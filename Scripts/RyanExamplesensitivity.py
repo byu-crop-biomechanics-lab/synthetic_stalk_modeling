@@ -13,10 +13,11 @@ from visualization import *
 from connectorBehavior import *
 
 #define moduli values to be used in the for loop: +/-5% of the Erind value defined above
-Rindmoduli = [1.0, 2.0, 3.0]
+Rindbase = 14600.0
+Rindmoduli = [Rindbase, Rindbase*1.01, Rindbase*0.99]
 
 #clear any old file with the same name and write header
-FileResultsX=open("C:\Temp\ResultsExample.txt",'w')
+FileResultsX=open("C:\\temp\ResultsExample.txt",'w')
 FileResultsX.write("Modulus\t\tForce\n")
 FileResultsX.close()
 
@@ -24,18 +25,18 @@ FileResultsX.close()
 for rindmod in Rindmoduli:
 
 	#assign material properties
-	mdb.models['Model-1'].materials['Material-1'].elastic.setValues(table=((rindmod, 0.3), ))
+	mdb.models['Model-1'].materials['Rind'].elastic.setValues(table=((rindmod, 0.3), ))
 
 
 	#create job
-	myJob = mdb.Job(atTime=None, contactPrint=OFF, description='', echoPrint=OFF, 
-		explicitPrecision=SINGLE, getMemoryFromAnalysis=True, historyPrint=OFF, 
-		memory=90, memoryUnits=PERCENTAGE, model='Model-1', modelPrint=OFF, 
-		multiprocessingMode=DEFAULT, name='Job-1', nodalOutputPrecision=SINGLE, 
-		numCpus=1, numGPUs=0, queue=None, scratch='', type=ANALYSIS, 
+	myJob = mdb.Job(atTime=None, contactPrint=OFF, description='', echoPrint=OFF,
+		explicitPrecision=SINGLE, getMemoryFromAnalysis=True, historyPrint=OFF,
+		memory=90, memoryUnits=PERCENTAGE, model='Model-1', modelPrint=OFF,
+		multiprocessingMode=DEFAULT, name='Job-1', nodalOutputPrecision=SINGLE,
+		numCpus=1, numGPUs=0, queue=None, scratch='', type=ANALYSIS,
 		userSubroutine='', waitHours=0, waitMinutes=0)
-	
-	
+
+
 	#run job and wait to completion
 	mdb.jobs['Job-1'].submit(consistencyChecking=OFF)
 	myJob.waitForCompletion()
@@ -47,14 +48,18 @@ for rindmod in Rindmoduli:
 	regS1 = odb.rootAssembly.nodeSets['READSET']
 
 	FX = RForce.getSubset(region=regS1).values[0].data[2]
-	
+
 	#write to file (in append mode)
-	FileResultsX=open("C:\Temp\ResultsExample.txt",'a')
+	FileResultsX=open("C:\\Temp\ResultsExample.txt",'a')
 	FileResultsX.write('%.2E\t' % (rindmod))
 	FileResultsX.write('%.2E\t' % (FX))
 	FileResultsX.write('\n')
-	
+
 	#close the file and output database, and then delete the output database
 	FileResultsX.close()
 	odb.close()
 	del mdb.jobs['Job-1']
+
+# ADD: Reset Rind modulus to be the original value
+
+# Create for loop that does the same thing as above, but
