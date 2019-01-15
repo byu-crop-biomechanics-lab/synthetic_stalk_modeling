@@ -1,15 +1,16 @@
 clear all;
 close all;
 
-dmaj = 3;
+dmaj = 2;
 dmin = 1;
 
-nwidth = 1;
+nwidth = 0.5;
+ndepth = 0.1;
 if nwidth >= dmaj
     error('Notch width is too large. Increase dmaj or decrease nwidth.')
 end
 
-theta = linspace(-pi,pi,100);   % The range of theta must stay as -pi to pi
+theta = linspace(-pi,pi,500);   % The range of theta must stay as -pi to pi
 yshift = zeros(1,length(theta));
 notch = zeros(1,length(theta));
 y = (dmin/2)*cos(theta);
@@ -17,10 +18,10 @@ x = (dmaj/2)*sin(theta);
 % flatlimit = pi/4;
 flatlimit = asin(nwidth/dmaj);
 for i = 1:length(notch)
-    if theta(i) <= -flatlimit | theta(i) >= flatlimit
-        notch(i) = NaN;
+    if theta(i) < -flatlimit | theta(i) > flatlimit
+        notch(i) = 0;
     else
-        notch(i) = -(0.1*(cos((2*pi/nwidth)*theta(i))) + 0.1);
+        notch(i) = ((ndepth/2)*(cos((2*pi/nwidth)*theta(i)))+(ndepth/4));
     end
 end
 
@@ -32,7 +33,7 @@ for i = 1:length(yshift)
         yshift(i) = 0;
     elseif theta(i) >= -flatlimit & theta(i) <= flatlimit
 %         yshift(i) = (dmin/2)*cos(-flatlimit);   % Keep the same value as the value at flatlimits
-        yshift(i) = y(i) + notch(i);
+        yshift(i) = y(i) - notch(i);
     else
         yshift(i) = y(i);
     end          
