@@ -11,18 +11,19 @@
 %   - major diameter
 %   - minor diameter
 %   - notch depth
-%   - notch width
+%   - notch width  <<<<----- THIS NEEDS WORK TO ALLOW FULL CONTROL!!!!!!
 %   - amplitude of x-asymmetry
 %   - location of x-asymmetry
 %   - amplitude of y-asymmetry
 %   - location of y-asymmetry
-%   - probably should add breadth of x and y asymmetry features.
+%   - probably should add breadth of x and y asymmetry features.  WHAT IS
+%   THIS?
 
 clear
 clc
 
 theta = linspace(0,2*pi,100);
-nloc = pi;
+nloc = pi;  % notch location?
 m = 1; % multiplier
 
 % Data = [1;
@@ -43,26 +44,10 @@ for i = 1:3
     %     ndepth = unifrnd(0.1,0.25);
     %     nwidth = 1;
     
-%     if i == 1     % Segments 1-3 (Bottom)
-%         min_diam = 22.53;
-%         maj_diam = 24;
-%         ndepth = 0;
-%         nwidth = 1;
-%     elseif i == 2
-%         min_diam = 24.84;
-%         maj_diam = 26;
-%         ndepth = .026;
-%         nwidth = 1;
-%     else
-%         min_diam = 27.11;
-%         maj_diam = 29.51;
-%         ndepth = .025;
-%         nwidth = 1;
-%     end
-%     
+
 
 % DEFINE DESIRED GEOMETRY FOR EACH INTERNODE
-        if i == 1
+        if i == 1       % Segments 5-7 (Top)
             min_diam = 22.6;
             maj_diam = 26.84;
             ndepth = 0.023;
@@ -78,8 +63,6 @@ for i = 1:3
             ndepth = .303;
             nwidth = 1;
         end
-    
-    
     
     min_diam = min_diam*m/2;
     maj_diam = maj_diam*m/2;
@@ -99,7 +82,7 @@ for i = 1:3
     
     x = maj_diam*(cos(theta) + noisex + notch + asymmetry);
     
-    %if mod(i,2) == 0, x = x*-1; end
+    %if mod(i,2) == 0, x = x*-1; end        % WHAT DOES THIS DO?
     
     % y-Asymmetry
     aAmp = unifrnd(-0.05,0.05);
@@ -107,7 +90,7 @@ for i = 1:3
     asymmetry = aAmp*sin(theta - aSym);
     
     y = min_diam*(sin(theta) + noisey + asymmetry);
-    rindx = unifrnd(0.92,0.94);
+    rindx = unifrnd(0.92,0.94); % IS THIS EVEN USED DOWN THE LINE?
     rindy = unifrnd(0.92,0.94);
     
     X(i,:) = x;
@@ -201,6 +184,39 @@ for i = 41:80
     Y(i,:) = (.00000125*(i-60)^4 +.9)*Ys(2,:);
 end
 
+% Make interpolation vectors into matrices
+Zinterp = [2.075:0.25:Z(end,1)];
+Zq = zeros(length(Zinterp),100);
+Xq = zeros(length(Zinterp),100);
+Yq = zeros(length(Zinterp),100);
+
+for i = 1:100
+    Xinterp = interp1(Z(:,i),X(:,i),Zinterp,'pchip');
+    Yinterp = interp1(Z(:,i),Y(:,i),Zinterp,'pchip');
+    for j = 1:length(Zinterp)
+        Zq(j,i) = Zinterp(j);
+        Xq(j,i) = Xinterp(j);
+        Yq(j,i) = Yinterp(j);
+    end
+end
+
+
+% Zq = [2.075:0.25:Z(end,1)];         % These are all row vectors and the interpolated ones can't be turned into column vectors for some reason
+% Xq = interp1(Z(:,1),X(:,1),Zq);
+% Yq = interp1(Z(:,1),Y(:,1),Zq);
+
+
+
+figure(2)
+plot3(X,Y,Z)
+xlabel('X');
+ylabel('Y');
+zlabel('Z');
+hold on
+plot3(Xq,Yq,Zq)
+% legend('original data','interpolated data')
+
+%% TRY USING INTERP1 IN A GOOD DATA STRUCTURE TO INTERPOLATE ALL THE 3D DATA POINTS
 
 % % Third Segment
 % 
@@ -231,7 +247,21 @@ end
 
 % also note the necessity of duplicate points to finish the stitching
 
-surf2stl_V1('stalk.stl',X,Y,Z)
+
+
+
+
+
+% surf2stl_V1('stalk.stl',X,Y,Z)
+
+% surf2stl_V1('stalkinterp.stl',Xq,Yq,Zq)
+
+
+
+
+
+
+
 
 %     %writes the STL
 %     if q==1
