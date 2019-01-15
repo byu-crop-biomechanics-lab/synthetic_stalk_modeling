@@ -6,7 +6,7 @@ dmin = 2;
 
 nwidth = 2.5;
 
-theta = linspace(-2*pi,2*pi,1000);
+theta = linspace(-pi,pi,100);
 yshift = zeros(1,length(theta));
 y = (dmin/2)*cos(theta);
 x = (dmaj/2)*sin(theta);
@@ -16,7 +16,7 @@ flatlimit = asin(nwidth/dmaj);
 
 for i = 1:length(yshift)
     % Don't shift y if outside the chosen bounds
-    if theta(i) <= -pi | theta(i) >= pi
+    if theta(i) < -pi | theta(i) > pi
         yshift(i) = 0;
     elseif theta(i) >= -flatlimit & theta(i) <= flatlimit
         yshift(i) = (dmin/2)*cos(-flatlimit);
@@ -25,17 +25,15 @@ for i = 1:length(yshift)
     end          
 end
 
-yshift(yshift == 0) = NaN;  % THIS STILL CAUSES A HOLE IN THE BOTTOM OF THE ELLIPSE
-for i = 1:length(theta)
-    if theta(i) == 0
-        yshift(i) = 0;
-    end
-end
+% yshift(yshift == 0) = NaN;  % THIS STILL CAUSES A HOLE IN THE BOTTOM OF THE ELLIPSE
+% for i = 1:length(theta)
+%     if theta(i) == 0
+%         yshift(i) = 0;
+%     end
+% end
+% x(1) = 0;
+% x(end) = 0;
 
-
-
-% NEXT STEPS: relate flat length to angle so that the flat length can be
-% specified and the appropriate angles used
 figure(1)
 plot(theta,y)
 hold on
