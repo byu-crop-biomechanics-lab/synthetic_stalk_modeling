@@ -2,9 +2,12 @@ clear all;
 close all;
 
 dmaj = 3;
-dmin = 2;
+dmin = 1;
 
-nwidth = 2.5;
+nwidth = 1;
+if nwidth >= dmaj
+    error('Notch width is too large. Increase dmaj or decrease nwidth.')
+end
 
 theta = linspace(-pi,pi,100);
 yshift = zeros(1,length(theta));
