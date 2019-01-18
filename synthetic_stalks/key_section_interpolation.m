@@ -22,7 +22,8 @@
 clear
 clc
 
-theta = linspace(0,2*pi,100);
+N = 1000;
+theta = linspace(0,2*pi,N);
 nloc = pi;  % notch location?
 m = 1; % multiplier
 
@@ -74,18 +75,18 @@ for i = 1:3
     aSym = unifrnd(-pi,pi);
     
     % Random Noise
-    noisex = unifrnd(-0.001,0.001,1,100);
-    noisey = unifrnd(-0.001,0.001,1,100);
+    noisex = unifrnd(-0.001,0.001,1,N);
+    noisey = unifrnd(-0.001,0.001,1,N);
     
-    % playing with ndepth and nwidth to find problems in equation
-    nloc = pi;
-    ndepth = 0.3;
-    nwidth = 0.75;
+%     % playing with ndepth and nwidth to find problems in equation
+%     nloc = pi;
+%     ndepth = 0.3;
+%     nwidth = 0.75;
     
-    notch = ndepth./cosh(4*(theta/nwidth-nloc)).^2;
-    figure(1)
-    plot(theta,notch)
-    notch(notch <= 0.001) = 0;
+    notch = ndepth./cosh((10/nwidth)*(theta-nloc)).^2;
+%     figure(1)
+%     plot(theta,notch)
+%     notch(notch <= 0.001) = 0;
     % Could use the first non-zero point to determine where to start
     % looking for the notch measurement points. Look into the parametric
     % equations of the 
