@@ -7,8 +7,8 @@ theta = linspace(0,2*pi,N);
 min_diam = 22;
 maj_diam = 27;
 nloc = pi;
-ndepth = linspace(0.001,1,100);
-nwidth = linspace(0.001,1,100);
+ndepth = linspace(0.001,2,100);
+nwidth = linspace(0.001,2,100);
 
 
 notch = zeros(length(ndepth),length(nwidth),length(theta));
@@ -60,7 +60,7 @@ for i = 1:length(ndepth)
 
                     % Fill a temporary vector of theta values for
                     % measurement points
-                    thetaptstemp = interp1(dxdytemp((k-2):(k+3)),theta((k-2):(k+3)),0,'pchip');
+                    thetaptstemp = interp1(dxdytemp((k-1):(k+1)),theta((k-1):(k+1)),0,'pchip');
                     thetapts(i,j,count) = thetaptstemp;
                     
 %                     thetapts(i,j,count) = interp1(dxdytemp(k-4:k+5),theta(k-4:k+5),0,'pchip');
@@ -109,8 +109,16 @@ for i = 1:length(ndepth)
     end
 end
 
-
-
+figure(1)
+surf(ndepth_true)
+xlabel('ndepth')
+ylabel('nwidth')
+zlabel('True notch depth')
+figure(2)
+surf(nwidth_true)
+xlabel('ndepth')
+ylabel('nwidth')
+zlabel('True notch width')
 
 % ndepth_true = (abs(xmeasurepts(1)-xmeasurepts(2)) + abs(xmeasurepts(2)-xmeasurepts(3)))/2
 % nwidth_true = abs(ymeasurepts(1)-ymeasurepts(3))
