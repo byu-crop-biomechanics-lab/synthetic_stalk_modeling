@@ -7,8 +7,8 @@ min_diam = 22;
 maj_diam = 27;
 min_maj_ratio = min_diam/maj_diam;
 nloc = pi;
-ndepth = linspace(0.25,2,100);
-nwidth = linspace(0.1,9.9,100); % limits are determined by the 
+ndepth = linspace(0,0.3,100);
+nwidth = linspace(0,9.9,100); % limits are determined by the 
 
 
 notch = zeros(length(ndepth),length(nwidth),length(theta));
@@ -34,8 +34,8 @@ end
 % figure(1)
 % 
 % %// Plot point by point
-% for i = 1:5
-%     for j = 1:length(nwidth)
+% for i = 1:10
+%     for j = 95:100
 %         xtemp = zeros(1,N);
 %         ytemp = zeros(1,N);
 %         for k = 1:length(theta)
@@ -80,13 +80,17 @@ end
 % CASES WHERE THE NOTCH DEPTH IS NOT DEEP ENOUGH TO CAUSE 
 
 
-thetapts = zeros(length(ndepth),length(nwidth),3);
-dxdytemp = zeros(1,length(theta));
+thetapts = nan(length(ndepth),length(nwidth),3);
+dxdytemp = nan(1,length(theta));
 count = 1;
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
         for k = 1:length(theta)
-            if theta(k)>pi/2 & theta(k)<(3*pi)/2 % FIXED: ONLY SEARCH BETWEEN PI/2 AND 3PI/2 TO AVOID CATCHING ASYMPTOTES
+            % NEW SOLUTION: SEARCH IN EACH OF THE EXPECTED ANGLE RANGES FOR
+            % A MEASUREMENT FEATURE. IF THERE ISN'T A MEASUREMENT FEATURE,
+            % THEN LET ALL ENTRIES FOR THAT NDEPTH/NWIDTH COMBO REMAIN NAN
+            
+            if theta(k)>pi/2 & theta(k)<(3*pi)/2
                 % If there's a sign change, catch it
                 if (dxdy(i,j,k)<0 & dxdy(i,j,k+1)>0) || (dxdy(i,j,k)>0 & dxdy(i,j,k+1)<0)
                     % Create a temporary holding vector for dxdy across all
@@ -111,22 +115,22 @@ for i = 1:length(ndepth)
     end
 end
 
-% Troubleshooting: Check how many ndepth/nwidth combinations don't have all
-% three theta slots filled
-problemvecs = 0;
-for i = 1:length(ndepth)
-    for j = 1:length(nwidth)
-        if nnz(~thetapts(i,j,:)) > 0
-            problemvecs = problemvecs+1;
-        end
-    end
-end
-problemratio = problemvecs/(100*100);
+% % Troubleshooting: Check how many ndepth/nwidth combinations don't have all
+% % three theta slots filled
+% problemvecs = 0;
+% for i = 1:length(ndepth)
+%     for j = 1:length(nwidth)
+%         if nnz(~thetapts(i,j,:)) > 0
+%             problemvecs = problemvecs+1;
+%         end
+%     end
+% end
+% problemratio = problemvecs/(N^2);
             
 % Establish x and y values for measurement points
-xmeasurepts = zeros(size(thetapts));
-ymeasurepts = zeros(size(thetapts));
-notchmeasurepts = zeros(size(thetapts));
+xmeasurepts = nan(size(thetapts));
+ymeasurepts = nan(size(thetapts));
+notchmeasurepts = nan(size(thetapts));
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
         for k = 1:3
@@ -142,8 +146,8 @@ ndepth_true = NaN(length(ndepth),length(nwidth));
 nwidth_true = NaN(length(ndepth),length(nwidth));
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
-        ndepth_true(i,j) = (abs(xmeasurepts(i,j,1)-xmeasurepts(i,j,2)) + abs(xmeasurepts(i,j,2)-xmeasurepts(i,j,3)))/2;
-        nwidth_true(i,j) = abs(ymeasurepts(i,j,1)-ymeasurepts(i,j,3));
+        ndepth_true(i,j) = (xmeasurepts(i,j,1)-xmeasurepts(i,j,2)) + abs(xmeasurepts(i,j,2)-xmeasurepts(i,j,3))/2;
+        nwidth_true(i,j) = ymeasurepts(i,j,1)-ymeasurepts(i,j,3);
     end
 end
 
