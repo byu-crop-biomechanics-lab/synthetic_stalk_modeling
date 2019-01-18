@@ -5,6 +5,7 @@ N = 100;
 theta = linspace(0,2*pi,N);
 min_diam = 22;
 maj_diam = 27;
+min_maj_ratio = min_diam/maj_diam;
 nloc = pi;
 ndepth = linspace(0.25,2,100);
 nwidth = linspace(0.25,2,100);
@@ -17,7 +18,7 @@ dxdy = zeros(length(ndepth),length(nwidth),length(theta));
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
         for k = 1:length(theta)
-            notch(i,j,k) = ndepth(i)/cosh(4*(theta(k)/nwidth(j)-nloc))^2;
+            notch(i,j,k) = ndepth(i)./cosh(4*(theta(k)/nwidth(j)-nloc)).^2;
             x(i,j,k) = maj_diam*(cos(theta(k)) + notch(i,j,k));
             y(i,j,k) = min_diam*(sin(theta(k)));
             dxdy(i,j,k) = -(maj_diam*(sin(theta(k)) - (8.*ndepth(i)*sinh(4*nloc - ...
@@ -30,14 +31,10 @@ end
 % TRY PLOTTING THE CROSS SECTION SHAPES TO SEE HOW THEY CHANGE AS A
 % FUNCTION OF NDEPTH OR NWIDTH
 %// Plot starts here
-figure
-
-%// Set x and y limits of the plot
-% xlim([min(x(:)) max(x(:))])
-% ylim([min(y(:)) max(y(:))])
+figure(1)
 
 %// Plot point by point
-for i = 1:length(ndepth)
+for i = 1:5
     for j = 1:length(nwidth)
         xtemp = zeros(1,N);
         ytemp = zeros(1,N);
@@ -45,13 +42,27 @@ for i = 1:length(ndepth)
             xtemp(k) = x(i,j,k);
             ytemp(k) = y(i,j,k);
         end
-        plot(xtemp,ytemp) %// Choose your own marker here
-
-        %// MATLAB pauses for 0.001 sec before moving on to execue the next 
-        %%// instruction and thus creating animation effect
+        plot(xtemp,ytemp)
         pause(0.05);
     end
 end
+
+close(figure(1))
+%// Plot starts here
+figure(2)
+
+%// Plot point by point
+for i = 1:5
+    for j = 1:length(nwidth)
+        notchtemp = zeros(1,N);
+        for k = 1:length(theta)
+            notchtemp(k) = notch(i,j,k);
+        end
+        plot(theta,notchtemp)
+        pause(0.05);
+    end
+end
+close(figure(2))
 
 
 

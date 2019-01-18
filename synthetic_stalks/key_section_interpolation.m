@@ -77,7 +77,14 @@ for i = 1:3
     noisex = unifrnd(-0.001,0.001,1,100);
     noisey = unifrnd(-0.001,0.001,1,100);
     
+    % playing with ndepth and nwidth to find problems in equation
+    nloc = pi;
+    ndepth = 0.3;
+    nwidth = 0.75;
+    
     notch = ndepth./cosh(4*(theta/nwidth-nloc)).^2;
+    figure(1)
+    plot(theta,notch)
     notch(notch <= 0.001) = 0;
     % Could use the first non-zero point to determine where to start
     % looking for the notch measurement points. Look into the parametric
@@ -129,6 +136,7 @@ Y(2,:) = Y2prime;
 
 r = 15;
 % Plot cross sections of stalks
+figure(2)
 hold on
 set(gcf, 'Position', [300, 300, 1000, 350])
 
@@ -212,14 +220,14 @@ end
 
 
 
-figure(2)
-plot3(X,Y,Z)
-xlabel('X');
-ylabel('Y');
-zlabel('Z');
-hold on
-plot3(Xq,Yq,Zq)
-% legend('original data','interpolated data')
+% figure(3)
+% plot3(X,Y,Z)
+% xlabel('X');
+% ylabel('Y');
+% zlabel('Z');
+% hold on
+% plot3(Xq,Yq,Zq)
+% % legend('original data','interpolated data')
 
 %% TRY USING INTERP1 IN A GOOD DATA STRUCTURE TO INTERPOLATE ALL THE 3D DATA POINTS
 
