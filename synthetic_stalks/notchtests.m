@@ -1,7 +1,6 @@
 clear all;
 close all;
 
-% syms theta min_diam maj_diam nloc ndepth nwidth x y
 N = 1000;
 theta = linspace(0,2*pi,N);
 min_diam = 22;
@@ -30,16 +29,9 @@ end
 
 dxdy(:,:,1) = 0;
 
-% x = maj_diam.*(cos(theta) + notch);
-% y = min_diam.*(sin(theta));
-
-% dxdy = -(maj_diam.*(sin(theta) - (8.*ndepth.*sinh(4.*nloc - (4.*theta)./nwidth))./(nwidth.*cosh(4.*nloc - (4.*theta)./nwidth).^3)))./(min_diam.*cos(theta));
-% dxdy(1) = 0;
-
 % Calculate the theta values where the dxdy slope is zero (measurement
 % points for nwidth and ndepth)
 thetapts = zeros(length(ndepth),length(nwidth),3);
-% thetaptstemp = zeros(3,1);
 dxdytemp = zeros(1,length(theta));
 count = 1;
 for i = 1:length(ndepth)
@@ -56,23 +48,16 @@ for i = 1:length(ndepth)
                     for m = 1:(N-2)
                         dxdytemp(m) = dxdy(i,j,m);
                     end
-%                     dxdytemp = dxdy(i,j,:);
 
                     % Fill a temporary vector of theta values for
                     % measurement points
                     thetaptstemp = interp1(dxdytemp((k-1):(k+1)),theta((k-1):(k+1)),0,'pchip');
                     thetapts(i,j,count) = thetaptstemp;
                     
-%                     thetapts(i,j,count) = interp1(dxdytemp(k-4:k+5),theta(k-4:k+5),0,'pchip');
                     count = count + 1;
                     if count > 3
                         count = 1;
                     end
-%                     thetapts(i,j,count) = interp1(dxdy(i,j,k-4:k+5),theta(i,j,k-4:k+5),0,'pchip');
-                    
-                    
-%                     theta_zero = interp1(dxdy((i,j,k-4):(i,j,k+5)),theta((i,j,k-4):(i,j,k+5)),0,'pchip');
-%                     thetapts = [Zeros;theta_zero];
                 end
             end
         end
@@ -92,12 +77,6 @@ for i = 1:length(ndepth)
         end
     end
 end
-        
-% for i = 1:length(zeros)
-%     notchmeasurepts(i) = ndepth./cosh(4*(zeros(i)/nwidth-nloc)).^2;
-%     xmeasurepts(i) = maj_diam*(cos(zeros(i)) + notchmeasurepts(i));
-%     ymeasurepts(i) = min_diam*(sin(zeros(i)));
-% end
 
 % Measure the true notch depth and width
 ndepth_true = zeros(length(ndepth),length(nwidth));
@@ -109,6 +88,7 @@ for i = 1:length(ndepth)
     end
 end
 
+% Visualize with 3D plots
 figure(1)
 surf(ndepth_true)
 xlabel('ndepth')
