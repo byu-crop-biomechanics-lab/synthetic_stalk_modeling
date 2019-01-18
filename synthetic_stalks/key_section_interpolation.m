@@ -78,6 +78,11 @@ for i = 1:3
     noisey = unifrnd(-0.001,0.001,1,100);
     
     notch = ndepth./cosh(4*(theta/nwidth-nloc)).^2;
+    notch(notch <= 0.001) = 0;
+    % Could use the first non-zero point to determine where to start
+    % looking for the notch measurement points. Look into the parametric
+    % equations of the 
+    
     asymmetry = aAmp*sin(theta - aSym);
     
     x = maj_diam*(cos(theta) + noisex + notch + asymmetry);
