@@ -18,12 +18,10 @@ dxdy = zeros(length(ndepth),length(nwidth),length(theta));
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
         for k = 1:length(theta)
-            notch(i,j,k) = ndepth(i)./cosh((10/nwidth(j))*(theta(k)-nloc)).^2;
+            notch(i,j,k) = ndepth(i)/cosh((10/nwidth(j))*(theta(k)-nloc))^2;
             x(i,j,k) = maj_diam*(cos(theta(k)) + notch(i,j,k));
             y(i,j,k) = min_diam*(sin(theta(k)));
-            dxdy(i,j,k) = -(maj_diam*(sin(theta(k)) - (8.*ndepth(i)*sinh(4*nloc - ...
-                (4*theta(k))/nwidth(j)))/(nwidth(j)*cosh(4*nloc - ...
-                (4*theta(k))/nwidth(j))^3)))/(min_diam*cos(theta(k)));
+            dxdy(i,j,k) =  maj_diam*(-(20*ndepth(i)*tanh((10*(theta(k)-nloc))/nwidth(j))*(sech((10*(theta(k)-nloc))/nwidth(j)))^2)/nwidth(j) - sin(theta(k)))/(min_diam*cos(theta(k)));
         end
     end
 end
@@ -93,7 +91,7 @@ notchmeasurepts = nan(size(thetapts));
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
         for k = 1:3
-            notchmeasurepts(i,j,k) = ndepth(i)/cosh(4*(thetapts(i,j,k)/nwidth(j)-nloc))^2;
+            notchmeasurepts(i,j,k) = ndepth(i)/cosh((10/nwidth(j))*(thetapts(k)-nloc))^2;
             xmeasurepts(i,j,k) = maj_diam*(cos(thetapts(i,j,k)) + notchmeasurepts(i,j,k));
             ymeasurepts(i,j,k) = min_diam*(sin(thetapts(i,j,k)));
         end
@@ -110,21 +108,36 @@ figure
 % RESULTS OF DX/DY AGAINST THETA AT THE SAME TIME (CATCH ASYMPTOTES AND
 % ZEROS AND MAKE SURE THEY CORRESPOND)
 
-
 %// Plot point by point
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
         xtemp = zeros(1,N);
         ytemp = zeros(1,N);
+        dxdytemp = zeros(1,N);
         for k = 1:length(theta)
             xtemp(k) = x(i,j,k);
             ytemp(k) = y(i,j,k);
+            dxdytemp(k) = dxdy(i,j,k);
         end
+        for k = 1:3
+            thetaptsscatter(k) = thetapts(i,j,k);
+            dxdyscatter(k) = maj_diam*(-(20*ndepth(i)*tanh((10*(thetaptsscatter(k)-nloc))...
+                /nwidth(j))*(sech((10*(thetaptsscatter(k)-nloc))/nwidth(j)))^2)/nwidth(j) - ...
+                sin(thetaptsscatter(k)))/(min_diam*cos(thetaptsscatter(k)));
+        end
+        subplot(1,2,1);
         plot(xtemp,ytemp)
         hold on
-        scatter(xmeasurepts(i,j,:),ymeasurepts(i,j,:))
-        % plot points that show the measurement points
+        scatter(xmeasurepts(i,j,:),ymeasurepts(i,j,:));  % plot measurement points over the top of the cross section shape
         hold off
+        title('Cross sectional shape and measurement points');
+        subplot(1,2,2);
+        plot(theta(270:730),dxdytemp(270:730))
+        hold on
+        scatter(thetaptsscatter,dxdyscatter);
+        hold off
+        xlabel('\theta, rad');
+        ylabel('dx/dy')
         pause(0.05);
     end
 end
