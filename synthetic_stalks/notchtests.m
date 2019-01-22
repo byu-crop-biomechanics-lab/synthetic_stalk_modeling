@@ -7,8 +7,8 @@ min_diam = 22;
 maj_diam = 27;
 min_maj_ratio = min_diam/maj_diam;
 nloc = pi;
-ndepth = linspace(0,0.3,100);
-nwidth = linspace(0,9.9,100); % limits are determined by the 
+ndepth = linspace(0,1,100);
+nwidth = linspace(0,5,100); % limits are determined by the 
 
 
 notch = zeros(length(ndepth),length(nwidth),length(theta));
@@ -27,47 +27,6 @@ for i = 1:length(ndepth)
         end
     end
 end
-
-% % TRY PLOTTING THE CROSS SECTION SHAPES TO SEE HOW THEY CHANGE AS A
-% % FUNCTION OF NDEPTH OR NWIDTH
-% %// Plot starts here
-% figure(1)
-% 
-% %// Plot point by point
-% for i = 1:10
-%     for j = 95:100
-%         xtemp = zeros(1,N);
-%         ytemp = zeros(1,N);
-%         for k = 1:length(theta)
-%             xtemp(k) = x(i,j,k);
-%             ytemp(k) = y(i,j,k);
-%         end
-%         plot(xtemp,ytemp)
-%         pause(0.05);
-%     end
-% end
-% 
-% close(figure(1))
-% %// Plot starts here
-% figure(2)
-% 
-% %// Plot point by point
-% for i = 1:5
-%     for j = 1:length(nwidth)
-%         notchtemp = zeros(1,N);
-%         for k = 1:length(theta)
-%             notchtemp(k) = notch(i,j,k);
-%         end
-%         plot(theta,notchtemp)
-%         pause(0.05);
-%     end
-% end
-% close(figure(2))
-
-
-
-
-
 
 % dxdy(:,:,1) = 0;    % FIXED: THIS LINE IS NOT NEEDED IF THE NEXT FIX BELOW IS IMPLEMENTED
 
@@ -141,27 +100,77 @@ for i = 1:length(ndepth)
     end
 end
 
+
+% % TRY PLOTTING THE CROSS SECTION SHAPES TO SEE HOW THEY CHANGE AS A
+% % FUNCTION OF NDEPTH OR NWIDTH
+% %// Plot starts here
+figure
+
+% ADDITION: MAKE THE BELOW PLOT INTO A SUBPLOT SO YOU CAN COMPARE THE
+% RESULTS OF DX/DY AGAINST THETA AT THE SAME TIME (CATCH ASYMPTOTES AND
+% ZEROS AND MAKE SURE THEY CORRESPOND)
+
+
+%// Plot point by point
+for i = 1:length(ndepth)
+    for j = 1:length(nwidth)
+        xtemp = zeros(1,N);
+        ytemp = zeros(1,N);
+        for k = 1:length(theta)
+            xtemp(k) = x(i,j,k);
+            ytemp(k) = y(i,j,k);
+        end
+        plot(xtemp,ytemp)
+        hold on
+        scatter(xmeasurepts(i,j,:),ymeasurepts(i,j,:))
+        % plot points that show the measurement points
+        hold off
+        pause(0.05);
+    end
+end
+
+% close(figure(1))
+% %// Plot starts here
+% figure(2)
+% 
+% %// Plot point by point
+% for i = 1:5
+%     for j = 1:length(nwidth)
+%         notchtemp = zeros(1,N);
+%         for k = 1:length(theta)
+%             notchtemp(k) = notch(i,j,k);
+%         end
+%         plot(theta,notchtemp)
+%         pause(0.05);
+%     end
+% end
+% close(figure(2))
+
+
+
+
+
 % Measure the true notch depth and width
 ndepth_true = NaN(length(ndepth),length(nwidth));
 nwidth_true = NaN(length(ndepth),length(nwidth));
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
-        ndepth_true(i,j) = (xmeasurepts(i,j,1)-xmeasurepts(i,j,2)) + abs(xmeasurepts(i,j,2)-xmeasurepts(i,j,3))/2;
+        ndepth_true(i,j) = ((xmeasurepts(i,j,1)-xmeasurepts(i,j,2)) + (xmeasurepts(i,j,3)-xmeasurepts(i,j,2)))/2;
         nwidth_true(i,j) = ymeasurepts(i,j,1)-ymeasurepts(i,j,3);
     end
 end
 
-% Visualize with 3D plots
-figure(1)
-surf(ndepth_true)
-xlabel('ndepth')
-ylabel('nwidth')
-zlabel('True notch depth')
-figure(2)
-surf(nwidth_true)
-xlabel('ndepth')
-ylabel('nwidth')
-zlabel('True notch width')
+% % Visualize with 3D plots
+% figure(1)
+% surf(ndepth_true)
+% xlabel('ndepth')
+% ylabel('nwidth')
+% zlabel('True notch depth')
+% figure(2)
+% surf(nwidth_true)
+% xlabel('ndepth')
+% ylabel('nwidth')
+% zlabel('True notch width')
 
 % ndepth_true = (abs(xmeasurepts(1)-xmeasurepts(2)) + abs(xmeasurepts(2)-xmeasurepts(3)))/2
 % nwidth_true = abs(ymeasurepts(1)-ymeasurepts(3))
