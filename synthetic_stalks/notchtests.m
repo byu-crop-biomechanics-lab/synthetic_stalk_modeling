@@ -37,38 +37,92 @@ end
 % CASES WHERE THE NOTCH DEPTH IS NOT DEEP ENOUGH TO CAUSE 
 
 
-thetapts = nan(length(ndepth),length(nwidth),3);
-dxdytemp = nan(1,length(theta));
-count = 1;
+
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
-        for k = 1:length(theta)
-            % NEW SOLUTION: SEARCH IN EACH OF THE EXPECTED ANGLE RANGES FOR
-            % A MEASUREMENT FEATURE. IF THERE ISN'T A MEASUREMENT FEATURE,
-            % THEN LET ALL ENTRIES FOR THAT NDEPTH/NWIDTH COMBO REMAIN NAN
-            
-            if theta(k)>pi/2 & theta(k)<(3*pi)/2
-                % If there's a sign change, catch it
-                if (dxdy(i,j,k)<0 & dxdy(i,j,k+1)>0) || (dxdy(i,j,k)>0 & dxdy(i,j,k+1)<0)
-                    % Create a temporary holding vector for dxdy across all
-                    % theta, for each specific combination of nwidth and
-                    % ndepth
-                    for m = 1:(N-2)
-                        dxdytemp(m) = dxdy(i,j,m);
-                    end
+        thetapts = nan(length(ndepth),length(nwidth),3);
+        dxdytemp = nan(1,length(theta));
+        count = 1;
+        % NEW SOLUTION: SEARCH IN EACH OF THE EXPECTED ANGLE RANGES FOR
+        % A MEASUREMENT FEATURE. IF THERE ISN'T A MEASUREMENT FEATURE,
+        % THEN LET ALL ENTRIES FOR THAT NDEPTH/NWIDTH COMBO REMAIN NAN
+        
+        % Create a temporary holding vector for dxdy across all
+        % theta, for each specific combination of nwidth and
+        % ndepth
+        for m = 1:length(theta)
+            dxdytemp(m) = dxdy(i,j,m);
+        end
 
-                    % Fill a temporary vector of theta values for
-                    % measurement points
-                    thetaptstemp = interp1(dxdytemp((k-1):(k+1)),theta((k-1):(k+1)),0,'pchip');
-                    thetapts(i,j,count) = thetaptstemp;
+        %% Catch the first possible measurement point:
+        bound1 = pi/2;
+        bound2 = pi;
+        [maxind,minind] = boundinds(bound1,bound2,theta);
 
-                    count = count + 1;
-                    if count > 3
-                        count = 1;
-                    end
-                end
+        % Check the bounds of the range in question to see if dx/dy
+        % is NaN there
+        if isnan(dxdytemp(maxind)) & isnan(dxdytemp(minind))
+            thetapts(i,j,count) = NaN;
+        else
+            thetaptstemp = interp1(dxdytemp(minind:maxind),theta(minind:maxind),0,'pchip');
+
+%             % Verify that the interpolated value is good for the range
+%             % of interest:
+%             if (thetaptstemp<theta(maxind)) & (thetaptstemp>theta(minind))
+%                 thetapts(i,j,count) = thetaptstemp;
+%                 count = count + 1;
+%             else
+%                 thetapts(i,j,count) = NaN;
+%             end
+            thetapts(i,j,count) = thetaptstemp;
+            count = count + 1;
+        end
+
+        %% Catch the second possible measurement point
+        bound1 = pi - 0.2;
+        bound2 = pi + 0.2;
+        [maxind,minind] = boundinds(bound1,bound2,theta);
+        
+        % Check the bounds of the range in question to see if dx/dy
+        % is NaN there
+        if isnan(dxdytemp(maxind)) & isnan(dxdytemp(minind))
+            thetapts(i,j,count) = NaN;
+        else
+            thetaptstemp = interp1(dxdytemp(minind:maxind),theta(minind:maxind),0,'pchip');
+
+            % Verify that the interpolated value is good for the range
+            % of interest:
+            if (thetaptstemp<theta(maxind)) & (thetaptstemp>theta(minind))
+                thetapts(i,j,count) = thetaptstemp;
+                count = count + 1;
+            else
+                thetapts(i,j,count) = NaN;
+                continue
             end
         end
+        
+        %% Catch the third possible measurement point
+        bound1 = pi;
+        bound2 = 3*pi/2;
+        [maxind,minind] = boundinds(bound1,bound2,theta);
+
+        % Check the bounds of the range in question to see if dx/dy
+        % is NaN there
+        if isnan(dxdytemp(maxind)) & isnan(dxdytemp(minind))
+            thetapts(i,j,count) = NaN;
+        else
+            thetaptstemp = interp1(dxdytemp(minind:maxind),theta(minind:maxind),0,'pchip');
+
+            % Verify that the interpolated value is good for the range
+            % of interest:
+            if (thetaptstemp<theta(maxind)) & (thetaptstemp>theta(minind))
+                thetapts(i,j,count) = thetaptstemp;
+                count = count + 1;
+            else
+                thetapts(i,j,count) = NaN;
+            end
+        end
+%         disp(thetapts(i,j,:))
     end
 end
 
@@ -104,10 +158,6 @@ end
 % %// Plot starts here
 figure
 
-% ADDITION: MAKE THE BELOW PLOT INTO A SUBPLOT SO YOU CAN COMPARE THE
-% RESULTS OF DX/DY AGAINST THETA AT THE SAME TIME (CATCH ASYMPTOTES AND
-% ZEROS AND MAKE SURE THEY CORRESPOND)
-
 %// Plot point by point
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
@@ -125,6 +175,13 @@ for i = 1:length(ndepth)
                 /nwidth(j))*(sech((10*(thetaptsscatter(k)-nloc))/nwidth(j)))^2)/nwidth(j) - ...
                 sin(thetaptsscatter(k)))/(min_diam*cos(thetaptsscatter(k)));
         end
+        
+        
+        %% THE PROBLEM IS SOMEWHERE IN THE PASSING OF VALUES FROM THETAPTS
+        % TO THETAPTSSCATTER, BECAUSE IT IS SUCCESSFULLY INTERPOLATING AND
+        % FINDING THETA VALUES, BUT ALL THETAPTSSCATTER IS GETTING IS NAN
+        disp(thetaptsscatter);
+        
         subplot(1,2,1);
         plot(xtemp,ytemp)
         hold on
