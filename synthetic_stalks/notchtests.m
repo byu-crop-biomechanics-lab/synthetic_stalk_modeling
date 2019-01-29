@@ -3,12 +3,15 @@ close all;
 
 N = 1000;
 theta = linspace(0,2*pi,N);
-min_diam = 22;
+min_diam = 26;
 maj_diam = 27;
+if maj_diam/min_diam <= 1
+    error('Major diameter must be greater than minor diameter');
+end
 min_maj_ratio = min_diam/maj_diam;
 nloc = pi;
-ndepth = linspace(0,1,100);
-nwidth = linspace(0,5,100); % limits are determined by the 
+ndepth = linspace(0,2,100);
+nwidth = linspace(0,9,100);  % Don't let the second number be 10 or greater
 
 
 notch = zeros(length(ndepth),length(nwidth),length(theta));
@@ -26,29 +29,14 @@ for i = 1:length(ndepth)
     end
 end
 
-% dxdy(:,:,1) = 0;    % FIXED: THIS LINE IS NOT NEEDED IF THE NEXT FIX BELOW IS IMPLEMENTED
-
-% Calculate the theta values where the dxdy slope is zero (measurement
-% points for nwidth and ndepth)
-
-% NOTE 1/18/2019: THE FOLLOWING BLOCK OF CODE DOES NOT CATCH ALL THREE
-% MEASUREMENT POINTS NEARLY HALF THE TIME (PROBLEMRATIO RETURNS 46.7%).
-% THIS INDICATES A PROBLEM WITH THE METHOD. IT DOESN'T TAKE INTO ACCOUNT
-% CASES WHERE THE NOTCH DEPTH IS NOT DEEP ENOUGH TO CAUSE 
-
-
 nopts = 0;
 yespts = 0;
 thetapts = nan(length(ndepth),length(nwidth),3);
 dxdytemp = nan(1,length(theta));
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
-        
         count = 1;
-        % NEW SOLUTION: SEARCH IN EACH OF THE EXPECTED ANGLE RANGES FOR
-        % A MEASUREMENT FEATURE. IF THERE ISN'T A MEASUREMENT FEATURE,
-        % THEN LET ALL ENTRIES FOR THAT NDEPTH/NWIDTH COMBO REMAIN NAN
-        
+                
         % Create a temporary holding vector for dxdy across all
         % theta, for each specific combination of nwidth and
         % ndepth
@@ -156,8 +144,8 @@ for i = 1:length(ndepth)
     for j = 1:length(nwidth)
         ndepth_true(i,j) = abs((abs(xmeasurepts(i,j,1)-xmeasurepts(i,j,2)) + abs(xmeasurepts(i,j,3)-xmeasurepts(i,j,2)))/2);
         nwidth_true(i,j) = ymeasurepts(i,j,1)-ymeasurepts(i,j,3);
-        disp(ndepth_true(i,j));
-        disp(nwidth_true(i,j));
+%         disp(ndepth_true(i,j));
+%         disp(nwidth_true(i,j));
     end
 end
 
