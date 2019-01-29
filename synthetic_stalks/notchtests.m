@@ -37,11 +37,13 @@ end
 % CASES WHERE THE NOTCH DEPTH IS NOT DEEP ENOUGH TO CAUSE 
 
 
-
+nopts = 0;
+yespts = 0;
+thetapts = nan(length(ndepth),length(nwidth),3);
+dxdytemp = nan(1,length(theta));
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
-        thetapts = nan(length(ndepth),length(nwidth),3);
-        dxdytemp = nan(1,length(theta));
+        
         count = 1;
         % NEW SOLUTION: SEARCH IN EACH OF THE EXPECTED ANGLE RANGES FOR
         % A MEASUREMENT FEATURE. IF THERE ISN'T A MEASUREMENT FEATURE,
@@ -75,6 +77,7 @@ for i = 1:length(ndepth)
 %                 thetapts(i,j,count) = NaN;
 %             end
             thetapts(i,j,count) = thetaptstemp;
+%             disp(thetapts(i,j,count));
             count = count + 1;
         end
 
@@ -90,15 +93,18 @@ for i = 1:length(ndepth)
         else
             thetaptstemp = interp1(dxdytemp(minind:maxind),theta(minind:maxind),0,'pchip');
 
-            % Verify that the interpolated value is good for the range
-            % of interest:
-            if (thetaptstemp<theta(maxind)) & (thetaptstemp>theta(minind))
-                thetapts(i,j,count) = thetaptstemp;
-                count = count + 1;
-            else
-                thetapts(i,j,count) = NaN;
-                continue
-            end
+
+% %             Verify that the interpolated value is good for the range
+% %             of interest:
+%             if (thetaptstemp<theta(maxind)) & (thetaptstemp>theta(minind))
+%                 thetapts(i,j,count) = thetaptstemp;
+%                 count = count + 1;
+%             else
+%                 thetapts(i,j,count) = NaN;
+%                 continue
+%             end
+            thetapts(i,j,count) = thetaptstemp;
+            count = count + 1;
         end
         
         %% Catch the third possible measurement point
@@ -113,30 +119,21 @@ for i = 1:length(ndepth)
         else
             thetaptstemp = interp1(dxdytemp(minind:maxind),theta(minind:maxind),0,'pchip');
 
-            % Verify that the interpolated value is good for the range
-            % of interest:
-            if (thetaptstemp<theta(maxind)) & (thetaptstemp>theta(minind))
-                thetapts(i,j,count) = thetaptstemp;
-                count = count + 1;
-            else
-                thetapts(i,j,count) = NaN;
-            end
+
+%             % Verify that the interpolated value is good for the range
+%             % of interest:
+%             if (thetaptstemp<theta(maxind)) & (thetaptstemp>theta(minind))
+%                 thetapts(i,j,count) = thetaptstemp;
+%                 count = count + 1;
+%             else
+%                 thetapts(i,j,count) = NaN;
+%             end
+            thetapts(i,j,count) = thetaptstemp;
+            count = count + 1;
         end
 %         disp(thetapts(i,j,:))
     end
 end
-
-% % Troubleshooting: Check how many ndepth/nwidth combinations don't have all
-% % three theta slots filled
-% problemvecs = 0;
-% for i = 1:length(ndepth)
-%     for j = 1:length(nwidth)
-%         if nnz(~thetapts(i,j,:)) > 0
-%             problemvecs = problemvecs+1;
-%         end
-%     end
-% end
-% problemratio = problemvecs/(N^2);
             
 % Establish x and y values for measurement points
 xmeasurepts = nan(size(thetapts));
@@ -145,108 +142,85 @@ notchmeasurepts = nan(size(thetapts));
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
         for k = 1:3
-            notchmeasurepts(i,j,k) = ndepth(i)/cosh((10/nwidth(j))*(thetapts(k)-nloc))^2;
+            notchmeasurepts(i,j,k) = ndepth(i)/cosh((10/nwidth(j))*(thetapts(i,j,k)-nloc))^2;
             xmeasurepts(i,j,k) = maj_diam*(cos(thetapts(i,j,k)) + notchmeasurepts(i,j,k));
             ymeasurepts(i,j,k) = min_diam*(sin(thetapts(i,j,k)));
         end
     end
 end
 
-
-% % TRY PLOTTING THE CROSS SECTION SHAPES TO SEE HOW THEY CHANGE AS A
-% % FUNCTION OF NDEPTH OR NWIDTH
-% %// Plot starts here
-figure
-
-%// Plot point by point
-for i = 1:length(ndepth)
-    for j = 1:length(nwidth)
-        xtemp = zeros(1,N);
-        ytemp = zeros(1,N);
-        dxdytemp = zeros(1,N);
-        for k = 1:length(theta)
-            xtemp(k) = x(i,j,k);
-            ytemp(k) = y(i,j,k);
-            dxdytemp(k) = dxdy(i,j,k);
-        end
-        for k = 1:3
-            thetaptsscatter(k) = thetapts(i,j,k);
-            dxdyscatter(k) = maj_diam*(-(20*ndepth(i)*tanh((10*(thetaptsscatter(k)-nloc))...
-                /nwidth(j))*(sech((10*(thetaptsscatter(k)-nloc))/nwidth(j)))^2)/nwidth(j) - ...
-                sin(thetaptsscatter(k)))/(min_diam*cos(thetaptsscatter(k)));
-        end
-        
-        
-        %% THE PROBLEM IS SOMEWHERE IN THE PASSING OF VALUES FROM THETAPTS
-        % TO THETAPTSSCATTER, BECAUSE IT IS SUCCESSFULLY INTERPOLATING AND
-        % FINDING THETA VALUES, BUT ALL THETAPTSSCATTER IS GETTING IS NAN
-        disp(thetaptsscatter);
-        
-        subplot(1,2,1);
-        plot(xtemp,ytemp)
-        hold on
-        scatter(xmeasurepts(i,j,:),ymeasurepts(i,j,:));  % plot measurement points over the top of the cross section shape
-        hold off
-        title('Cross sectional shape and measurement points');
-        subplot(1,2,2);
-        plot(theta(270:730),dxdytemp(270:730))
-        hold on
-        scatter(thetaptsscatter,dxdyscatter);
-        hold off
-        xlabel('\theta, rad');
-        ylabel('dx/dy')
-        pause(0.05);
-    end
-end
-
-% close(figure(1))
-% %// Plot starts here
-% figure(2)
-% 
-% %// Plot point by point
-% for i = 1:5
-%     for j = 1:length(nwidth)
-%         notchtemp = zeros(1,N);
-%         for k = 1:length(theta)
-%             notchtemp(k) = notch(i,j,k);
-%         end
-%         plot(theta,notchtemp)
-%         pause(0.05);
-%     end
-% end
-% close(figure(2))
-
-
-
-
-
 % Measure the true notch depth and width
 ndepth_true = NaN(length(ndepth),length(nwidth));
 nwidth_true = NaN(length(ndepth),length(nwidth));
 for i = 1:length(ndepth)
     for j = 1:length(nwidth)
-        ndepth_true(i,j) = ((xmeasurepts(i,j,1)-xmeasurepts(i,j,2)) + (xmeasurepts(i,j,3)-xmeasurepts(i,j,2)))/2;
+        ndepth_true(i,j) = abs((abs(xmeasurepts(i,j,1)-xmeasurepts(i,j,2)) + abs(xmeasurepts(i,j,3)-xmeasurepts(i,j,2)))/2);
         nwidth_true(i,j) = ymeasurepts(i,j,1)-ymeasurepts(i,j,3);
+        disp(ndepth_true(i,j));
+        disp(nwidth_true(i,j));
     end
 end
 
-% % Visualize with 3D plots
-% figure(1)
-% surf(ndepth_true)
-% xlabel('ndepth')
-% ylabel('nwidth')
-% zlabel('True notch depth')
-% figure(2)
-% surf(nwidth_true)
-% xlabel('ndepth')
-% ylabel('nwidth')
-% zlabel('True notch width')
+% % % TRY PLOTTING THE CROSS SECTION SHAPES TO SEE HOW THEY CHANGE AS A
+% % % FUNCTION OF NDEPTH OR NWIDTH
+% % %// Plot starts here
+% figure
+% thetaptsscatter = zeros(3,1);
+% dxdyscatter = zeros(3,1);
+% %// Plot point by point
+% for i = 1:length(ndepth)
+%     for j = 1:length(nwidth)
+%         xtemp = zeros(1,N);
+%         ytemp = zeros(1,N);
+%         dxdytemp = zeros(1,N);
+%         for k = 1:length(theta)
+%             xtemp(k) = x(i,j,k);
+%             ytemp(k) = y(i,j,k);
+%             dxdytemp(k) = dxdy(i,j,k);
+%         end
+%         for k = 1:3
+%             thetaptsscatter(k) = thetapts(i,j,k);
+%             dxdyscatter(k) = maj_diam*(-(20*ndepth(i)*tanh((10*(thetaptsscatter(k)-nloc))...
+%                 /nwidth(j))*(sech((10*(thetaptsscatter(k)-nloc))/nwidth(j)))^2)/nwidth(j) - ...
+%                 sin(thetaptsscatter(k)))/(min_diam*cos(thetaptsscatter(k)));
+%         end
+%         
+%         
+%         subplot(1,2,1);
+%         plot(xtemp,ytemp)
+%         hold on
+%         scatter(xmeasurepts(i,j,:),ymeasurepts(i,j,:));  % plot measurement points over the top of the cross section shape
+%         hold off
+%         title('Cross sectional shape and measurement points');
+%         subplot(1,2,2);
+%         plot(theta(270:730),dxdytemp(270:730))
+%         hold on
+%         scatter(thetaptsscatter,dxdyscatter);
+%         hold off
+%         xlabel('\theta, rad');
+%         ylabel('dx/dy')
+%         pause(0.05);
+%     end
+% end
+
+
+% Visualize with 3D plots
+figure(1)
+surf(ndepth_true)
+xlabel('ndepth')
+ylabel('nwidth')
+zlabel('True notch depth')
+figure(2)
+surf(nwidth_true)
+xlabel('ndepth')
+ylabel('nwidth')
+zlabel('True notch width')
 
 % ndepth_true = (abs(xmeasurepts(1)-xmeasurepts(2)) + abs(xmeasurepts(2)-xmeasurepts(3)))/2
 % nwidth_true = abs(ymeasurepts(1)-ymeasurepts(3))
 
-% figure(1)
-% plot(theta,dxdy)
-% 
-% figure(2)
-% plot(x,y)
+figure(1)
+plot(theta,dxdy)
+
+figure(2)
+plot(x,y)
