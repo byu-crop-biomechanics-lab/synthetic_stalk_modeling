@@ -23,14 +23,14 @@ dmin_up = 20;
 dmaj_low = dmin_up;
 dmaj_up = 25;
 
-aAmplim = 0.05;
+aAmplim = 0.125;
 
 %% Main loop
 for i = 1:n
     dmaj = unifrnd(dmaj_low,dmaj_up);
     dmin = unifrnd(dmin_low,dmin_up);
-    ndepth = unifrnd(0.1,0.5);
-    nwidth = unifrnd(1,8);
+    ndepth = unifrnd(0.1,0.75);
+    nwidth = unifrnd(1,6);
     nloc = unifrnd(pi-0.2,pi+0.2);
     rotate_angle = unifrnd(-pi,pi);
     
@@ -41,8 +41,8 @@ for i = 1:n
     yshift = unifrnd(-10,10);
     
     % Random Noise
-    noisex = unifrnd(-0.001,0.001,1,N);
-    noisey = unifrnd(-0.001,0.001,1,N);
+    noisex = unifrnd(-0.0025,0.0025,1,N);
+    noisey = unifrnd(-0.0025,0.0025,1,N);
     
     notch = notch_fn(N,ndepth,nwidth,nloc,theta);
     
@@ -59,9 +59,10 @@ for i = 1:n
     
 end
 
-% Plot cross sections to verify that none of them are unrealistic
+%% Plot cross sections to verify that none of them are unrealistic
 for i = 1:n
     plot(sections(i,:,1),sections(i,:,2));
+    hold on
     pause(0.25);    
 end
 
