@@ -1,4 +1,8 @@
-% Generate lots of stalk cross sections with random noise and feature
+%% stalk_cross_sections.m
+% RL - 2/9/2019
+% Based on modified version of GenerateStalkSegments.m, originally by Dr.
+% Cook.
+% Generates lots of stalk cross sections with random noise and feature
 % variation. 
 clear all;
 close all;
@@ -23,49 +27,57 @@ dmin_up = 20;
 dmaj_low = dmin_up;
 dmaj_up = 25;
 
-aAmplim = 0.125;
+aAmplim = 0.05;
 
 %% Main loop
 for i = 1:n
     dmaj = unifrnd(dmaj_low,dmaj_up);
     dmin = unifrnd(dmin_low,dmin_up);
-    ndepth = unifrnd(0.1,0.75);
-    nwidth = unifrnd(1,6);
+    ndepth = unifrnd(0.1,1);
+    nwidth = unifrnd(1,9);
     nloc = unifrnd(pi-0.2,pi+0.2);
     rotate_angle = unifrnd(-pi,pi);
     
     xasymmetry = Asymmetry(aAmplim,theta,N);
     yasymmetry = Asymmetry(aAmplim,theta,N);
     
-    xshift = unifrnd(-10,10);
-    yshift = unifrnd(-10,10);
+    % Add a translational shift to the data
+%     xshift = unifrnd(-10,10);
+%     yshift = unifrnd(-10,10);
+    xshift = 0;
+    yshift = 0;
     
-    % Random Noise
+    % Random noise in shape to prevent them from being perfectly smooth
     noisex = unifrnd(-0.0025,0.0025,1,N);
     noisey = unifrnd(-0.0025,0.0025,1,N);
     
+    % Generate points to define the cross section
     notch = notch_fn(N,ndepth,nwidth,nloc,theta);
-    
     x = xpts(N,theta,notch,dmaj,noisex,xasymmetry);
     y = ypts(N,theta,dmin,noisey,yasymmetry);
     
+    % Rotate the generated points
     [x,y] = rotate(x,y,rotate_angle,N);
     
+    % Shift the generated points
     x = xshift + x;
     y = yshift + y;
     
+    % Place cross section data in the larger array of data
     sections(i,:,1) = x;
     sections(i,:,2) = y;
     
 end
 
-%% Plot cross sections to verify that none of them are unrealistic
+%% Plot cross sections to verify that they're realistic enough
 for i = 1:n
     plot(sections(i,:,1),sections(i,:,2));
     hold on
     pause(0.25);    
 end
 
+%% Save data as a mat file for ease of use
+save cross_sections.mat sections
 
 %% Functions
 function [x] = xpts(N,theta,notch,dmaj,noisex,asymmetry)
