@@ -1,9 +1,10 @@
-%% stalk_cross_sections.m
-% RL - 2/9/2019
+%% stalk_cross_sections_A.m
+% RL - 2/19/2019
 % Based on modified version of GenerateStalkSegments.m, originally by Dr.
 % Cook.
-% Generates lots of stalk cross sections with random noise and feature
-% variation. 
+% This version of stalk_cross_sections.m does not include any translation
+% or rotation of the cross section shapes. It does include noise in the
+% shape and some variation in size, symmetry, and notch location.
 clear all;
 close all;
 clc;
@@ -22,12 +23,12 @@ sections = zeros(n,N,2);
 
 % Choose size limits for major and minor diameter (lower bound on major
 % diameter must be greater than the upper bound for minor diameter):
-dmin_low = 15;
-dmin_up = 20;
-dmaj_low = dmin_up;
-dmaj_up = 25;
+dmin_low = 15;          % Lowest allowable value for dmin
+dmin_up = 20;           % Greatest allowable value for dmin
+dmaj_low = dmin_up;     % Lowest allowable value for dmaj
+dmaj_up = 25;           % Greatest allowable value for dmaj
 
-aAmplim = 0.05;
+aAmplim = 0.05;     % Asymmetry amplitude limit
 
 %% Main loop
 for i = 1:n
@@ -35,15 +36,10 @@ for i = 1:n
     dmin = unifrnd(dmin_low,dmin_up);
     ndepth = unifrnd(0.1,1);
     nwidth = unifrnd(1,9);
-    nloc = unifrnd(pi-0.2,pi+0.2);
-    rotate_angle = unifrnd(-pi,pi);
+    nloc = unifrnd(pi-0.2,pi+0.2);      % Notch location varies around pi
     
     xasymmetry = Asymmetry(aAmplim,theta,N);
     yasymmetry = Asymmetry(aAmplim,theta,N);
-    
-    % Add a translational shift to the data
-    xshift = unifrnd(-10,10);
-    yshift = unifrnd(-10,10);
     
     % Random noise in shape to prevent them from being perfectly smooth
     noisex = unifrnd(-0.0025,0.0025,1,N);
@@ -53,13 +49,6 @@ for i = 1:n
     notch = notch_fn(N,ndepth,nwidth,nloc,theta);
     x = xpts(N,theta,notch,dmaj,noisex,xasymmetry);
     y = ypts(N,theta,dmin,noisey,yasymmetry);
-    
-    % Rotate the generated points
-    [x,y] = rotate(x,y,rotate_angle,N);
-    
-    % Shift the generated points
-    x = xshift + x;
-    y = yshift + y;
     
     % Place cross section data in the larger array of data
     sections(i,:,1) = x;
