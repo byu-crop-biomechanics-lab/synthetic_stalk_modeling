@@ -13,7 +13,7 @@ N = 360;
 theta = linspace(0,2*pi,N);
 
 % Choose how many stalk cross sections to generate:
-n = 50;
+n = 500;
 
 % Create an empty array (n x N x 2) to represent the x and y data for all
 % of the cross sections (a row in slice 1 represents x, and a row in slice
@@ -31,19 +31,24 @@ aAmplim = 0.05;
 
 %% Main loop
 for i = 1:n
-    dmaj = unifrnd(dmaj_low,dmaj_up);
-    dmin = unifrnd(dmin_low,dmin_up);
-    ndepth = unifrnd(0.1,1);
-    nwidth = unifrnd(1,9);
+%     dmaj = unifrnd(dmaj_low,dmaj_up);
+%     dmin = unifrnd(dmin_low,dmin_up);
+    dmaj = 25;
+    dmin = 20;
+    ndepth = unifrnd(0.1,0.5);
+    nwidth = unifrnd(1,2);
     nloc = unifrnd(pi-0.2,pi+0.2);
-    rotate_angle = unifrnd(-pi,pi);
+%     rotate_angle = unifrnd(-pi,pi);
+    rotate_angle = 0;
     
     xasymmetry = Asymmetry(aAmplim,theta,N);
     yasymmetry = Asymmetry(aAmplim,theta,N);
     
     % Add a translational shift to the data
-    xshift = unifrnd(-10,10);
-    yshift = unifrnd(-10,10);
+%     xshift = unifrnd(-10,10);
+%     yshift = unifrnd(-10,10);
+    xshift = 0;
+    yshift = 0;
     
     % Random noise in shape to prevent them from being perfectly smooth
     noisex = unifrnd(-0.0025,0.0025,1,N);
