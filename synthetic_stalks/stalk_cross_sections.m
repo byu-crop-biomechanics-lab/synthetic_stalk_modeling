@@ -31,15 +31,29 @@ aAmplim = 0.05;
 
 %% Main loop
 for i = 1:n
-%     dmaj = unifrnd(dmaj_low,dmaj_up);
-%     dmin = unifrnd(dmin_low,dmin_up);
-    dmaj = 25;
-    dmin = 20;
+%     dmaj = normrnd(dmaj_up,1);
+%     dmin = normrnd(dmin_low,1);
+    dmaj = unifrnd(dmaj_low,dmaj_up);
+    dmin = unifrnd(dmin_low,dmin_up);
+    
+%     ndepth = normrnd(0.2,0.05);
+%     if ndepth < 0
+%         ndepth = 0.001;
+%     end
+%     
+%     nwidth = normrnd(1.5,0.1);
+%     if nwidth < 1
+%         nwidth = 1;
+%     end
+%     
+%     nloc = normrnd(pi,0.05);
+    
     ndepth = unifrnd(0.1,0.5);
     nwidth = unifrnd(1,2);
     nloc = unifrnd(pi-0.2,pi+0.2);
-%     rotate_angle = unifrnd(-pi,pi);
+
     rotate_angle = 0;
+%     rotate_angle = unifrnd(-pi,pi);
     
     xasymmetry = Asymmetry(aAmplim,theta,N);
     yasymmetry = Asymmetry(aAmplim,theta,N);
@@ -76,7 +90,7 @@ end
 for i = 1:n
     plot(sections(i,:,1),sections(i,:,2));
     hold on
-    pause(0.25);    
+%     pause(0.25);    
 end
 
 %% Save data as a mat file for ease of use
