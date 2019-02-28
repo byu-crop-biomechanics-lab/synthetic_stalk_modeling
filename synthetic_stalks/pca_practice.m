@@ -16,8 +16,8 @@ X = sections(:,:,1);
 Y = sections(:,:,2);
 
 % Run PCA analysis on the x and y data
-[coeffx, scorex, latentx, ~, explainedx, mux] = pca(X,'Centered',false,'VariableWeights','variance');
-[coeffy, scorey, latenty, ~, explainedy, muy] = pca(Y,'Centered',false,'VariableWeights','variance');
+[coeffx, scorex, latentx, ~, explainedx, mux] = pca(X,'Centered',true,'VariableWeights','variance');
+[coeffy, scorey, latenty, ~, explainedy, muy] = pca(Y,'Centered',true,'VariableWeights','variance');
 % [coeffx, scorex, latentx, ~, explainedx, mux] = pca(X);
 % [coeffy, scorey, latenty, ~, explainedy, muy] = pca(Y);
 
