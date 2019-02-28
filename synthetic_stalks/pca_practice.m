@@ -16,20 +16,10 @@ X = sections(:,:,1);
 Y = sections(:,:,2);
 
 % Run PCA analysis on the x and y data
-[coeffx, scorex, latentx, tsquaredx, explainedx, mux] = pca(X);
-[coeffy, scorey, latenty, tsquaredy, explainedy, muy] = pca(Y);
-
-% % Create vectors that normalize latentx and latenty
-% pctlatx = zeros(size(latentx));
-% pctlaty = zeros(size(latenty));
-% 
-% for i = 1:length(pctlatx)
-%     pctlatx(i) = latentx(i)/sum(latentx);
-% end
-% 
-% for i = 1:length(pctlaty)
-%     pctlaty(i) = latenty(i)/sum(latenty);
-% end
+[coeffx, scorex, latentx, ~, explainedx, mux] = pca(X,'Centered',false,'VariableWeights','variance');
+[coeffy, scorey, latenty, ~, explainedy, muy] = pca(Y,'Centered',false,'VariableWeights','variance');
+% [coeffx, scorex, latentx, ~, explainedx, mux] = pca(X);
+% [coeffy, scorey, latenty, ~, explainedy, muy] = pca(Y);
 
 % Bar plots of normalized latent vectors for visualization of relative
 % contribution of principal components (there are N principal components,
@@ -48,10 +38,6 @@ title('Principal components in y');
 xlim([0,10]);
 xlabel('Principal Component');
 ylabel('% Variance explained by PC');
-
-% if length(pctlatx) ~= length(pctlaty)
-%     error('latent vectors are not the same length');
-% end
 
 % Count up the number of principal components that account for more than
 % the percentage called out by threshold:
@@ -93,7 +79,15 @@ plot(sumy,'LineWidth',2);
 title('Principal components from y data');
 hold off
 
+% Reconstruct the original data using only the principal components that
+% matter, based on threshold value
+xapprox = scorex(:,1:countx)*coeffx(:,1:countx)';
+yapprox = scorey(:,1:county)*coeffy(:,1:county)';
+
+
+
 % This plots the un-scaled cross section shape that the principal
 % components generate
 subplot(1,3,3);
-plot(sumx,sumy);
+% plot(sumx,sumy);
+plot(xapprox(1,:),yapprox(1,:));

@@ -52,8 +52,8 @@ for i = 1:n
     nwidth = unifrnd(1,2);
     nloc = unifrnd(pi-0.2,pi+0.2);
 
-    rotate_angle = 0;
-%     rotate_angle = unifrnd(-pi,pi);
+%     rotate_angle = 0;
+    rotate_angle = unifrnd(-pi,pi);
     
     xasymmetry = Asymmetry(aAmplim,theta,N);
     yasymmetry = Asymmetry(aAmplim,theta,N);
