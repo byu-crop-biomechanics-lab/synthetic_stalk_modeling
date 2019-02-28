@@ -9,41 +9,45 @@ load cross_sections.mat
 
 % Choose a threshold value below which to reject principal components that
 % don't contribute enough to the overall shape of the data.
-threshold = 0.1;
+threshold = 10;
 
 % Organize data from cross_sections.mat
 X = sections(:,:,1);
 Y = sections(:,:,2);
 
 % Run PCA analysis on the x and y data
-[coeffx, scorex, latentx] = pca(X);
-[coeffy, scorey, latenty] = pca(Y);
+[coeffx, scorex, latentx, tsquaredx, explainedx, mux] = pca(X);
+[coeffy, scorey, latenty, tsquaredy, explainedy, muy] = pca(Y);
 
-% Create vectors that normalize latentx and latenty
-pctlatx = zeros(size(latentx));
-pctlaty = zeros(size(latenty));
-
-for i = 1:length(pctlatx)
-    pctlatx(i) = latentx(i)/sum(latentx);
-end
-
-for i = 1:length(pctlaty)
-    pctlaty(i) = latenty(i)/sum(latenty);
-end
+% % Create vectors that normalize latentx and latenty
+% pctlatx = zeros(size(latentx));
+% pctlaty = zeros(size(latenty));
+% 
+% for i = 1:length(pctlatx)
+%     pctlatx(i) = latentx(i)/sum(latentx);
+% end
+% 
+% for i = 1:length(pctlaty)
+%     pctlaty(i) = latenty(i)/sum(latenty);
+% end
 
 % Bar plots of normalized latent vectors for visualization of relative
 % contribution of principal components (there are N principal components,
 % but only the first few have much influence, so only the first 10 are
 % plotted)
 figure(1);
-bar(pctlatx);
+bar(explainedx);
 title('Principal components in x');
 xlim([0,10]);
+xlabel('Principal Component');
+ylabel('% Variance explained by PC');
 
 figure(2);
-bar(pctlaty);
+bar(explainedy);
 title('Principal components in y');
 xlim([0,10]);
+xlabel('Principal Component');
+ylabel('% Variance explained by PC');
 
 % if length(pctlatx) ~= length(pctlaty)
 %     error('latent vectors are not the same length');
@@ -53,11 +57,11 @@ xlim([0,10]);
 % the percentage called out by threshold:
 countx = 0;
 county = 0;
-for i = 1:length(pctlatx)
-    if pctlatx(i) > threshold
+for i = 1:length(explainedx)
+    if explainedx(i) > threshold
         countx = countx + 1;
     end
-    if pctlaty(i) > threshold
+    if explainedy(i) > threshold
         county = county + 1;
     end
 end
