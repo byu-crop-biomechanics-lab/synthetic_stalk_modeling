@@ -9,7 +9,7 @@ load cross_sections.mat
 
 % Choose a threshold value below which to reject principal components that
 % don't contribute enough to the overall shape of the data.
-threshold = 10;
+threshold = 4;
 
 % Organize data from cross_sections.mat
 X = sections(:,:,1);
@@ -25,19 +25,19 @@ Y = sections(:,:,2);
 % contribution of principal components (there are N principal components,
 % but only the first few have much influence, so only the first 10 are
 % plotted)
-figure(1);
-bar(explainedx);
-title('Principal components in x');
-xlim([0,10]);
-xlabel('Principal Component');
-ylabel('% Variance explained by PC');
-
-figure(2);
-bar(explainedy);
-title('Principal components in y');
-xlim([0,10]);
-xlabel('Principal Component');
-ylabel('% Variance explained by PC');
+% figure(1);
+% bar(explainedx);
+% title('Principal components in x');
+% xlim([0,10]);
+% xlabel('Principal Component');
+% ylabel('% Variance explained by PC');
+% 
+% figure(2);
+% bar(explainedy);
+% title('Principal components in y');
+% xlim([0,10]);
+% xlabel('Principal Component');
+% ylabel('% Variance explained by PC');
 
 % Count up the number of principal components that account for more than
 % the percentage called out by threshold:
@@ -65,7 +65,7 @@ for i = 1:countx
     plot(coeffx(:,i));
     sumx = sumx + coeffx(:,i);
 end
-plot(sumx,'LineWidth',2);
+% plot(sumx,'LineWidth',2);
 title('Principal components from x data');
 hold off
 
@@ -75,7 +75,7 @@ for i = 1:county
     plot(coeffy(:,i));
     sumy = sumy + coeffy(:,i);
 end
-plot(sumy,'LineWidth',2);
+% plot(sumy,'LineWidth',2);
 title('Principal components from y data');
 hold off
 
@@ -90,4 +90,6 @@ yapprox = scorey(:,1:county)*coeffy(:,1:county)';
 % components generate
 subplot(1,3,3);
 % plot(sumx,sumy);
-plot(xapprox(1,:),yapprox(1,:));
+sec = 5;    % choose which approximated section shape to show
+% plot(xapprox(sec,:),yapprox(sec,:));
+plot(sumx,sumy);

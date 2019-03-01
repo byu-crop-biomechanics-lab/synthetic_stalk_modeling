@@ -9,11 +9,11 @@ close all;
 clc;
 
 % Choose the number of data points to define the stalk shape
-N = 360;
+N = 180;
 theta = linspace(0,2*pi,N);
 
 % Choose how many stalk cross sections to generate:
-n = 500;
+n = 5000;
 
 % Create an empty array (n x N x 2) to represent the x and y data for all
 % of the cross sections (a row in slice 1 represents x, and a row in slice
@@ -48,11 +48,18 @@ for i = 1:n
 %     
 %     nloc = normrnd(pi,0.05);
     
-    ndepth = unifrnd(0.1,0.5);
-    nwidth = unifrnd(1,2);
+    ndepth = unifrnd(0.1,0.15);
+    nwidth = unifrnd(1,5);
     nloc = unifrnd(pi-0.2,pi+0.2);
-
+    
+%     % Flip the notch 180 degrees every other iteration
+%     if mod(i,2) == 0
+%         rotate_angle = 0;
+%     else
+%         rotate_angle = pi;
+%     end
     rotate_angle = 0;
+
 %     rotate_angle = unifrnd(-pi,pi);           
 %     store the random rotation vector for later use
     
@@ -66,8 +73,8 @@ for i = 1:n
     yshift = 0;
     
     % Random noise in shape to prevent them from being perfectly smooth
-    noisex = unifrnd(-0.0025,0.0025,1,N);
-    noisey = unifrnd(-0.0025,0.0025,1,N);
+    noisex = unifrnd(-0.005,0.005,1,N);
+    noisey = unifrnd(-0.005,0.005,1,N);
     
     % Generate points to define the cross section
     notch = notch_fn(N,ndepth,nwidth,nloc,theta);
@@ -80,6 +87,12 @@ for i = 1:n
     % Shift the generated points
     x = xshift + x;
     y = yshift + y;
+    
+    % Scale the x and y points by a factor related to dmin and dmaj
+    factor = (dmaj + dmin);
+%     factor = 1;
+    x = x/factor;
+    y = y/factor;
     
     % Place cross section data in the larger array of data
     sections(i,:,1) = x;
