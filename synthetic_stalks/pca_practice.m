@@ -2,24 +2,24 @@
 % RL - 2/22/2019
 % Script for calculating the principal components of a data set generated
 % by stalk_cross_sections.m, above a chosen threshold.
-clear;
+% clear;
 
 % Make sure to run stalk_cross_sections.m before running this script
 load cross_sections.mat
 
 % Choose a threshold value below which to reject principal components that
 % don't contribute enough to the overall shape of the data.
-threshold = 4;
+threshold = 10;
 
 % Organize data from cross_sections.mat
 X = sections(:,:,1);
 Y = sections(:,:,2);
 
 % Run PCA analysis on the x and y data
-[coeffx, scorex, latentx, ~, explainedx, mux] = pca(X,'Centered',true,'VariableWeights','variance');
-[coeffy, scorey, latenty, ~, explainedy, muy] = pca(Y,'Centered',true,'VariableWeights','variance');
-% [coeffx, scorex, latentx, ~, explainedx, mux] = pca(X);
-% [coeffy, scorey, latenty, ~, explainedy, muy] = pca(Y);
+% [coeffx, scorex, latentx, ~, explainedx, mux] = pca(X,'Centered',true,'VariableWeights','variance');
+% [coeffy, scorey, latenty, ~, explainedy, muy] = pca(Y,'Centered',true,'VariableWeights','variance');
+[coeffx, scorex, latentx, ~, explainedx, mux] = pca(X);
+[coeffy, scorey, latenty, ~, explainedy, muy] = pca(Y);
 
 % Bar plots of normalized latent vectors for visualization of relative
 % contribution of principal components (there are N principal components,
@@ -84,12 +84,10 @@ hold off
 xapprox = scorex(:,1:countx)*coeffx(:,1:countx)';
 yapprox = scorey(:,1:county)*coeffy(:,1:county)';
 
-
-
 % This plots the un-scaled cross section shape that the principal
 % components generate
 subplot(1,3,3);
-% plot(sumx,sumy);
-sec = 5;    % choose which approximated section shape to show
+plot(sumx,sumy);
+% sec = 10;    % choose which approximated section shape to show
 % plot(xapprox(sec,:),yapprox(sec,:));
 plot(sumx,sumy);

@@ -13,7 +13,7 @@ N = 180;
 theta = linspace(0,2*pi,N);
 
 % Choose how many stalk cross sections to generate:
-n = 5000;
+n = 1000;
 
 % Create an empty array (n x N x 2) to represent the x and y data for all
 % of the cross sections (a row in slice 1 represents x, and a row in slice
@@ -31,22 +31,8 @@ aAmplim = 0.05;
 
 %% Main loop
 for i = 1:n
-%     dmaj = normrnd(dmaj_up,1);
-%     dmin = normrnd(dmin_low,1);
     dmaj = unifrnd(dmaj_low,dmaj_up);
     dmin = unifrnd(dmin_low,dmin_up);
-    
-%     ndepth = normrnd(0.2,0.05);
-%     if ndepth < 0
-%         ndepth = 0.001;
-%     end
-%     
-%     nwidth = normrnd(1.5,0.1);
-%     if nwidth < 1
-%         nwidth = 1;
-%     end
-%     
-%     nloc = normrnd(pi,0.05);
     
     ndepth = unifrnd(0.1,0.15);
     nwidth = unifrnd(1,5);
@@ -89,10 +75,10 @@ for i = 1:n
     y = yshift + y;
     
     % Scale the x and y points by a factor related to dmin and dmaj
-    factor = (dmaj + dmin);
+    factor = 1/(dmaj + dmin);
 %     factor = 1;
-    x = x/factor;
-    y = y/factor;
+    x = x*factor;
+    y = y*factor;
     
     % Place cross section data in the larger array of data
     sections(i,:,1) = x;
