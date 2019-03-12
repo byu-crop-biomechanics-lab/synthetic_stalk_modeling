@@ -27,15 +27,15 @@ dmin_up = 20;
 dmaj_low = dmin_up;
 dmaj_up = 25;
 
-aAmplim = 0.05;
+aAmplim = 0.015;
 
 %% Main loop
 for i = 1:n
     dmaj = unifrnd(dmaj_low,dmaj_up);
     dmin = unifrnd(dmin_low,dmin_up);
     
-    ndepth = unifrnd(0.1,0.15);
-    nwidth = unifrnd(1,5);
+    ndepth = unifrnd(0.15,0.25);
+    nwidth = unifrnd(1,4);
     nloc = unifrnd(pi-0.2,pi+0.2);
     
 %     % Flip the notch 180 degrees every other iteration
