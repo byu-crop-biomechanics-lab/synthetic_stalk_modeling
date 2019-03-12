@@ -10,7 +10,7 @@ load cross_sections.mat
 
 % Choose a threshold value below which to reject principal components that
 % don't contribute enough to the overall shape of the data.
-threshold = 90;
+threshold = 95;
 
 % Organize data from cross_sections.mat
 X = sections(:,:,1);
@@ -66,26 +66,33 @@ sumy = zeros(size(yPCAs(:,1)));
 % Plot the principal components in x and y that are above the chosen
 % threshold. Thick line is the sum of the components. 
 figure('Position',[75, 250, 1800, 500]);
-subplot(1,3,1);
+subplot(1,2,1);
 hold on
 for i = 1:xcount
-    plot(xPCAs(:,i));
+    plot(xPCAs(lowind:upind,i));    % This line only works if notchPCA.m has been run before
+%     plot(xPCAs(:,i));
     sumx = sumx + xPCAs(:,i);
 end
 % plot(sumx,'LineWidth',2);
 str = sprintf('PCs from x data (%0.2f%% captured)',PCcapturex);
 title(str);
+xlabel('Index (centered around \pi rad)');
+ylabel('PC value');
+legend('PC1','PC2');
 hold off
 
-subplot(1,3,2);
+subplot(1,2,2);
 hold on
 for i = 1:ycount
-    plot(yPCAs(:,i));
+    plot(yPCAs(lowind:upind,i));    % This line only works if notchPCA.m has been run before
+%     plot(yPCAs(:,i));
     sumy = sumy + yPCAs(:,i);
 end
 % plot(sumy,'LineWidth',2);
 str = sprintf('PCs from y data (%0.2f%% captured)',PCcapturey);
 title(str);
+xlabel('Index (centered around \pi rad)');
+ylabel('PC value');
 hold off
 
 % Reconstruct the original data using only the principal components that
@@ -95,9 +102,10 @@ yapprox = ycoeffs(:,1:ycount)*yPCAs(:,1:ycount)';
 
 % This plots the un-scaled cross section shape that the principal
 % components generate
-subplot(1,3,3);
-plot(sumx,sumy);
-title('Sum of principal components in x and y');
+% subplot(1,,3);
+% plot(sumx(lowind:upind),sumy(lowind:upind));
+% % plot(sumx,sumy);
+% title('Sum of principal components in x and y');
 
 % sec = 10;    % choose which approximated section shape to show
 % plot(xapprox(sec,:),yapprox(sec,:));

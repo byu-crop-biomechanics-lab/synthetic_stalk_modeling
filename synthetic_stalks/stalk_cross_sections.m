@@ -9,7 +9,7 @@ close all;
 clc;
 
 % Choose the number of data points to define the stalk shape
-N = 180;
+N = 360;
 theta = linspace(0,2*pi,N);
 
 % Choose how many stalk cross sections to generate:
@@ -27,7 +27,7 @@ dmin_up = 20;
 dmaj_low = dmin_up;
 dmaj_up = 25;
 
-aAmplim = 0.015;
+aAmplim = 0.05;
 
 %% Main loop
 for i = 1:n
