@@ -13,7 +13,7 @@ N = 180;
 theta = linspace(0,2*pi,N);
 
 % Choose how many stalk cross sections to generate:
-n = 1000;
+n = 500;
 
 % Create an empty array (n x N x 2) to represent the x and y data for all
 % of the cross sections (a row in slice 1 represents x, and a row in slice

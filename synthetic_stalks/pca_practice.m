@@ -3,91 +3,102 @@
 % Script for calculating the principal components of a data set generated
 % by stalk_cross_sections.m, above a chosen threshold.
 % clear;
+close all;
 
 % Make sure to run stalk_cross_sections.m before running this script
 load cross_sections.mat
 
 % Choose a threshold value below which to reject principal components that
 % don't contribute enough to the overall shape of the data.
-threshold = 10;
+threshold = 90;
 
 % Organize data from cross_sections.mat
 X = sections(:,:,1);
 Y = sections(:,:,2);
 
 % Run PCA analysis on the x and y data
-% [coeffx, scorex, latentx, ~, explainedx, mux] = pca(X,'Centered',true,'VariableWeights','variance');
-% [coeffy, scorey, latenty, ~, explainedy, muy] = pca(Y,'Centered',true,'VariableWeights','variance');
-[coeffx, scorex, latentx, ~, explainedx, mux] = pca(X);
-[coeffy, scorey, latenty, ~, explainedy, muy] = pca(Y);
-
-% Bar plots of normalized latent vectors for visualization of relative
-% contribution of principal components (there are N principal components,
-% but only the first few have much influence, so only the first 10 are
-% plotted)
-% figure(1);
-% bar(explainedx);
-% title('Principal components in x');
-% xlim([0,10]);
-% xlabel('Principal Component');
-% ylabel('% Variance explained by PC');
-% 
-% figure(2);
-% bar(explainedy);
-% title('Principal components in y');
-% xlim([0,10]);
-% xlabel('Principal Component');
-% ylabel('% Variance explained by PC');
+[xPCAs, xcoeffs, xPCA_variances, xtstat, xexplained, xvarMeans] = pca(X);
+[yPCAs, ycoeffs, yPCA_variances, ytstat, yexplained, yvarMeans] = pca(Y);
 
 % Count up the number of principal components that account for more than
 % the percentage called out by threshold:
-countx = 0;
-county = 0;
-for i = 1:length(explainedx)
-    if explainedx(i) > threshold
-        countx = countx + 1;
+xcount = 0;
+ycount = 0;
+xsumexp = 0;
+ysumexp = 0;
+xlast = 0;
+ylast = 0;
+for i = 1:length(xexplained)
+    % Step through the explained vectors and add up percentages until they
+    % exceed the desired threshold
+    xsumexp = xsumexp + xexplained(i);
+    if xsumexp < threshold 
+        xcount = xcount + 1;
+    elseif xsumexp > threshold && xlast < threshold
+        xcount = xcount + 1;
     end
-    if explainedy(i) > threshold
-        county = county + 1;
+    xlast = xsumexp;
+    
+    ysumexp = ysumexp + yexplained(i);
+    if ysumexp < threshold
+        ycount = ycount + 1;
+    elseif ysumexp > threshold && ylast < threshold
+        ycount = ycount + 1;
     end
+    ylast = ysumexp;
+end
+
+% Determine the total percentage of the data that is captured by the chosen
+% principal components (will be above chosen threshold)
+PCcapturex = 0;
+PCcapturey = 0;
+for i = 1:xcount
+    PCcapturex = PCcapturex + xexplained(i);
+end
+for i = 1:ycount
+    PCcapturey = PCcapturey + yexplained(i);
 end
 
 % Holding vectors for sums of important principal components
-sumx = zeros(size(coeffx(:,1)));
-sumy = zeros(size(coeffy(:,1)));
+sumx = zeros(size(xPCAs(:,1)));
+sumy = zeros(size(yPCAs(:,1)));
 
 % Plot the principal components in x and y that are above the chosen
 % threshold. Thick line is the sum of the components. 
-figure(3);
+figure('Position',[75, 250, 1800, 500]);
 subplot(1,3,1);
 hold on
-for i = 1:countx
-    plot(coeffx(:,i));
-    sumx = sumx + coeffx(:,i);
+for i = 1:xcount
+    plot(xPCAs(:,i));
+    sumx = sumx + xPCAs(:,i);
 end
 % plot(sumx,'LineWidth',2);
-title('Principal components from x data');
+str = sprintf('PCs from x data (%0.2f%% captured)',PCcapturex);
+title(str);
 hold off
 
 subplot(1,3,2);
 hold on
-for i = 1:county
-    plot(coeffy(:,i));
-    sumy = sumy + coeffy(:,i);
+for i = 1:ycount
+    plot(yPCAs(:,i));
+    sumy = sumy + yPCAs(:,i);
 end
 % plot(sumy,'LineWidth',2);
-title('Principal components from y data');
+str = sprintf('PCs from y data (%0.2f%% captured)',PCcapturey);
+title(str);
 hold off
 
 % Reconstruct the original data using only the principal components that
 % matter, based on threshold value
-xapprox = scorex(:,1:countx)*coeffx(:,1:countx)';
-yapprox = scorey(:,1:county)*coeffy(:,1:county)';
+xapprox = xcoeffs(:,1:xcount)*xPCAs(:,1:xcount)';
+yapprox = ycoeffs(:,1:ycount)*yPCAs(:,1:ycount)';
 
 % This plots the un-scaled cross section shape that the principal
 % components generate
 subplot(1,3,3);
 plot(sumx,sumy);
+title('Sum of principal components in x and y');
+
 % sec = 10;    % choose which approximated section shape to show
 % plot(xapprox(sec,:),yapprox(sec,:));
-plot(sumx,sumy);
+% title('Reconstructed data from PCs');
