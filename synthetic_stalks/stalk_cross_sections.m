@@ -13,7 +13,7 @@ N = 360;
 theta = linspace(0,2*pi,N);
 
 % Choose how many stalk cross sections to generate:
-n = 500;
+n = 1000;
 
 % Create an empty array (n x N x 2) to represent the x and y data for all
 % of the cross sections (a row in slice 1 represents x, and a row in slice
@@ -27,7 +27,7 @@ dmin_up = 20;
 dmaj_low = dmin_up;
 dmaj_up = 25;
 
-aAmplim = 0.05;
+aAmplim = 0.0;
 
 %% Main loop
 for i = 1:n
@@ -36,7 +36,8 @@ for i = 1:n
     
     ndepth = unifrnd(0.15,0.25);
     nwidth = unifrnd(1,4);
-    nloc = unifrnd(pi-0.2,pi+0.2);
+%     nloc = unifrnd(pi-0.2,pi+0.2);
+    nloc = pi;
     
 %     % Flip the notch 180 degrees every other iteration
 %     if mod(i,2) == 0

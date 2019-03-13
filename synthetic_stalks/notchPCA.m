@@ -94,34 +94,49 @@ end
 sumx = zeros(size(xPCAs(:,1)));
 sumy = zeros(size(yPCAs(:,1)));
 
+minangle = lowind*thetastep;
+maxangle = upind*thetastep;
+angles = linspace(minangle,maxangle,size(xPCAs,2));
+
 % Plot the principal components in x and y that are above the chosen
 % threshold. Thick line is the sum of the components. 
 figure('Position',[75, 250, 1800, 500]);
 subplot(1,2,1);
 hold on
 for i = 1:xcount
-    plot(xPCAs(:,i));
+    plot(angles,xPCAs(:,i));
     sumx = sumx + xPCAs(:,i);
 end
 % plot(sumx,'LineWidth',2);
 str = sprintf('PCs from x data (%0.2f%% captured, %0.2f rad covered)',PCcapturex,thetarange);
 title(str);
-xlabel('Index (centered around \pi rad)');
+xlabel('Angle (rad)');
 ylabel('PC value');
-legend('PC1','PC2');
+legendstrx = cell(1,xcount);
+for i = 1:xcount
+    str = sprintf('PC%d',i);
+    legendstrx{i} = str;
+end
+legend(legendstrx);
 hold off
 
 subplot(1,2,2);
 hold on
 for i = 1:ycount
-    plot(yPCAs(:,i));
+    plot(angles,yPCAs(:,i));
     sumy = sumy + yPCAs(:,i);
 end
 % plot(sumy,'LineWidth',2);
 str = sprintf('PCs from y data (%0.2f%% captured, %0.2f rad covered)',PCcapturey,thetarange);
 title(str);
-xlabel('Index (centered around \pi rad)');
+xlabel('Angle (rad)');
 ylabel('PC value');
+legendstry = cell(1,ycount);
+for i = 1:ycount
+    str = sprintf('PC%d',i);
+    legendstry{i} = str;
+end
+legend(legendstry);
 hold off
 
 % Reconstruct the original data using only the principal components that
