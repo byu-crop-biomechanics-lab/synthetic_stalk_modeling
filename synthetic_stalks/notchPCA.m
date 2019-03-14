@@ -1,21 +1,46 @@
+% FILENAME: notchPCA.m
+% AUTHOR: Ryan Larson
+% DATE: 3/12/19
+%
+%
+% PURPOSE: This script tests the results of running PCA on only the notch
+% region of a synthetic stalk cross section
+% 
+% 
+% INPUTS: cross_sections.mat - A file produced by the script
+% stalk_cross_sections.m, which creates synthetic cross sections
+% 
+% 
+% OUTPUTS:  ext_xDCSR - the downsampled, centered, scaled, and rotated x-coordinates
+%           ext_yDCSR - the downsampled, centered, scaled, and rotated y-coordinates
+%
+%
+% NOTES: - Adapted from pca_practice.m, and designed to work in tandem with
+% that script (may combine later if necessary)
+% 
+% 
+% VERSION HISTORY:
+% V1 - 
+% V2 - 
+% V3 - 
+%
+% -------------------------------------------------------------------------
+
+
+
 % clear;
 close;
 
+% Make sure to run stalk_cross_sections.m before running this script
 load cross_sections.mat
 
 X = sections(:,:,1);
 Y = sections(:,:,2);
-Xnotch = X;
-Ynotch = Y;
 
 N = size(X,2);
-threshold = 95;
+threshold = 95;     % Minimum percentage required to be described by PCs
 
-% % Flip data so notch is always on the right side
-% X = -X;
-% Y = -Y;
-
-% Decide on a range to examine
+% Decide on an angular range to examine (centered on notch location at pi)
 degrees = 60;
 thetarange = degrees*pi/180;
 thetastep = (2*pi)/N;   % Angular distance covered by each index
@@ -26,12 +51,16 @@ if mod(indexrange,2)==1
     indexrange = indexrange-1;
 end
 
+% Copy X and Y for further operations
 Xnotch = X;
 Ynotch = Y;
 
+% Determine lower and upper indices that define the notch region
 lowind = N/2 - indexrange/2;
 upind = N/2 + indexrange/2;
 
+% Set all values in Xnotch and Ynotch that are not between lowind and upind
+% to NaN
 for i = 1:size(X,1)
     for j = 1:N
         if j < lowind || j > upind
@@ -41,11 +70,9 @@ for i = 1:size(X,1)
     end
 end
 
-
 % Get rid of nan values in Xnotch and Ynotch
 Xnotch = rmmissing(Xnotch,2);
 Ynotch = rmmissing(Ynotch,2);
-
 
 % Run PCA analysis on the x and y data
 [xPCAs, xcoeffs, xPCA_variances, xtstat, xexplained, xvarMeans] = pca(Xnotch);

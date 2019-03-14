@@ -27,7 +27,7 @@ dmin_up = 20;
 dmaj_low = dmin_up;
 dmaj_up = 25;
 
-aAmplim = 0.05;
+aAmplim = 0.1;
 
 %% Main loop
 for i = 1:n
@@ -90,8 +90,9 @@ end
 %% Plot cross sections to verify that they're realistic enough
 for i = 1:n
     plot(sections(i,:,1),sections(i,:,2));
+%     plot(sections(i,:,1));
     hold on
-%     pause(0.25);    
+%     pause(0.1);    
 end
 
 %% Save data as a mat file for ease of use
