@@ -73,8 +73,8 @@ figure('Position',[75, 250, 1800, 500]);
 subplot(1,2,1);
 hold on
 for i = 1:xcount
-    plot(xPCAs(lowind:upind,i));    % This line only works if notchPCA.m has been run before
-%     plot(xPCAs(:,i));
+%     plot(xPCAs(lowind:upind,i));    % This line only works if notchPCA.m has been run before
+    plot(xPCAs(:,i));
     sumx = sumx + xPCAs(:,i);
 end
 % plot(sumx,'LineWidth',2);
@@ -93,8 +93,8 @@ hold off
 subplot(1,2,2);
 hold on
 for i = 1:ycount
-    plot(yPCAs(lowind:upind,i));    % This line only works if notchPCA.m has been run before
-%     plot(yPCAs(:,i));
+%     plot(yPCAs(lowind:upind,i));    % This line only works if notchPCA.m has been run before
+    plot(yPCAs(:,i));
     sumy = sumy + yPCAs(:,i);
 end
 % plot(sumy,'LineWidth',2);
