@@ -9,11 +9,11 @@ close all;
 clc;
 
 % Choose the number of data points to define the stalk shape
-N = 360;
+N = 180;
 theta = linspace(0,2*pi,N);
 
 % Choose how many stalk cross sections to generate:
-n = 1000;
+n = 100;
 
 % Create an empty array (n x N x 2) to represent the x and y data for all
 % of the cross sections (a row in slice 1 represents x, and a row in slice
@@ -34,10 +34,11 @@ for i = 1:n
     dmaj = unifrnd(dmaj_low,dmaj_up);
     dmin = unifrnd(dmin_low,dmin_up);
     
-    ndepth = unifrnd(0.15,0.25);
-    nwidth = unifrnd(1,4);
-%     nloc = unifrnd(pi-0.2,pi+0.2);
-    nloc = pi;
+    ndepth = unifrnd(1,10);
+    nwidth = unifrnd(1,5);
+    nloc = unifrnd(pi-0.2,pi+0.2);
+    phi = nloc - pi;
+%     nloc = pi;
     
 %     % Flip the notch 180 degrees every other iteration
 %     if mod(i,2) == 0
@@ -45,28 +46,35 @@ for i = 1:n
 %     else
 %         rotate_angle = pi;
 %     end
-    rotate_angle = 0;
-
-%     rotate_angle = unifrnd(-pi,pi);           
+    
+%     rotate_angle = 0;
+    rotate_angle = unifrnd(-pi,pi);           
 %     store the random rotation vector for later use
     
-    xasymmetry = Asymmetry(aAmplim,theta,N);
-    yasymmetry = Asymmetry(aAmplim,theta,N);
+    xasymmetry = Asymmetry(aAmplim,theta);
+    yasymmetry = Asymmetry(aAmplim,theta);
     
     % Add a translational shift to the data
-%     xshift = unifrnd(-10,10);
-%     yshift = unifrnd(-10,10);
-    xshift = 0;
-    yshift = 0;
+    xshift = unifrnd(-10,10);
+    yshift = unifrnd(-10,10);
+%     xshift = 0;
+%     yshift = 0;
     
     % Random noise in shape to prevent them from being perfectly smooth
-    noisex = unifrnd(-0.005,0.005,1,N);
-    noisey = unifrnd(-0.005,0.005,1,N);
+    noisex = unifrnd(-0.15,0.15,1,N);
+    noisey = unifrnd(-0.15,0.15,1,N);
     
     % Generate points to define the cross section
-    notch = notch_fn(N,ndepth,nwidth,nloc,theta);
-    x = xpts(N,theta,notch,dmaj,noisex,xasymmetry);
-    y = ypts(N,theta,dmin,noisey,yasymmetry);
+    xnotch = notch_fn(N,ndepth,nwidth,nloc,theta);
+    ynotch = zeros(1,N);
+    
+    [xnotch_rot,ynotch_rot] = rotate(xnotch,ynotch,phi,N);
+    
+    xmain = xpts(N,theta,dmaj,noisex,xasymmetry);
+    ymain = ypts(N,theta,dmin,noisey,yasymmetry);
+    
+    x = xmain + xnotch_rot;
+    y = ymain + ynotch_rot;
     
     % Rotate the generated points
     [x,y] = rotate(x,y,rotate_angle,N);
@@ -75,11 +83,11 @@ for i = 1:n
     x = xshift + x;
     y = yshift + y;
     
-    % Scale the x and y points by a factor related to dmin and dmaj
-    factor = 1/(dmaj + dmin);
-%     factor = 1;
-    x = x*factor;
-    y = y*factor;
+%     % Scale the x and y points by a factor related to dmin and dmaj
+%     factor = 1/(dmaj + dmin);
+% %     factor = 1;
+%     x = x*factor;
+%     y = y*factor;
     
     % Place cross section data in the larger array of data
     sections(i,:,1) = x;
@@ -87,29 +95,32 @@ for i = 1:n
     
 end
 
-%% Plot cross sections to verify that they're realistic enough
+% Plot cross sections to verify that they're realistic enough
 for i = 1:n
     plot(sections(i,:,1),sections(i,:,2));
-%     plot(sections(i,:,1));
     hold on
-%     pause(0.1);    
+%     pause(0.1); 
 end
 
-%% Save data as a mat file for ease of use
+% Save data as a mat file for ease of use
 save cross_sections.mat sections
 
+
+
+
+
 %% Functions
-function [x] = xpts(N,theta,notch,dmaj,noisex,asymmetry)
+function [x] = xpts(N,theta,dmaj,noisex,asymmetry)
     x = zeros(1,N);
     for i = 1:N
-        x(i) = dmaj*(cos(theta(i)) + notch(i) + noisex(i) + asymmetry(i));
+        x(i) = (dmaj/2)*(cos(theta(i))) + noisex(i) + asymmetry(i);
     end
 end
 
 function [y] = ypts(N,theta,dmin,noisey,asymmetry)
     y = zeros(1,N);
     for i = 1:N
-        y(i) = dmin*(sin(theta(i)) + noisey(i) + asymmetry(i));
+        y(i) = (dmin/2)*(sin(theta(i))) + noisey(i) + asymmetry(i);
     end
 end
 
@@ -120,8 +131,8 @@ function [notch] = notch_fn(N,ndepth,nwidth,nloc,theta)
     end
 end
 
-function [asymmetry] = Asymmetry(aAmplim,theta,N)
-    asymmetry = zeros(1,N);
+function [asymmetry] = Asymmetry(aAmplim,theta)
+%     asymmetry = zeros(1,N);
     aAmp = unifrnd(-aAmplim,aAmplim);
     aSym = unifrnd(-pi,pi);
     asymmetry = aAmp*sin(theta - aSym);
