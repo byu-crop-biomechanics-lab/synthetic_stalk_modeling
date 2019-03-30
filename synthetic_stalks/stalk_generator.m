@@ -9,7 +9,7 @@ clc
 
 %% Create data structure for holding lots of stalk information
 N = 100;    % Number of points around the stalk cross section
-n = 300;    % Number of stalks to generate
+n = 2;    % Number of stalks to generate
 nslices = 120;  % Number of z slices per stalk
 theta = linspace(0,2*pi,N);
 
@@ -234,7 +234,7 @@ for numstalk = 1:n
 
     
     %% Write to STL if desired
-    % surf2stl_V1('stalk.stl',X,Y,Z)
+    surf2stl_V1('stalk.stl',X,Y,Z)
 
 end
 

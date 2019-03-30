@@ -182,9 +182,9 @@ Ys(3,100) = Ys(3,1);
 L = 83*m; % internode length
 a = L/40; % multiplier
 
-Z = zeros(60,100);
+Z = zeros(120,100);
 
-for i = 1:80       % Generate Z vector
+for i = 1:120       % Generate Z vector
     Z(i,:) = i*a; %3*q instead of 4 if you are varying the lengths
 end
 
@@ -202,12 +202,12 @@ for i = 41:80
 end
 
 
-% % Third Segment
-% 
-% for i = 81:120
-%     X(i,:) = (.00000125*(i-100)^4 +.85)*Xs(3,:);
-%     Y(i,:) = (.00000125*(i-100)^4 +.85)*Ys(3,:);
-% end
+% Third Segment
+
+for i = 81:120
+    X(i,:) = (.00000125*(i-100)^4 +.85)*Xs(3,:);
+    Y(i,:) = (.00000125*(i-100)^4 +.85)*Ys(3,:);
+end
 
 % % This block is necessary because of the nature of the STL writer.
 % % In the stitching process, it will make triangle connections from one
