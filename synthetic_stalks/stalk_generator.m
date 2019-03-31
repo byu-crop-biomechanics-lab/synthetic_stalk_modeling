@@ -19,10 +19,6 @@ aAmplim = 0.05;
 STALKS = zeros(n,nslices,N);
 
 for numstalk = 1:n
-    
-
-
-    %% Generate stalks
     % Generate realish looking stalk with synthetic data
     %
     % Features include 3 segments, upper segments taper, bowed segments,
@@ -43,10 +39,21 @@ for numstalk = 1:n
     %   - location of y-asymmetry
     %   - probably should add breadth of x and y asymmetry features.
 
+    clear
+    clc
 
-
+    theta = linspace(0,2*pi,100);
     nloc = pi;
     m = 1; % multiplier
+
+    % Data = [1;
+    %     24;
+    %     22.53;
+    %     23.3;
+    %     21;
+    %     0;
+    %     0;
+    %     41.08];
 
     for i = 1:3
 
@@ -57,23 +64,40 @@ for numstalk = 1:n
         %     ndepth = unifrnd(0.1,0.25);
         %     nwidth = 1;
 
+    %     if i == 1     % Segments 1-3 (Bottom)
+    %         min_diam = 22.53;
+    %         maj_diam = 24;
+    %         ndepth = 0;
+    %         nwidth = 1;
+    %     elseif i == 2
+    %         min_diam = 24.84;
+    %         maj_diam = 26;
+    %         ndepth = .026;
+    %         nwidth = 1;
+    %     else
+    %         min_diam = 27.11;
+    %         maj_diam = 29.51;
+    %         ndepth = .025;
+    %         nwidth = 1;
+    %     end
+    %     
 
     % DEFINE DESIRED GEOMETRY FOR EACH INTERNODE
             if i == 1
-                min_diam = unifrnd(19,20);
-                maj_diam = unifrnd(23,25);
-                ndepth = unifrnd(0.1,0.25);
-                nwidth = unifrnd(1,4);
+                min_diam = 22.6;
+                maj_diam = 26.84;
+                ndepth = 0.023;
+                nwidth = 1;
             elseif i == 2
-                min_diam = unifrnd(17,19);
-                maj_diam = unifrnd(22,23);
-                ndepth = unifrnd(0.1,0.25);
-                nwidth = unifrnd(1,4);
+                min_diam = 21.3;
+                maj_diam = 23.75;
+                ndepth = .168;
+                nwidth = 1;
             else
-                min_diam = unifrnd(15,17);
-                maj_diam = unifrnd(20,22);
-                ndepth = unifrnd(0.1,0.25);
-                nwidth = unifrnd(1,4);
+                min_diam = 19.64;
+                maj_diam = 21.15;
+                ndepth = .303;
+                nwidth = 1;
             end
 
 
@@ -83,14 +107,18 @@ for numstalk = 1:n
         ndepth = ndepth*m;
 
 
+        % x-Asymmetry
+        aAmp = unifrnd(-0.05,0.05);
+        aSym = unifrnd(-pi,pi);
+
         % Random Noise
-        noisex = unifrnd(-0.005,0.005,1,N);
-        noisey = unifrnd(-0.005,0.005,1,N);
+        noisex = unifrnd(-0.001,0.001,1,100);
+        noisey = unifrnd(-0.001,0.001,1,100);
 
-        notch = notch_fn(N,ndepth,nwidth,nloc,theta);
-        asymmetry = Asymmetry(aAmplim,theta,N);
+        notch = ndepth./cosh(4*(theta/nwidth-nloc)).^2;
+        asymmetry = aAmp*sin(theta - aSym);
 
-        x = xpts(N,theta,notch,maj_diam,noisex,asymmetry);
+        x = maj_diam*(cos(theta) + noisex + notch + asymmetry);
 
         %if mod(i,2) == 0, x = x*-1; end
 
@@ -99,11 +127,10 @@ for numstalk = 1:n
         aSym = unifrnd(-pi,pi);
         asymmetry = aAmp*sin(theta - aSym);
 
-        y = ypts(N,theta,min_diam,noisey,asymmetry);
-        
-        X = zeros(3,N);
-        Y = zeros(3,N);
-        
+        y = min_diam*(sin(theta) + noisey + asymmetry);
+        rindx = unifrnd(0.92,0.94);
+        rindy = unifrnd(0.92,0.94);
+
         X(i,:) = x;
         Y(i,:) = y;
     end
@@ -119,7 +146,7 @@ for numstalk = 1:n
 
     % Shift function
     % Reassigns index values to compensate for the rotation
-    shift = round((-N*alpha)/(2*pi));
+    shift = round((-100*alpha)/(2*pi));
 
     X2prime = zeros(1,(length(X) + shift));
     X2prime((shift+1):end) = X(2,:);
@@ -184,20 +211,23 @@ for numstalk = 1:n
 
     % First segment
     for i = 1:40
-        X(i,:) = (.00000125*(i-20)^4 + 1)*Xs(1,:);
-        Y(i,:) = (.00000125*(i-20)^4 + 1)*Ys(1,:);
+        X(i,:) = (.00000125*(i-20)^4 +.95)*Xs(1,:);
+        Y(i,:) = (.00000125*(i-20)^4 +.95)*Ys(1,:);
     end
 
     % Second Segment
+
     for i = 41:80
-        X(i,:) = (.00000125*(i-60)^4 + 1)*Xs(2,:);
-        Y(i,:) = (.00000125*(i-60)^4 + 1)*Ys(2,:);
+        X(i,:) = (.00000125*(i-60)^4 +.9)*Xs(2,:);
+        Y(i,:) = (.00000125*(i-60)^4 +.9)*Ys(2,:);
     end
 
+
     % Third Segment
+    
     for i = 81:120
-        X(i,:) = (.00000125*(i-100)^4 + 1)*Xs(3,:);
-        Y(i,:) = (.00000125*(i-100)^4 + 1)*Ys(3,:);
+        X(i,:) = (.00000125*(i-100)^4 +.85)*Xs(3,:);
+        Y(i,:) = (.00000125*(i-100)^4 +.85)*Ys(3,:);
     end
 
     % % This block is necessary because of the nature of the STL writer.
@@ -236,6 +266,7 @@ for numstalk = 1:n
     %% Write to STL if desired
     surf2stl_V1('stalk.stl',X,Y,Z)
 
+    surf2stl_V1('stalk.stl',X,Y,Z)
 end
 
 
