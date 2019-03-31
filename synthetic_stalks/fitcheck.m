@@ -2,7 +2,7 @@
 [xopt, fopt, exitflag, output] = stalk_cross_fit();
 
 load cross_sections.mat sections
-numsection = 1; % MAKE SURE THIS IS THE SAME CROSS SECTION THAT WAS OPTIMIZED
+numsection = 2; % MAKE SURE THIS IS THE SAME CROSS SECTION THAT WAS OPTIMIZED
 
 xdata = sections(numsection,:,1);
 ydata = sections(numsection,:,2);
