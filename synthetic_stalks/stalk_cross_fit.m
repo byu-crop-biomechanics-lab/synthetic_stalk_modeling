@@ -3,7 +3,7 @@ function [xopt, fopt, exitflag, output] = stalk_cross_fit()
     % synthetic stalk equations to an example shape
     
     load cross_sections.mat sections
-    numsection = 2;
+    numsection = 10;
     
     xreal = sections(numsection,:,1);
     yreal = sections(numsection,:,2);
