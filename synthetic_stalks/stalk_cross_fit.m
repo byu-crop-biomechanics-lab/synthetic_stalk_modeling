@@ -3,7 +3,7 @@ function [xopt, fopt, exitflag, output] = stalk_cross_fit()
     % synthetic stalk equations to an example shape
     
     load cross_sections.mat sections
-    numsection = 2;
+    numsection = 2; % Which cross section should we optimize?
     
     xreal = sections(numsection,:,1);
     yreal = sections(numsection,:,2);
@@ -65,14 +65,6 @@ function [xopt, fopt, exitflag, output] = stalk_cross_fit()
         
         % Inequality constraints
         c = [];
-%         c = zeros(7,1);
-%         c(1) = tau_a - Sefratio;            % tau_a <= Se/Sf
-%         c(2) = tau_amsum - Syfratio;        % tau_a + tau_m <= Sy/Sf
-%         c(3) = dratio - 16;                 % D/d <= 16
-%         c(4) = 4 - dratio;                  % 4 <= D/d
-%         c(5) = dsum - 0.75;                 % D + d <= 0.75
-%         c(6) = 0.05 - clash;                % 0.05 <= clash allowance
-%         c(7) = tau_s - Sy;                  % tau_s <= Sy
         
         % Equality constraints
         ceq = [];
