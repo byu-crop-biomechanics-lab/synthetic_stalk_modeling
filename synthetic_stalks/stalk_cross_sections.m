@@ -98,8 +98,8 @@ end
 % Plot cross sections to verify that they're realistic enough
 for i = 1:n
     plot(sections(i,:,1),sections(i,:,2));
-    hold on
-%     pause(0.1); 
+%     hold on
+    pause(0.1); 
 end
 
 % Save data as a mat file for ease of use
