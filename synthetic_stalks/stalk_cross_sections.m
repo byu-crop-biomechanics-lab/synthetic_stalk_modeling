@@ -27,7 +27,7 @@ dmin_up = 20;
 dmaj_low = dmin_up;
 dmaj_up = 25;
 
-aAmplim = 0.1;
+aAmplim = 0.2;
 
 %% Main loop
 for i = 1:n
