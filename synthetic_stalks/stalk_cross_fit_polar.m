@@ -2,15 +2,17 @@ function [xopt, fopt, exitflag, output] = stalk_cross_fit_polar(numsection)
     % Using optimization routine (fmincon) to get the best fit of the
     % synthetic stalk equations to an example shape
     
-    load polar_cross_sections.mat sections
+%     load polar_cross_sections.mat sections
+    load TRryan.mat rhoDCSR
     
-    R = sections(numsection,:);
+%     R = sections(numsection,:);
+    R = rhoDCSR(1,:,numsection);
     
     % ------------Starting point and bounds------------
     %var= dmaj  dmin  ndepth  nwidth  nloc    aAmp   aSym  % Design variables
-    x0 = [20,   10,   5,      1.1,      pi,     0,     0];   % Starting point
+    x0 = [20,   10,   5,      1.1,    pi,     0,     0];   % Starting point
     ub = [30,   20,   10,     5,      3*pi/2, 10,  pi];  % Upper bound
-    lb = [20,   10,   1,      1,      pi/2,   -10, -pi]; % Lower bound
+    lb = [0.001,0.001,0.01,   0.01,   pi/2,   -10, -pi]; % Lower bound
 
     % ------------Linear constraints------------
     A = [];
@@ -33,30 +35,17 @@ function [xopt, fopt, exitflag, output] = stalk_cross_fit_polar(numsection)
         % Other analysis variables
         N = length(R);
         theta = linspace(0,2*pi,N);
-%         phi = nloc - pi;
         
         % Analysis functions
         asymmetry = aAmp*sin(theta - aSym);
-%         yasymmetry = yaAmp*sin(theta - yaSym);
         notch = notch_fn(N,ndepth,nwidth,nloc,theta);
-%         ynotch = zeros(1,N);
-%         [xnotch_rot,ynotch_rot] = rotate(xnotch,ynotch,phi,N);
-        
-%         xmain = xpts(N,theta,dmaj,xasymmetry);
-%         ymain = ypts(N,theta,dmin,yasymmetry);
-        
-%         x = xmain + xnotch_rot;
-%         y = ymain + ynotch_rot;
-%         [x,y] = rotate(x,y,rotate_angle,N);
-%         xsynth = xshift + x;
-%         ysynth = yshift + y;
         r = rpts(N,theta,dmaj,dmin,asymmetry,notch);
         
         % Objective function
         f = getfitpolar(R,r); % Minimize the fit metric
         
         % Inequality constraints
-        c = [];
+        c = dmin - dmaj;
         
         % Equality constraints
         ceq = [];
