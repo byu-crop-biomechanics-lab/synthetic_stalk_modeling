@@ -1,18 +1,18 @@
-function [xopt, fopt, exitflag, output] = stalk_cross_fit_polar(numsection)
+function [xopt, fopt, exitflag, output] = stalk_cross_fit_polar(T,R)
     % Using optimization routine (fmincon) to get the best fit of the
     % synthetic stalk equations to an example shape
     
-%     load polar_cross_sections.mat sections
-    load TRryan.mat rhoDCSR
-    
-%     R = sections(numsection,:);
-    R = rhoDCSR(1,:,numsection);
+% %     load polar_cross_sections.mat sections
+%     load TRryan.mat rhoDCSR
+%     
+% %     R = sections(numsection,:);
+%     R = rhoDCSR(1,:,numsection);
     
     % ------------Starting point and bounds------------
-    %var= dmaj  dmin  ndepth  nwidth  nloc    aAmp   aSym  % Design variables
-    x0 = [20,   10,   5,      1.1,    pi,     0,     0];   % Starting point
-    ub = [30,   20,   10,     5,      3*pi/2, 10,  pi];  % Upper bound
-    lb = [0.001,0.001,0.01,   0.01,   pi/2,   -10, -pi]; % Lower bound
+    %var= dmaj  dmin   ndepth  nwidth  nloc    aAmp   aSym  % Design variables
+    x0 = [100,   50,   5,      1.1,    pi,     0,     0];   % Starting point
+    ub = [400,   300,  100,    99,   2*pi,   10,    pi];  % Upper bound
+    lb = [0.001,0.001, 0.01,   0.01,   0,      -10,   -pi]; % Lower bound
 
     % ------------Linear constraints------------
     A = [];
@@ -34,12 +34,11 @@ function [xopt, fopt, exitflag, output] = stalk_cross_fit_polar(numsection)
         
         % Other analysis variables
         N = length(R);
-        theta = linspace(0,2*pi,N);
         
         % Analysis functions
-        asymmetry = aAmp*sin(theta - aSym);
-        notch = notch_fn(N,ndepth,nwidth,nloc,theta);
-        r = rpts(N,theta,dmaj,dmin,asymmetry,notch);
+        asymmetry = aAmp*sin(T - aSym);
+        notch = notch_fn(N,ndepth,nwidth,nloc,T);
+        r = rpts(N,T,dmaj,dmin,asymmetry,notch);
         
         % Objective function
         f = getfitpolar(R,r); % Minimize the fit metric

@@ -1,4 +1,5 @@
-% Visually check the fit produced by stalk_cross_fit.m function
+% Visually check the fit produced by stalk_cross_fit.m function (checks all
+% cross sections)
 close;
 fitvals = zeros(990,1);
 dmajvals = zeros(990,1);

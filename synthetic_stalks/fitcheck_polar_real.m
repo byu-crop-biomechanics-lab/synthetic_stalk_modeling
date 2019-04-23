@@ -1,59 +1,34 @@
 % Visually check the fit produced by stalk_cross_fit.m function
-load AAbounds.mat ext_X ext_Y
-numsection = 1;
-xdata = ext_X;
-ydata = ext_Y;
+load AD_SP.mat ext_T ext_R
+% numsection = 1;
+Tdata = ext_T;
+Rdata = ext_R;
+N = length(Rdata);
 
-[xopt, fopt, exitflag, output] = stalk_cross_fit_real(xdata,ydata);
-
-% load XYryan.mat ext_xDCSR ext_yDCSR
-% 
-% numsection = 1; % MAKE SURE THIS IS THE SAME CROSS SECTION THAT WAS OPTIMIZED
-% 
-% xdata = ext_xDCSR(1,:,numsection);
-% ydata = ext_yDCSR(1,:,numsection);
+[xopt, fopt, exitflag, output] = stalk_cross_fit_polar(Tdata,Rdata);
 
 % Get variable values from the output of stalk_cross_fit.m:
-dmaj            = xopt(1);
-dmin            = xopt(2); 
-ndepth          = xopt(3);
-nwidth          = xopt(4);
-nloc            = xopt(5);
-rotate_angle    = xopt(6);
-xshift          = xopt(7);
-yshift          = xopt(8);
-xaAmp           = xopt(9);
-xaSym           = xopt(10);
-yaAmp           = xopt(11);
-yaSym           = xopt(12);
-
-N = length(xdata);
-theta = linspace(0,2*pi,N);
-phi = nloc - pi;
+dmaj =      xopt(1);
+dmin =      xopt(2);
+ndepth =    xopt(3);
+nwidth =    xopt(4);
+nloc =      xopt(5);
+aAmp =      xopt(6);
+aSym =      xopt(7);
 
 % Analysis functions
-xasymmetry = xaAmp*sin(theta - xaSym);
-yasymmetry = yaAmp*sin(theta - yaSym);
-xnotch = notch_fn(N,ndepth,nwidth,nloc,theta);
-ynotch = zeros(1,N);
-[xnotch_rot,ynotch_rot] = rotate(xnotch,ynotch,phi,N);
-
-xmain = xpts(N,theta,dmaj,xasymmetry);
-ymain = ypts(N,theta,dmin,yasymmetry);
-
-x = xmain + xnotch_rot;
-y = ymain + ynotch_rot;
-[x,y] = rotate(x,y,rotate_angle,N);
-xsynth = xshift + x;
-ysynth = yshift + y;
-
-
+asymmetry = aAmp*sin(Tdata - aSym);
+notch = notch_fn(N,ndepth,nwidth,nloc,Tdata);
+rsynth = rpts(N,Tdata,dmaj,dmin,asymmetry,notch);
 
 % Plot the original data and the fit data on top of each other
-plot(xdata,ydata);
+polarplot(Tdata,Rdata);
 hold on
-plot(xsynth,ysynth)
+polarplot(Tdata,rsynth)
+hold off
 legend('Original data','Fit model');
+
+
 
 
 

@@ -1,18 +1,18 @@
-function [xopt, fopt, exitflag, output] = stalk_cross_fit_real()
+function [xopt, fopt, exitflag, output] = stalk_cross_fit_real(xreal,yreal)
     % Using optimization routine (fmincon) to get the best fit of the
     % synthetic stalk equations to an example shape
     
-    load XYryan.mat ext_xDCSR ext_yDCSR
-    numsection = 1;
-    
-    xreal = ext_xDCSR(1,:,numsection);
-    yreal = ext_yDCSR(1,:,numsection);
+%     load XYryan.mat ext_xDCSR ext_yDCSR
+%     numsection = 1;
+%     
+%     xreal = ext_xDCSR(1,:,numsection);
+%     yreal = ext_yDCSR(1,:,numsection);
     
     % ------------Starting point and bounds------------
     %var= dmaj  dmin  ndepth  nwidth  nloc    rotate_angle  xshift  yshift xaAmp  xaSym  yaAmp  yaSym % Design variables
-    x0 = [1,    0.8,  0.1,    1,      pi,     0,            0,      0,     0,     0,     0,     0];      % Starting point
-    ub = [3,    3,    1,      2,      3*pi/2, pi,           10,     10,    1,     pi,    1      pi];      % Upper bound
-    lb = [0.1,  0.1,  0,      0.05,   pi/2,   -pi,          -10,    -10,   -1,    -pi,   -1,    -pi];      % Lower bound
+    x0 = [200,  150,  15,     1,      pi,     0,            0,      0,     0,     0,     0,     0];      % Starting point
+    ub = [300,  300,  30,     5,      3*pi/2, 3*pi/2,       300,    300,   1,     pi,    1      pi];      % Upper bound
+    lb = [100,  100,  10,     0.05,   pi/2,   -3*pi/2,      -300,   -300,  -1,    -pi,   -1,    -pi];      % Lower bound
 
     % ------------Linear constraints------------
     A = [];
@@ -64,15 +64,7 @@ function [xopt, fopt, exitflag, output] = stalk_cross_fit_real()
         f = getfit(xreal,xsynth,yreal,ysynth); % Minimize the fit metric
         
         % Inequality constraints
-        c = [];
-%         c = zeros(7,1);
-%         c(1) = tau_a - Sefratio;            % tau_a <= Se/Sf
-%         c(2) = tau_amsum - Syfratio;        % tau_a + tau_m <= Sy/Sf
-%         c(3) = dratio - 16;                 % D/d <= 16
-%         c(4) = 4 - dratio;                  % 4 <= D/d
-%         c(5) = dsum - 0.75;                 % D + d <= 0.75
-%         c(6) = 0.05 - clash;                % 0.05 <= clash allowance
-%         c(7) = tau_s - Sy;                  % tau_s <= Sy
+        c = dmin - dmaj;
         
         % Equality constraints
         ceq = [];
