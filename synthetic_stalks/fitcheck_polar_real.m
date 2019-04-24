@@ -1,5 +1,5 @@
 % Visually check the fit produced by stalk_cross_fit.m function
-load AD_SP.mat ext_T ext_R
+load AC_SP.mat ext_T ext_R
 % numsection = 1;
 Tdata = ext_T;
 Rdata = ext_R;
