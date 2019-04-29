@@ -1,12 +1,17 @@
 load DATA.mat
+load ellDATA.mat
 
 % Remove the last column in DATA_ext and DATA_int (repeats of the first
 % point)
 DATA_ext = DATA_ext(:,1:(end-1));
 DATA_int = DATA_int(:,1:(end-1));
 
-[extPCAs, extcoeffs, extPCA_variances, exttstat, extexplained, extvarMeans] = pca(DATA_ext);
-[intPCAs, intcoeffs, intPCA_variances, inttstat, intexplained, intvarMeans] = pca(DATA_int);
+% Subtract the real data from the ellipse fit for the interior and exterior
+ext_diff = ellDATA_ext - DATA_ext;
+int_diff = ellDATA_int - DATA_int;
+
+[extPCAs, extcoeffs, extPCA_variances, exttstat, extexplained, extvarMeans] = pca(ext_diff);
+[intPCAs, intcoeffs, intPCA_variances, inttstat, intexplained, intvarMeans] = pca(int_diff);
 
 threshold = 95;
 
