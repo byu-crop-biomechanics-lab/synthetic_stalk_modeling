@@ -1,4 +1,4 @@
-function [alpha, ellx, elly, major, minor, xbar_e, ybar_e] = fit_ellipse_R3( x, y, prev_alpha, axis_handle )
+function [alpha, ellx, elly, major, minor, xbar_e, ybar_e] = fit_ellipse_R3( x, y, prev_alpha, npoints, axis_handle )
 %
 % fit_ellipse - finds the best fit to an ellipse for the given set of points.
 %
@@ -257,7 +257,7 @@ if (nargin>2) && ~isempty( axis_handle ) & (test>0) & axis_handle~=0
     new_horz_line   = R*horz_line;
     
     % the ellipse
-    theta_r         = linspace(0,2*pi,360);
+    theta_r         = linspace(0,2*pi,npoints);
     ellipse_x_r     = X0 + a*cos( theta_r );
     ellipse_y_r     = Y0 + b*sin( theta_r );
     rotated_ellipse = R * [ellipse_x_r;ellipse_y_r];
