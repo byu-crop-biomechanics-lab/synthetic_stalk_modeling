@@ -29,6 +29,8 @@ ELLIPSE_R = zeros(N,360);
 DIFF_ext_R = zeros(N,360);
 DIFF_int_R = zeros(N,360);
 
+AVG_RIND_T = zeros(N,1);
+
 prev_alpha = 0;
 prompt1 = 'Enter the minimum angle that defines the notch, in degrees.';
 prompt2 = 'Enter the maximum angle that defines the notch, in degrees.';
@@ -111,11 +113,13 @@ for i = 1:N
     DIFF_ext_R(i,:) = ext_rho - ext_rhoDCSR(1,:,indices(i));
     DIFF_int_R(i,:) = int_rho - int_rhoDCSR(1,:,indices(i));
     
+    AVG_RIND_T(i) = avg_rind_thickness(indices(i));
+    
 end
 
 % Save the final data in a new mat file
 SaveFile       = fullfile(FolderName, SaveName);
-save(SaveFile,'A','B','ELLIPSE_XY','ELLIPSE_T','ELLIPSE_R','DIFF_ext_R','DIFF_int_R');
+save(SaveFile,'A','B','ELLIPSE_XY','ELLIPSE_T','ELLIPSE_R','DIFF_ext_R','DIFF_int_R','AVG_RIND_T');
 
 end
 
