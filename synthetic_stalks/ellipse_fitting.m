@@ -119,7 +119,7 @@ end
 
 % Save the final data in a new mat file
 SaveFile       = fullfile(FolderName, SaveName);
-save(SaveFile,'A','B','ELLIPSE_XY','ELLIPSE_T','ELLIPSE_R','DIFF_ext_R','DIFF_int_R','AVG_RIND_T');
+save(SaveFile,'A','B','ELLIPSE_XY','ELLIPSE_T','ELLIPSE_R','DIFF_ext_R','DIFF_int_R','AVG_RIND_T','indices');
 
 end
 

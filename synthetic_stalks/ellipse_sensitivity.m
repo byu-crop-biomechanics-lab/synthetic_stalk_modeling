@@ -24,8 +24,8 @@ for i = 1:N
     end
     
     % Repeat the last points to close the loop
-    ellipse_ext = [ellipse_ext; ellipse_ext(end,:)];
-    ellipse_int = [ellipse_int; ellipse_int(end,:)];
+    ellipse_ext = [ellipse_ext; ellipse_ext(1,:)];
+    ellipse_int = [ellipse_int; ellipse_int(1,:)];
     
     % Save base points as txt file
     S = size(ellipse_ext);
@@ -78,19 +78,19 @@ for i = 1:N
     Aminus15_xy_int = convert_to_xy(Aminus15_int,Tnew);
     
     % Repeat the last points to close the loop
-    Aplus5_xy_ext   = [Aplus5_xy_ext; Aplus5_xy_ext(end,:)];
-    Aplus10_xy_ext  = [Aplus10_xy_ext; Aplus10_xy_ext(end,:)];
-    Aplus15_xy_ext  = [Aplus15_xy_ext; Aplus15_xy_ext(end,:)];
-    Aminus5_xy_ext  = [Aminus5_xy_ext; Aminus5_xy_ext(end,:)];
-    Aminus10_xy_ext = [Aminus10_xy_ext; Aminus10_xy_ext(end,:)];
-    Aminus15_xy_ext = [Aminus15_xy_ext; Aminus15_xy_ext(end,:)];
+    Aplus5_xy_ext   = [Aplus5_xy_ext; Aplus5_xy_ext(1,:)];
+    Aplus10_xy_ext  = [Aplus10_xy_ext; Aplus10_xy_ext(1,:)];
+    Aplus15_xy_ext  = [Aplus15_xy_ext; Aplus15_xy_ext(1,:)];
+    Aminus5_xy_ext  = [Aminus5_xy_ext; Aminus5_xy_ext(1,:)];
+    Aminus10_xy_ext = [Aminus10_xy_ext; Aminus10_xy_ext(1,:)];
+    Aminus15_xy_ext = [Aminus15_xy_ext; Aminus15_xy_ext(1,:)];
     
-    Aplus5_xy_int   = [Aplus5_xy_int; Aplus5_xy_int(end,:)];
-    Aplus10_xy_int  = [Aplus10_xy_int; Aplus10_xy_int(end,:)];
-    Aplus15_xy_int  = [Aplus15_xy_int; Aplus15_xy_int(end,:)];
-    Aminus5_xy_int  = [Aminus5_xy_int; Aminus5_xy_int(end,:)];
-    Aminus10_xy_int = [Aminus10_xy_int; Aminus10_xy_int(end,:)];
-    Aminus15_xy_int = [Aminus15_xy_int; Aminus15_xy_int(end,:)];
+    Aplus5_xy_int   = [Aplus5_xy_int; Aplus5_xy_int(1,:)];
+    Aplus10_xy_int  = [Aplus10_xy_int; Aplus10_xy_int(1,:)];
+    Aplus15_xy_int  = [Aplus15_xy_int; Aplus15_xy_int(1,:)];
+    Aminus5_xy_int  = [Aminus5_xy_int; Aminus5_xy_int(1,:)];
+    Aminus10_xy_int = [Aminus10_xy_int; Aminus10_xy_int(1,:)];
+    Aminus15_xy_int = [Aminus15_xy_int; Aminus15_xy_int(1,:)];
     
     % Save base points as txt file
     S = size(Aplus5_xy_ext);
@@ -172,19 +172,19 @@ for i = 1:N
     Bminus15_xy_int = convert_to_xy(Bminus15_int,Tnew);
     
     % Repeat the last points to close the loop
-    Bplus5_xy_ext   = [Bplus5_xy_ext; Bplus5_xy_ext(end,:)];
-    Bplus10_xy_ext  = [Bplus10_xy_ext; Bplus10_xy_ext(end,:)];
-    Bplus15_xy_ext  = [Bplus15_xy_ext; Bplus15_xy_ext(end,:)];
-    Bminus5_xy_ext  = [Bminus5_xy_ext; Bminus5_xy_ext(end,:)];
-    Bminus10_xy_ext = [Bminus10_xy_ext; Bminus10_xy_ext(end,:)];
-    Bminus15_xy_ext = [Bminus15_xy_ext; Bminus15_xy_ext(end,:)];
+    Bplus5_xy_ext   = [Bplus5_xy_ext; Bplus5_xy_ext(1,:)];
+    Bplus10_xy_ext  = [Bplus10_xy_ext; Bplus10_xy_ext(1,:)];
+    Bplus15_xy_ext  = [Bplus15_xy_ext; Bplus15_xy_ext(1,:)];
+    Bminus5_xy_ext  = [Bminus5_xy_ext; Bminus5_xy_ext(1,:)];
+    Bminus10_xy_ext = [Bminus10_xy_ext; Bminus10_xy_ext(1,:)];
+    Bminus15_xy_ext = [Bminus15_xy_ext; Bminus15_xy_ext(1,:)];
     
-    Bplus5_xy_int   = [Bplus5_xy_int; Bplus5_xy_int(end,:)];
-    Bplus10_xy_int  = [Bplus10_xy_int; Bplus10_xy_int(end,:)];
-    Bplus15_xy_int  = [Bplus15_xy_int; Bplus15_xy_int(end,:)];
-    Bminus5_xy_int  = [Bminus5_xy_int; Bminus5_xy_int(end,:)];
-    Bminus10_xy_int = [Bminus10_xy_int; Bminus10_xy_int(end,:)];
-    Bminus15_xy_int = [Bminus15_xy_int; Bminus15_xy_int(end,:)];
+    Bplus5_xy_int   = [Bplus5_xy_int; Bplus5_xy_int(1,:)];
+    Bplus10_xy_int  = [Bplus10_xy_int; Bplus10_xy_int(1,:)];
+    Bplus15_xy_int  = [Bplus15_xy_int; Bplus15_xy_int(1,:)];
+    Bminus5_xy_int  = [Bminus5_xy_int; Bminus5_xy_int(1,:)];
+    Bminus10_xy_int = [Bminus10_xy_int; Bminus10_xy_int(1,:)];
+    Bminus15_xy_int = [Bminus15_xy_int; Bminus15_xy_int(1,:)];
     
     % Save base points as txt file
     S = size(Bplus5_xy_ext);
@@ -254,13 +254,13 @@ for i = 1:N
     Tminus15_xy_int = convert_to_xy(Tminus15_int,Tnew);
     
     % Repeat the last points to close the loop
-    base_xy_ext   = [base_xy_ext; base_xy_ext(end,:)];
-    Tplus5_xy_int   = [Tplus5_xy_int; Tplus5_xy_int(end,:)];
-    Tplus10_xy_int  = [Tplus10_xy_int; Tplus10_xy_int(end,:)];
-    Tplus15_xy_int  = [Tplus15_xy_int; Tplus15_xy_int(end,:)];
-    Tminus5_xy_int  = [Tminus5_xy_int; Tminus5_xy_int(end,:)];
-    Tminus10_xy_int = [Tminus10_xy_int; Tminus10_xy_int(end,:)];
-    Tminus15_xy_int = [Tminus15_xy_int; Tminus15_xy_int(end,:)];
+    base_xy_ext   = [base_xy_ext; base_xy_ext(1,:)];
+    Tplus5_xy_int   = [Tplus5_xy_int; Tplus5_xy_int(1,:)];
+    Tplus10_xy_int  = [Tplus10_xy_int; Tplus10_xy_int(1,:)];
+    Tplus15_xy_int  = [Tplus15_xy_int; Tplus15_xy_int(1,:)];
+    Tminus5_xy_int  = [Tminus5_xy_int; Tminus5_xy_int(1,:)];
+    Tminus10_xy_int = [Tminus10_xy_int; Tminus10_xy_int(1,:)];
+    Tminus15_xy_int = [Tminus15_xy_int; Tminus15_xy_int(1,:)];
     
     % Save base points as txt file
     S = size(base_xy_ext);
