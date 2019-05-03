@@ -110,6 +110,8 @@ for i = 1:N
     ELLIPSE_T(i,:) = theta;
     ELLIPSE_R(i,:) = ext_rho;
     
+    % Get difference between the ellipse and the real data (if the ellipse
+    % overestimates, then the value of DIFF will be positive)
     DIFF_ext_R(i,:) = ext_rho - ext_rhoDCSR(1,:,indices(i));
     DIFF_int_R(i,:) = int_rho - int_rhoDCSR(1,:,indices(i));
     
