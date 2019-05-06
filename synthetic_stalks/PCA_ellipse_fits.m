@@ -1,4 +1,6 @@
 function PCA_ellipse_fits(FileName,SaveName)
+% USE THIS FUNCTION ON Ellipse_fits_bottom1.mat or Ellipse_fits_top1.mat
+% (uses the difference between the ellipse and the real data)
 
 FolderName = pwd;
 File       = fullfile(FolderName, FileName);
