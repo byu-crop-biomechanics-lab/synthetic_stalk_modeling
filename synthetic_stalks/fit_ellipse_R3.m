@@ -197,7 +197,7 @@ case (test==0), status = 'Parabola found';  warning( 'fit_ellipse: Did not locat
 case (test<0),  status = 'Hyperbola found'; warning( 'fit_ellipse: Did not locate an ellipse' );
 end
 
-% if we found an ellipse return it's data
+% if we found an ellipse return its data
 if (test>0)
     
     % make sure coefficients are positive as required

@@ -105,40 +105,40 @@ PC3:
   RP2y: -108.5033
 
 PC4:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 2.3465
+  RP1y: 108.5205
+  RP2x: -4.1735
+  RP2y: -108.0314
 
 PC5:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 2.3507
+  RP1y: 108.6601
+  RP2x: -4.1698
+  RP2y: -107.9077
 
 PC1-2:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 2.4225
+  RP1y: 111.0459
+  RP2x: -4.1897
+  RP2y: -108.5694
 
 PC1-3:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 2.4154
+  RP1y: 110.8096
+  RP2x: -4.2023
+  RP2y: -108.9871
 
 PC1-4:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 2.4084
+  RP1y: 110.5753
+  RP2x: -4.2007
+  RP2y: -108.9330
 
 PC1-5:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 2.4055
+  RP1y: 110.4813
+  RP2x: -4.1953
+  RP2y: -108.7556
 
 ==================
 
@@ -158,58 +158,58 @@ Ellipse Fit 3:
   RP2y: -129.2600
 
 PC1:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 5.3351
+  RP1y: 130.7360
+  RP2x: -5.3222
+  RP2y: -130.3917
 
 PC2:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 5.1890
+  RP1y: 127.1550
+  RP2x: -5.2960
+  RP2y: -129.7504
 
 PC3:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 5.2024
+  RP1y: 127.4842
+  RP2x: -5.2565
+  RP2y: -128.7809
 
 PC4:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 5.1966
+  RP1y: 127.3419
+  RP2x: -5.2760
+  RP2y: -129.2586
 
 PC5:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 5.1935
+  RP1y: 127.2674
+  RP2x: -5.2740
+  RP2y: -129.2112
 
 PC1-2:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 5.3296
+  RP1y: 130.6007
+  RP2x: -5.3427
+  RP2y: -130.8928
 
 PC1-3:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 5.3375
+  RP1y: 130.7946
+  RP2x: -5.3235
+  RP2y: -130.4243
 
 PC1-4:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 5.3396
+  RP1y: 130.8462
+  RP2x: -5.3239
+  RP2y: -130.4336
 
 PC1-5:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 5.3387
+  RP1y: 130.8232
+  RP2x: -5.3224
+  RP2y: -130.3954
 
 ==================
 
@@ -229,58 +229,58 @@ Ellipse Fit 4:
   RP2y: -108.7663
 
 PC1:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 29.4683
+  RP1y: 107.6096
+  RP2x: 21.8051
+  RP2y: -109.4676
 
 PC2:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 29.4757
+  RP1y: 107.8174
+  RP2x: 21.7749
+  RP2y: -110.3222
 
 PC3:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 29.4518
+  RP1y: 107.1415
+  RP2x: 21.7502
+  RP2y: -111.0219
 
 PC4:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 29.4524
+  RP1y: 107.1578
+  RP2x: 21.8084
+  RP2y: -109.3744
 
 PC5:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 29.4689
+  RP1y: 107.6247
+  RP2x: 21.8009
+  RP2y: -109.5875
 
 PC1-2:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 29.4897
+  RP1y: 108.2143
+  RP2x: 21.7726
+  RP2y: -110.3875
 
 PC1-3:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 29.4877
+  RP1y: 108.1588
+  RP2x: 21.7158
+  RP2y: -111.9981
 
 PC1-4:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 29.4856
+  RP1y: 108.0998
+  RP2x: 21.7169
+  RP2y: -111.9676
 
 PC1-5:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 29.5007
+  RP1y: 108.5278
+  RP2x: 21.7114
+  RP2y: -112.1215
 
 ==================
 
@@ -300,55 +300,55 @@ Ellipse Fit 5:
   RP2y: -116.6488
 
 PC1:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 4.2083
+  RP1y: 119.5825
+  RP2x: -4.6330
+  RP2y: -117.4646
 
 PC2:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 4.1260
+  RP1y: 117.3780
+  RP2x: -4.5755
+  RP2y: -115.9239
 
 PC3:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 4.1146
+  RP1y: 117.0708
+  RP2x: -4.6047
+  RP2y: -116.7066
 
 PC4:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 4.1162
+  RP1y: 117.1149
+  RP2x: -4.6026
+  RP2y: -116.6483
 
 PC5:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 4.1191
+  RP1y: 117.1924
+  RP2x: -4.6096
+  RP2y: -116.8378
 
 PC1-2:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 4.2185
+  RP1y: 119.8579
+  RP2x: -4.6061
+  RP2y: -116.7426
 
 PC1-3:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 4.2174
+  RP1y: 119.8268
+  RP2x: -4.6083
+  RP2y: -116.8034
 
 PC1-4:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 4.2178
+  RP1y: 119.8397
+  RP2x: -4.6084
+  RP2y: -116.8059
 
 PC1-5:
-  RP1x: 
-  RP1y: 
-  RP2x: 
-  RP2y: 
+  RP1x: 4.2212
+  RP1y: 119.9303
+  RP2x: -4.6156
+  RP2y: -116.9978
