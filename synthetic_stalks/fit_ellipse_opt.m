@@ -25,10 +25,10 @@ function [xopt, fopt, exitflag, output] = fit_ellipse_opt(Tdata,Rdata)
         dmin =  x(2);
         
         % Other analysis variables
-        Npts = length(Rdata);
+%         Npts = length(Rdata);
         
         % Analysis functions
-        r = rpts_ellipse(Npts,Tdata,dmaj,dmin);
+        r = rpts_ellipse(Tdata,dmaj,dmin);
         
         % Objective function
         f = getfitpolar(Rdata,r); % Minimize the fit metric
@@ -42,12 +42,12 @@ function [xopt, fopt, exitflag, output] = fit_ellipse_opt(Tdata,Rdata)
     end
 
     % ------------Call fmincon------------
-    options = optimoptions(@fmincon, 'display', 'iter-detailed');
+    options = optimoptions(@fmincon, 'display', 'off');
     [xopt, fopt, exitflag, output] = fmincon(@obj, x0, A, b, Aeq, beq, lb, ub, @con, options);
-    xopt
-    fopt
+%     xopt
+%     fopt
     [~,c,~] = objcon(xopt);
-    c
+%     c
     
     % ------------Separate obj/con (do not change)------------
     function [f] = obj(x)
@@ -121,7 +121,8 @@ function [xopt, fopt, exitflag, output] = fit_ellipse_opt(Tdata,Rdata)
 %     end
     
     
-    function [r] = rpts_ellipse(N,theta,dmaj,dmin)
+    function [r] = rpts_ellipse(theta,dmaj,dmin)
+        N = length(theta);
         r = zeros(1,N);
         for i = 1:N
             r(i) = (dmaj*dmin/4)/sqrt(((dmin/2)*cos(theta(i)))^2 ...
