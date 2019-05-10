@@ -8,17 +8,14 @@ function [alpha, major, minor, xbar_e, ybar_e, X_ellipse, Y_ellipse] = fit_ellip
 %           axis_handle - optional. a handle to an axis, at which the estimated ellipse 
 %                         will be drawn along with it's axes
 %
-% Output:   ellipse_t - structure that defines the best fit to an ellipse
-%                       a           - sub axis (radius) of the X axis of the non-tilt ellipse
-%                       b           - sub axis (radius) of the Y axis of the non-tilt ellipse
-%                       phi         - orientation in radians of the ellipse (tilt)
-%                       X0          - center at the X axis of the non-tilt ellipse
-%                       Y0          - center at the Y axis of the non-tilt ellipse
-%                       X0_in       - center at the X axis of the tilted ellipse
-%                       Y0_in       - center at the Y axis of the tilted ellipse
-%                       long_axis   - size of the long axis of the ellipse
-%                       short_axis  - size of the short axis of the ellipse
-%                       status      - status of detection of an ellipse
+% OUTPUT:   alpha: Rotation of the ellipse relative to the Cartesian
+%                  coordinate system
+%           major: Major diameter
+%           minor: Minor diameter
+%           xbar_e: Center of the ellipse
+%           ybar_e: Center of the ellipse
+%           X_ellipse: X data (relative to original coordinates?)
+%           Y_ellipse: Y data
 %
 % Note:     if an ellipse was not detected (but a parabola or hyperbola), then
 %           an empty structure is returned
