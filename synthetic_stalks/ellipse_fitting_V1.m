@@ -24,7 +24,9 @@ A = zeros(N,1);
 B = zeros(N,1);
 ALPHA = zeros(N,1);
 
+
 ELLIPSE_XY = zeros(N,360,2);
+ELLIPSE_CENTERS = zeros(N,2);
 ELLIPSE_T = zeros(N,360);
 ELLIPSE_R_ext = zeros(N,360);
 ELLIPSE_R_int = zeros(N,360);
@@ -70,32 +72,51 @@ for i = 1:N
 %     plot(xcut,ycut);
 %     pause();
 %     close;
-    [alpha, ellx, elly, major, minor, ~, ~] = fit_ellipse_R3(xcut, ycut, prev_alpha, 360, gca);
+%     [alpha, ellx, elly, major, minor, ~, ~] = fit_ellipse_R3(xcut, ycut, prev_alpha, 360, gca);
+    [alpha, major, minor, xbar_e, ybar_e, X_ellipse, Y_ellipse] = fit_ellipse_R2( xcut, ycut, prev_alpha, gca );
+    alpha
+    xbar_e
+    ybar_e
+    major
+    minor
     
     
+    % NEED TO SHIFT ELLIPSE CENTER TO THE GEOMETRIC CENTER IN ORDER TO
+    % COMPUTE THE TRANSFORMATION TO POLAR COORDINATES AS BELOW!
     
-    % Convert ellx and elly to polar coordinates
+    % Save ellipse center shift
+    ELLIPSE_CENTERS(i,:) = [xbar_e, ybar_e];
+    
+    % Shift XY data before converting to polar
+    Xshifted = X_ellipse - xbar_e;
+    Yshifted = Y_ellipse - ybar_e;    
+    
+    
+    % Convert X_ellipse and Y_ellipse to polar coordinates
     theta = 0:2*pi/360:2*pi;
     theta = theta(1:end-1);
     ext_rho = zeros(size(theta));
     for j = 1:length(theta)
-        ext_rho(j) = sqrt(ellx(j)^2 + elly(j)^2);
+        ext_rho(j) = sqrt(Xshifted(j)^2 + Yshifted(j)^2);
     end
     
-    % Interpolate ellipse points so they are at the same theta values as
-    % T
-    rho_new = interp1(theta,ext_rho,T);
-    assignin('base','theta',theta);
-    ext_rho = rho_new;
-    assignin('base','ext_rho',ext_rho);
+%     % Interpolate ellipse points so they are at the same theta values as
+%     % T
+%     rho_new = interp1(theta,ext_rho,T);
+%     assignin('base','theta',theta);
+%     ext_rho = rho_new;
+%     assignin('base','ext_rho',ext_rho);
     int_rho = ext_rho - avg_rind_thickness(i);
-    theta = T;
+%     theta = T;
     
     polarplot(T,R_ext(:,i));
     hold on
+    Ax = gca;
+    Ax.RTickLabel = []; 
+    Ax.ThetaTickLabel = [];    
     polarplot(T,R_int(:,i));
     polarplot(theta,ext_rho);
-    polarplot(theta,int_rho);
+    polarplot(theta,int_rho)
     pause();
     close;
     
@@ -103,7 +124,8 @@ for i = 1:N
     figure();
     plot(X_ext(:,i),Y_ext(:,i));
     hold on
-    plot(ellx,elly);
+    plot(X_ellipse,Y_ellipse);
+    plot(xbar_e,ybar_e,'+','LineWidth',2);
     axis equal
     hold off
     pause();
@@ -113,16 +135,18 @@ for i = 1:N
     B(i) = minor;
     ALPHA(i) = alpha;
 
-    ELLIPSE_XY(i,:,1) = ellx;
-    ELLIPSE_XY(i,:,2) = elly;
+    ELLIPSE_XY(i,:,1) = X_ellipse;
+    ELLIPSE_XY(i,:,2) = Y_ellipse;
+    ELLIPSE_CENTERS(i,1) = xbar_e;
+    ELLIPSE_CENTERS(i,2) = ybar_e;
     ELLIPSE_T(i,:) = theta;
     ELLIPSE_R_ext(i,:) = ext_rho;
     ELLIPSE_R_int(i,:) = ext_rho - avg_rind_thickness(i);
     
     % Get difference between the ellipse and the real data (if the ellipse
     % overestimates, then the value of DIFF will be positive)
-    DIFF_R_ext(i,:) = ext_rho - R_ext(:,i);
-    DIFF_R_int(i,:) = int_rho - R_int(:,i);
+    DIFF_R_ext(i,:) = ext_rho - transpose(R_ext(:,i));
+    DIFF_R_int(i,:) = int_rho - transpose(R_int(:,i));
     
     AVG_RIND_T(i) = avg_rind_thickness(i);
     

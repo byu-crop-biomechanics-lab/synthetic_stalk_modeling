@@ -254,7 +254,7 @@ if (nargin>2) & ~isempty( axis_handle ) & (test>0) & axis_handle~=0
     new_horz_line   = R*horz_line;
     
     % the ellipse
-    theta_r         = linspace(0,2*pi);
+    theta_r         = linspace(0,2*pi,360);
     ellipse_x_r     = X0 + a*cos( theta_r );
     ellipse_y_r     = Y0 + b*sin( theta_r );
     rotated_ellipse = R * [ellipse_x_r;ellipse_y_r];

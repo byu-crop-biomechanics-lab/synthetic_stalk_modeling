@@ -2,8 +2,6 @@ clear; close;
 % load Ellipse_fits_bottom1.mat
 load NEPCs_bottom1.mat
 
-
-
 %% Individual effects of NEPCs
 % Step through the cross sections
 for i = 1:length(indices)

@@ -21,3 +21,6 @@ for i = 1:N
     flip(i) = s;
 %     pause(); 
 end
+
+% Remember to save the resulting flip vector in a mat file called
+% Flip_sections.mat!
