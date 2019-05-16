@@ -1,4 +1,4 @@
-function [ext_xDCSR, ext_yDCSR, tDCSR, ext_rhoDCSR] = PrepSections(filename, thresh, npoints)
+function [ext_xDCSR, ext_yDCSR, ext_tDCSR, ext_rhoDCSR, int_xDCSR, int_yDCSR, int_tDCSR, int_rhoDCSR, avg_rind_thick] = PrepSections(filename, thresh, npoints)
 % FILENAME: PrepSections.m
 % AUTHOR: Aaron Lewis / Joe Hansen
 % DATE: 3/6/19
@@ -70,7 +70,6 @@ for g = 1:nslices
     
     % Uses a fit ellipse function to identify the angle of rotation along the long axis of the cross-section
     % (only takes into account the exterior boundaries)
-%     [alpha, ~, ~, ~, ~] = fit_ellipse_R3(ext_X, ext_Y, prev_alpha, gca);
     [alpha, ~, ~, ~, ~, ~, ~] = fit_ellipse_R2( ext_X, ext_Y, prev_alpha, gca );
     
     % Reorders and rotates the stalk's exterior and interior
@@ -107,10 +106,6 @@ for g = 1:nslices
     w2_ext_xi = ext_xi(window2);
     w1_ext_yi = ext_yi(window1);
     w2_ext_yi = ext_yi(window2);
-    w1_int_xi = int_xi(window1);
-    w2_int_xi = int_xi(window2);
-    w1_int_yi = int_yi(window1);
-    w2_int_yi = int_yi(window2);
     
     % Extreme smoothing needed to find peaks
     w1_rhoi = smooth(w1_rhoi, 30);
@@ -147,8 +142,8 @@ for g = 1:nslices
     % "Pie" vectors (the external cross sections with the notch cut out)
     pier = [ext_rhoi(cut2+1:end)   ext_rhoi(1:cut1-1)];
     piet = [ti_ext(cut2+1:end)     ti_ext(1:cut1-1)];
-    piex = [ext_xi(cut2+1:end) ext_xi(1:cut1-1)];
-    piey = [ext_yi(cut2+1:end) ext_yi(1:cut1-1)];
+    piex = [ext_xi(cut2+1:end)     ext_xi(1:cut1-1)];
+    piey = [ext_yi(cut2+1:end)     ext_yi(1:cut1-1)];
 
     % Rotate the cross-section again to be horizontal / notch on the right
     [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_xi, ext_yi, spin);
@@ -217,49 +212,57 @@ for g = 1:nslices
     int_yi = int_yi - ydif1;
     
     
-    % Get exterior data in polar coordinates
-    [~, ~, ~, ~, ~, ~, ~, ~, ext_rhoDCSR(:,:,g), tDCSR(:,:,g)] = reorder_V2(ext_xi, ext_yi, 0);
-    
-       
-    
-%     % NEW NEW POLAR COORDINATES
-%     tDCSR = 0:2*pi/npoints:2*pi;                             % Creates a theta vector according to the inputted resolution
-%     tDCSR = tDCSR(1:end-1);                                           % The last point is not necessary
-%     
-%     for j = 1:length(tDCSR)                                        
-%         ext_rhoDCSR(:,j,g) = sqrt(ext_xi(:,j)^2 + ext_yi(:,j)^2);  % Creates an exterior rho vector using Pythagorean theorem 
-%     end
+    % Get interior and exterior data in polar coordinates
+    [~, ~, ~, ~, ~, ~, ~, ~, ext_rhoDCSR(:,:,g), ext_tDCSR(:,:,g)] = reorder_V2(ext_xi, ext_yi, 0);
+    [~, ~, ~, ~, ~, ~, ~, ~, int_rhoDCSR(:,:,g), int_tDCSR(:,:,g)] = reorder_V2(ext_xi, ext_yi, 0);
     
     
     %%%======= OUTPUTS ===========
     ext_xDCSR(:,:,g) = ext_xi - mean(ext_xi);
     ext_yDCSR(:,:,g) = ext_yi - mean(ext_yi);
+    int_xDCSR(:,:,g) = int_xi - mean(int_xi);
+    int_yDCSR(:,:,g) = int_yi - mean(int_yi);
+    avg_rind_thick(g) = avgrindthickness;
     %%%===========================
-
-%     [avgrindthickness, int_X, int_Y] = avg_rind_thickness_normal_method(cell2mat(Scans(g,1)), ext_xDCSR(:,:,g), ext_yDCSR(:,:,g), plotting);
-%     avg_rind_thick = [avg_rind_thick, avgrindthickness];
-%     int_xDCSR(:,:,g) = int_X;
-%     int_yDCSR(:,:,g) = int_Y; 
     
 end
 
 % Squeeze all variables so they are two-dimensional and the same size
 ext_xDCSR = squeeze(ext_xDCSR);
 ext_yDCSR = squeeze(ext_yDCSR);
+int_xDCSR = squeeze(int_xDCSR);
+int_yDCSR = squeeze(int_yDCSR);
 ext_rhoDCSR = squeeze(ext_rhoDCSR);
-tDCSR = squeeze(tDCSR);
+ext_tDCSR = squeeze(ext_tDCSR);
+int_rhoDCSR = squeeze(int_rhoDCSR);
+int_tDCSR = squeeze(int_tDCSR);
 
 close(gcf)
 
 
+% INTERPOLATE DATA POINTS HERE IN POLAR COORDINATES
+theta = linspace(0,2*pi,npoints+1); % 361 points from 0 to 2*pi inclusive (puts the theta values right on degrees)
+theta = transpose(theta(1:end-1)); % Remove the last point so there are 360 points in the end
+
 for g = 1:nslices
-    [avgrindthickness, int_X, int_Y] = avg_rind_thickness_normal_method(cell2mat(Scans(g,1)), ext_xDCSR(:,g), ext_yDCSR(:,g), plotting);
-    avg_rind_thick = [avg_rind_thick, avgrindthickness];
-    int_xDCSR(:,:,g) = int_X;
-    int_yDCSR(:,:,g) = int_Y;    
+    ext_rho_interp(:,g) = interp1(ext_tDCSR(:,g),ext_rhoDCSR(:,g),theta,'pchip','extrap');
+    int_rho_interp(:,g) = interp1(int_tDCSR(:,g),int_rhoDCSR(:,g),theta,'pchip','extrap');  
+    ext_tDCSR(:,g) = theta;
+    int_tDCSR(:,g) = theta;    
 end
 
+ext_rhoDCSR = ext_rho_interp;
+int_rhoDCSR = int_rho_interp;
 
+% Now that the polar coordinates have been interpolated, convert them from
+% polar to Cartesian coordinates and substitute back into the interior and
+% exterior xy data
+for g = 1:nslices
+    ext_xDCSR(:,g) = ext_rhoDCSR(:,g).*cos(ext_tDCSR(:,g));
+    ext_yDCSR(:,g) = ext_rhoDCSR(:,g).*sin(ext_tDCSR(:,g));
+    int_xDCSR(:,g) = int_rhoDCSR(:,g).*cos(int_tDCSR(:,g));
+    int_yDCSR(:,g) = int_rhoDCSR(:,g).*sin(int_tDCSR(:,g));    
+end
 
 
 

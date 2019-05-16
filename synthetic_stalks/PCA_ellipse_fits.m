@@ -30,28 +30,29 @@ title('Interior Non-Ellipse PCs');
 xlabel('# of PCs');
 ylabel('% Variance Explained');
 
-% ELLIPSE_T = ELLIPSE_T';
-% theta = ELLIPSE_T(:,1);
-% 
-% figure(3);
-% polarplot(theta,ext_rhoPCAs(:,1));
-% hold on
-% polarplot(theta,ext_rhoPCAs(:,2));
-% polarplot(theta,ext_rhoPCAs(:,3));
-% polarplot(theta,ext_rhoPCAs(:,4));
-% polarplot(theta,ext_rhoPCAs(:,5));
-% title('Exterior Rho Principal Components');
-% legend('PC1','PC2','PC3','PC4','PC5');
-% 
-% figure(4);
-% polarplot(theta,int_rhoPCAs(:,1));
-% hold on
-% polarplot(theta,int_rhoPCAs(:,2));
-% polarplot(theta,int_rhoPCAs(:,3));
-% polarplot(theta,int_rhoPCAs(:,4));
-% polarplot(theta,int_rhoPCAs(:,5));
-% title('Interior Rho Principal Components');
-% legend('PC1','PC2','PC3','PC4','PC5');
+ELLIPSE_T = ELLIPSE_T';
+theta = ELLIPSE_T(:,1);
+ELLIPSE_T = ELLIPSE_T';
+
+figure(3);
+polarplot(theta,ext_rhoPCAs(:,1));
+hold on
+polarplot(theta,ext_rhoPCAs(:,2));
+polarplot(theta,ext_rhoPCAs(:,3));
+polarplot(theta,ext_rhoPCAs(:,4));
+polarplot(theta,ext_rhoPCAs(:,5));
+title('Exterior Rho Principal Components');
+legend('PC1','PC2','PC3','PC4','PC5');
+
+figure(4);
+polarplot(theta,int_rhoPCAs(:,1));
+hold on
+polarplot(theta,int_rhoPCAs(:,2));
+polarplot(theta,int_rhoPCAs(:,3));
+polarplot(theta,int_rhoPCAs(:,4));
+polarplot(theta,int_rhoPCAs(:,5));
+title('Interior Rho Principal Components');
+legend('PC1','PC2','PC3','PC4','PC5');
 
 
 
