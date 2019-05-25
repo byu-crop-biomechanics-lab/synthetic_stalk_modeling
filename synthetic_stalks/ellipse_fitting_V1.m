@@ -22,6 +22,13 @@ Y_ext = ext_yDCSR;
 X_int = int_xDCSR;
 Y_int = int_yDCSR;
 
+% % Plot in Cartesian coordinates to check results
+% plot(X_ext(:,1),Y_ext(:,1),'.','LineWidth',2);
+% hold on
+% plot(X_int(:,1),Y_int(:,1),'.','LineWidth',2);
+% pause();
+% close;
+
 
 N = length(avg_rind_thick);
 
@@ -104,7 +111,12 @@ for i = 1:N
     [X_ext_shift, Y_ext_shift, ~, ~, ~, ~, ~, ~, ~, ~] = reorder_V2(X_ext_shift, Y_ext_shift, 0);
     [X_int_shift, Y_int_shift, ~, ~, ~, ~, ~, ~, ~, ~] = reorder_V2(X_int_shift, Y_int_shift, 0);
     
-    
+%     % Plot in Cartesian coordinates to check results
+%     plot(X_ext_shift,Y_ext_shift,'.','LineWidth',2);
+%     hold on
+%     plot(X_int_shift,Y_int_shift,'.','LineWidth',2);
+%     pause();
+%     close;
     
     
     % Convert X_ellipse and Y_ellipse to polar coordinates
@@ -150,10 +162,12 @@ for i = 1:N
     % Get interior ellipse fit points, based on constant rind thickness
     % assumption
     int_rho_ellipse = ext_rho_ellipse - avg_rind_thick(i);
-
+    
+%     % Plot in polar coordinates to check results
 %     polarplot(theta,ext_rho,'.','LineWidth',2);
 %     hold on
-%     polarplot(theta,ext_rho_ellipse,'.','LineWidth',2)
+%     polarplot(theta,int_rho,'.','LineWidth',2);
+% %     polarplot(theta,ext_rho_ellipse,'.','LineWidth',2)
 %     pause();
 %     close;
     

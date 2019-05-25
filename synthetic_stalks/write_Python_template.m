@@ -3,6 +3,11 @@
 % that can be used to 
 
 
+% IMPORTANT NOTE: This script will not display properly when opened in
+% Microsoft Notepad. However, opening in Atom or another text editor will
+% show properly formatted code.
+
+
 Template = {
     'from part import *';
     'from material import *';
@@ -20,33 +25,33 @@ Template = {
     '';
     '########################User-defined Model-Specific Features #######################';
     '#name of stalk part (will also be name of job and odb file)';
-    'jobname = ';   % ADD STRING WITH JOBNAME INPUT
+    'jobname = ';
     '#name of model';
     'modelname = jobname';
     '#Stalk ID number';
-    'ID = 1';       % CHANGE THIS
+    'ID = ';
     '#case number (depending on case numbering convention you choose)';
-    'case_no = 1';  % CHANGE THIS
+    'case_no = ';
     '#name of output text file (must match looper script)';
-    'filename = ''C:\Temp\Results.txt''';  % MAYBE CHANGE THIS
+    'filename = ''~/Temp/Results.txt''';
     '#mesh seed size of part';
-    'SeedSize = 0.001'; % CHANGE THIS
+    'SeedSize = 5';
     '#deflection of part';
-    'PlatenMovement = 0.0001'; % CHANGE THIS
+    'PlatenMovement = 0.01';
     '#rind modulus';
-    'rindE = 100'; % CHANGE THIS
+    'rindE = 14672.916666667';
     '#rind modulus';
-    'pithE = 10';  % CHANGE THIS
+    'pithE = 1467.2916666667';
     '#x location of reference point 1';
-    'RP1x = 12.821E-03';  % CHANGE THIS
+    'RP1x = ';
     '#y location of reference point 1';
-    'RP1y = 22.276E-03'; % CHANGE THIS
+    'RP1y = ';
     '#x location of reference point 1';
-    'RP2x = 13.502E-03'; % CHANGE THIS
+    'RP2x = ';
     '#y location of reference point 1';
-    'RP2y = 2.846E-03'; % CHANGE THIS
+    'RP2y = ';
     '#influence area of fake contact constraint';
-    'influence = 1.00E-03'; % CHANGE THIS
+    'influence = 11.0';
     '######################################################################################';
     '';
     '#Define additional parameters';
@@ -64,7 +69,7 @@ Template = {
     '';
     '####################### copy / paste in the x-y data for the outer spline here #######################';
     'mdb.models[modelname].sketches[''__profile__''].Spline(points=(';
-    '    '; % CHANGE THIS
+    '    ';
     '    ))';
     '######################################################################################################';
     'mdb.models[modelname].Part(dimensionality=TWO_D_PLANAR, name=PartName, type=';
@@ -87,7 +92,7 @@ Template = {
     '';
     '####################### copy / paste in the x-y data for the inner spline here #######################';
     'mdb.models[modelname].sketches[''__profile__''].Spline(points=(';
-    '    '; % CHANGE THIS
+    '    ';
     '    ))';
     '######################################################################################################';
     'mdb.models[modelname].parts[''Stalk''].PartitionFaceBySketch(faces=';
@@ -116,22 +121,22 @@ Template = {
     'mdb.models[modelname].HomogeneousSolidSection(material=''Pith'', name=''Pith'',';
     '    thickness=None)';
     '';
-    '#Assign rind material region';
-    'mdb.models[modelname].parts[''Stalk''].Set(faces=';
-    '    mdb.models[modelname].parts[''Stalk''].faces.getSequenceFromMask((''[#2 ]'', ),';
-    '    ), name=''Set-2'')';
-    'mdb.models[modelname].parts[''Stalk''].SectionAssignment(offset=0.0, offsetField=';
-    '    '''', offsetType=MIDDLE_SURFACE, region=';
-    '    mdb.models[modelname].parts[''Stalk''].sets[''Set-2''], sectionName=''Rind'',';
-    '    thicknessAssignment=FROM_SECTION)';
-    '';
     '#Assign pith material region';
     'mdb.models[modelname].parts[''Stalk''].Set(faces=';
-    '    mdb.models[modelname].parts[''Stalk''].faces.getSequenceFromMask((''[#1 ]'', ),';
+    '    mdb.models[modelname].parts[''Stalk''].faces.getSequenceFromMask((''[#2 ]'', ),';
     '    ), name=''Set-3'')';
     'mdb.models[modelname].parts[''Stalk''].SectionAssignment(offset=0.0, offsetField=';
     '    '''', offsetType=MIDDLE_SURFACE, region=';
     '    mdb.models[modelname].parts[''Stalk''].sets[''Set-3''], sectionName=''Pith'',';
+    '    thicknessAssignment=FROM_SECTION)';
+    '';
+    '#Assign rind material region';
+    'mdb.models[modelname].parts[''Stalk''].Set(faces=';
+    '    mdb.models[modelname].parts[''Stalk''].faces.getSequenceFromMask((''[#1 ]'', ),';
+    '    ), name=''Set-2'')';
+    'mdb.models[modelname].parts[''Stalk''].SectionAssignment(offset=0.0, offsetField=';
+    '    '''', offsetType=MIDDLE_SURFACE, region=';
+    '    mdb.models[modelname].parts[''Stalk''].sets[''Set-2''], sectionName=''Rind'',';
     '    thicknessAssignment=FROM_SECTION)';
     '';
     '#Create Assembly';
@@ -219,3 +224,10 @@ Template = {
     'odb.close()';
     'FileResultsX.close()';
 };
+
+
+% % Write Python script from the cell array (turn off for using only as a
+% % template without writing a script)
+% filePh = fopen('features.py','w');
+% fprintf(filePh,'%s\n',Template{:});
+% fclose(filePh);

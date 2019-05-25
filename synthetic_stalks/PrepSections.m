@@ -158,7 +158,7 @@ for g = 1:nslices
     [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_xi, ext_yi, new_alpha);
     [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2(int_xi, int_yi, new_alpha);
     
-%     % Scaling by the major and minor axes (NOT SCALING HERE)
+    % Scaling by the major and minor axes (NOT SCALING HERE)
     ext_xscaled = ext_xi;
     ext_yscaled = ext_yi;
     int_xscaled = int_xi;
@@ -214,7 +214,7 @@ for g = 1:nslices
     
     % Get interior and exterior data in polar coordinates
     [~, ~, ~, ~, ~, ~, ~, ~, ext_rhoDCSR(:,:,g), ext_tDCSR(:,:,g)] = reorder_V2(ext_xi, ext_yi, 0);
-    [~, ~, ~, ~, ~, ~, ~, ~, int_rhoDCSR(:,:,g), int_tDCSR(:,:,g)] = reorder_V2(ext_xi, ext_yi, 0);
+    [~, ~, ~, ~, ~, ~, ~, ~, int_rhoDCSR(:,:,g), int_tDCSR(:,:,g)] = reorder_V2(int_xi, int_yi, 0);
     
     
     %%%======= OUTPUTS ===========
@@ -237,7 +237,20 @@ ext_tDCSR = squeeze(ext_tDCSR);
 int_rhoDCSR = squeeze(int_rhoDCSR);
 int_tDCSR = squeeze(int_tDCSR);
 
-close(gcf)
+% % Plot in Cartesian coordinates to check results
+% plot(ext_xDCSR(:,1),ext_yDCSR(:,1),'.','LineWidth',2);
+% hold on
+% plot(int_xDCSR(:,1),int_yDCSR(:,1),'.','LineWidth',2);
+% pause();
+% close;
+% 
+% % Plot in polar coordinates to check results
+% polarplot(ext_tDCSR(:,1),ext_rhoDCSR(:,1));
+% hold on
+% polarplot(int_tDCSR(:,1),int_rhoDCSR(:,1));
+% pause();
+% close;
+% close(gcf)
 
 
 % INTERPOLATE DATA POINTS HERE IN POLAR COORDINATES
@@ -264,7 +277,12 @@ for g = 1:nslices
     int_yDCSR(:,g) = int_rhoDCSR(:,g).*sin(int_tDCSR(:,g));    
 end
 
-
+% % Plot in Cartesian coordinates to check results
+% plot(ext_xDCSR(:,1),ext_yDCSR(:,1),'.','LineWidth',2);
+% hold on
+% plot(int_xDCSR(:,1),int_yDCSR(:,1),'.','LineWidth',2);
+% pause();
+% close;
 
 
 
