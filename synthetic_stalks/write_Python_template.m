@@ -33,7 +33,7 @@ Template = {
     '#case number (depending on case numbering convention you choose)';
     'case_no = ';
     '#name of output text file (must match looper script)';
-    'filename = ''~/Temp/Results.txt''';
+    'filename = ''C:/Temp/Results.txt''';
     '#mesh seed size of part';
     'SeedSize = 5';
     '#deflection of part';
