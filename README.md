@@ -1,1 +1,1 @@
-# byu-crop-biomechanics
+# synthetic_stalk_modeling
