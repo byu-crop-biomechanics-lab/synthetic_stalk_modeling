@@ -197,6 +197,8 @@ for i = 1:N
     
     AVG_RIND_T(i) = avg_rind_thick(i);
     
+    RIND_ELLIPSE_DIFF(i,:) = ELLIPSE_R_ext(i,:) - R_int(i,:);
+    
 end
 
 % Save the final data in a new mat file

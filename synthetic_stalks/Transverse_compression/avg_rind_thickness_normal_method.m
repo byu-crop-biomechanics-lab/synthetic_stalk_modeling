@@ -3,7 +3,7 @@ function [avgrindthickness, int_X, int_Y] = avg_rind_thickness_normal_method(I, 
 % This function calculates the average rind thickness of an individual slice (I). 
 % The thickness is calculated using a series of points that march inward from the exterior boundary.
 % Inward marching continues until the median value of the interior curve matches the median valule of 
-% the exterior curve. Along the way, wmoothing and point elimination/replacement are used to 
+% the exterior curve. Along the way, smoothing and point elimination/replacement are used to 
 % insure that the interior curves are a good approximation of the original exterior shape. 
 %
 % INPUTS:           I - the image slice to be analyzed
