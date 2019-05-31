@@ -25,7 +25,7 @@ for i = startsection:endsection
     %% Pure ellipse fit (case 1)
     case_num = case_num + 1;
     Script = Template; % Reset the script template
-    jobname = strcat('Section_',ID,'_',case_num);
+%     jobname = strcat('Section_',ID,'_',case_num);
     make_case(case_num,i,ID,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script)
     
     
