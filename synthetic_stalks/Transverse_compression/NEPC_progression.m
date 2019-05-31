@@ -1,14 +1,18 @@
-% create_cases.m: Calculate the necessary information to include in the
-% Python script template 
+% NEPC_progression.m: Create Python scripts for checking the trend of
+% cumulatively-added NEPCs. A near-copy of create_cases.m.
+
+% Author: Ryan Larson
+% Date: 5/31/2019
+
 
 clear; close;
 load NEPCs_bottom_987.mat
 load Ellipse_fits_bottom_987.mat
 
-numsections = 50;   % Choose the number of cross sections to examine
+numsections = 1;   % Choose the number of cross sections to examine
 startsection = 1;   % Choose the starting index of the 50 cross sections
 endsection = startsection + numsections - 1;
-numNEPCs = 5;       % Choose the number of NEPCs to use in case creation (5 was the original choice)
+numNEPCs = 360;       % Choose the number of NEPCs to use in case creation (5 was the original choice)
 
 write_Python_template;  % Create Template cell array that can be copied and used to make individualized Python scripts
 
@@ -53,26 +57,6 @@ for i = startsection:endsection
     end
     
     
-    %% Remaining individual NEPC cases
-    for j = 2:numNEPCs
-        case_num = case_num + 1;
-        Script = Template; % Reset the script template
-        
-        % Add the current NEPC to the ellipse in polar coordinates
-        NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-        NEPC_int = zeros(1,size(int_rhoPCAs,1));
-        NEPC_ext = ext_rhocoeffs(i,j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
-        NEPC_int = int_rhocoeffs(i,j)*int_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
-        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-        Rnew_int = ELLIPSE_R_int(i,:) - NEPC_int;
-%         Rnew_int = Rnew_ext - AVG_RIND_T(i);
-        
-        make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script)
-        
-    end
-    
-    
-    
     
 end
 
@@ -80,8 +64,8 @@ end
 %% Local functions %%
 function make_case(case_num,i,ID,R_ext,R_int,T,Script)
     CASE = sprintf('%d',case_num);
-    jobname = strcat('''Section_',ID,'_',CASE,'''');
-    scriptname = strcat('Section_',ID,'_',CASE,'.py');
+    jobname = strcat('''Single_Section_',ID,'_',CASE,'''');
+    scriptname = strcat('Single_Section_',ID,'_',CASE,'.py');
     
     % Convert data to Cartesian coordinates (read in as row vectors)
     if size(R_ext,1) > 1
