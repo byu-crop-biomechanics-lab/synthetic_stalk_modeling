@@ -4,12 +4,11 @@
 % Author: Ryan Larson
 % Date: 5/31/2019
 
-
 clear; close;
 load NEPCs_bottom_987.mat
 load Ellipse_fits_bottom_987.mat
 
-numsections = 1;   % Choose the number of cross sections to examine
+numsections = 60;   % Choose the number of cross sections to examine
 startsection = 1;   % Choose the starting index of the 50 cross sections
 endsection = startsection + numsections - 1;
 numNEPCs = 360;       % Choose the number of NEPCs to use in case creation (5 was the original choice)
@@ -29,7 +28,6 @@ for i = startsection:endsection
     %% Pure ellipse fit (case 1)
     case_num = case_num + 1;
     Script = Template; % Reset the script template
-%     jobname = strcat('Section_',ID,'_',case_num);
     make_case(case_num,i,ID,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script)
     
     
@@ -50,9 +48,10 @@ for i = startsection:endsection
         
         Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
         Rnew_int = ELLIPSE_R_int(i,:) - NEPC_int;
-%         Rnew_int = Rnew_ext - AVG_RIND_T(i);
-
-        make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script)
+        
+        if j == 1 || mod(j,10) == 0
+            make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script)
+        end
         
     end
     
@@ -64,8 +63,8 @@ end
 %% Local functions %%
 function make_case(case_num,i,ID,R_ext,R_int,T,Script)
     CASE = sprintf('%d',case_num);
-    jobname = strcat('''Single_Section_',ID,'_',CASE,'''');
-    scriptname = strcat('Single_Section_',ID,'_',CASE,'.py');
+    jobname = strcat('''Section_',ID,'_',CASE,'''');
+    scriptname = strcat('Section_',ID,'_',CASE,'.py');
     
     % Convert data to Cartesian coordinates (read in as row vectors)
     if size(R_ext,1) > 1
