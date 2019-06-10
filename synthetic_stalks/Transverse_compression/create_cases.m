@@ -45,7 +45,8 @@ for i = startsection:endsection
         end
         
         Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-        Rnew_int = ELLIPSE_R_int(i,:) - NEPC_int;
+%         Rnew_int = ELLIPSE_R_int(i,:) - NEPC_int;
+        Rnew_int = Rnew_ext - AVG_RIND_T(i);
 
         make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script)
         
