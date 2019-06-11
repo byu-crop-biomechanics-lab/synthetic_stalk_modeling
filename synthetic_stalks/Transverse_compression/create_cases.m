@@ -53,22 +53,23 @@ for i = startsection:endsection
     end
     
     
-%     %% Remaining individual NEPC cases
-%     for j = 2:numNEPCs
-%         case_num = case_num + 1;
-%         Script = Template; % Reset the script template
-%         
-%         % Add the current NEPC to the ellipse in polar coordinates
-%         NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-%         NEPC_int = zeros(1,size(int_rhoPCAs,1));
-%         NEPC_ext = ext_rhocoeffs(i,j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
-%         NEPC_int = int_rhocoeffs(i,j)*int_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
-%         Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+    %% Remaining individual NEPC cases
+    for j = 2:numNEPCs
+        case_num = case_num + 1;
+        Script = Template; % Reset the script template
+        
+        % Add the current NEPC to the ellipse in polar coordinates
+        NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
+        NEPC_int = zeros(1,size(int_rhoPCAs,1));
+        NEPC_ext = ext_rhocoeffs(i,j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
+        NEPC_int = int_rhocoeffs(i,j)*int_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
+        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
 %         Rnew_int = ELLIPSE_R_int(i,:) - NEPC_int;
-%         
-%         make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script)
-%         
-%     end
+        Rnew_int = Rnew_ext - AVG_RIND_T(i);
+        
+        make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script)
+        
+    end
     
     
     

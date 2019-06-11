@@ -4,10 +4,10 @@
 % number. Cases 0-6 are used.
 clear; close;
 
-load NEPC_results.mat
+load NEPC_results_const_rind.mat
 
 rows = 50;
-cols = 7;
+cols = 11;
 
 Results_new = NaN(rows,cols);
 
@@ -34,10 +34,12 @@ for i = 1:length(stdev)
     stderror(i) = stdev(i)/sqrt(n(i));
 end
 
-caselabels = {'Real'; 'Ellipse'; 'NEPC 1'; 'NEPC 1-2'; 'NEPC 1-3'; 'NEPC 1-4'; 'NEPC 1-5'};
 
-bar(avg,'FaceColor',[0.75,0.75,0.75]);
-set(gca,'xticklabel',caselabels);
+% Cumulative case bar chart
+figure(1);
+caselabels_cumulative = {'Real'; 'Ellipse'; 'NEPC 1'; 'NEPC 1-2'; 'NEPC 1-3'; 'NEPC 1-4'; 'NEPC 1-5'};
+bar(avg(1:7),'FaceColor',[0.75,0.75,0.75]);
+set(gca,'xticklabel',caselabels_cumulative);
 ylim([98,100.5]);
 title('NEPC Response Progression (Cumulative)');
 xlabel('Case');
@@ -45,7 +47,31 @@ ylabel('Reaction Force (% of Real Response)');
 
 hold on
 
-er = errorbar(1:7,avg,stderror,stderror);
+er = errorbar(1:7,avg(1:7),stderror(1:7),stderror(1:7));
+er.Color = [0 0 0];
+er.LineStyle = 'none';
+er.LineWidth = 0.5;
+
+% Define noisy region as +/- 0.2% of the real cross-section response
+yline(99.8,':k');
+yline(100.2,':k');
+
+hold off
+
+% Individual NEPC bar chart
+caselabels_individual = {'Real'; 'Ellipse'; 'NEPC 1'; 'NEPC 2'; 'NEPC 3'; 'NEPC 4'; 'NEPC 5'};
+indices = [1 2 3 8 9 10 11];
+figure(2);
+bar(avg(indices),'FaceColor',[0.75,0.75,0.75]);
+set(gca,'xticklabel',caselabels_individual);
+ylim([98,100.5]);
+title('NEPC Response Progression (Individual)');
+xlabel('Case');
+ylabel('Reaction Force (% of Real Response)');
+
+hold on
+
+er = errorbar(1:7,avg(indices),stderror(indices),stderror(indices));
 er.Color = [0 0 0];
 er.LineStyle = 'none';
 er.LineWidth = 0.5;
