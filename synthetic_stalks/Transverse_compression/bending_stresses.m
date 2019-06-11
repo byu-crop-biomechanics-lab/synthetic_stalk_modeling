@@ -16,9 +16,23 @@ Ep = 1467.2916666667;
 % Moment load
 M = 100000; % N*mm
 
-% Choose cross-section for testing
-i = 1;
+% Create arrays for holding rind and pith results
+rind_stresses = NaN(50,11);
+rind_Ixx = NaN(50,11);
+rind_A = NaN(50,11);
+rind_centroid = NaN(50,11,2);
 
+pith_stresses = NaN(50,11);
+pith_Ixx = NaN(50,11);
+pith_A = NaN(50,11);
+pith_centroid = NaN(50,11,2);
+
+% Iterate through the cross-sections
+for i = 1:50
+
+    % Iterate through the cases
+    % Real (Case 0)
+    
 % Convert data to Cartesian coordinates (read in as row vectors)
 if size(R_ext,1) > 1
     X_ext = R_ext(i,:).*cos(ELLIPSE_T(i,:));

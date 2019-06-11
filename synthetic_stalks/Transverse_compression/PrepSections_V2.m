@@ -1,7 +1,7 @@
-function [ext_xDCSR, ext_yDCSR, ext_tDCSR, ext_rhoDCSR, int_xDCSR, int_yDCSR, int_tDCSR, int_rhoDCSR, avg_rind_thick] = PrepSections(filename, thresh, npoints)
-% FILENAME: PrepSections.m
-% AUTHOR: Aaron Lewis / Joe Hansen
-% DATE: 3/6/19
+function [ext_xDCSR, ext_yDCSR, ext_tDCSR, ext_rhoDCSR, int_xDCSR, int_yDCSR, int_tDCSR, int_rhoDCSR, avg_rind_thick] = PrepSections_V2(indices, npoints, Table)
+% FILENAME: PrepSections_V2.m
+% AUTHOR: Ryan Larson
+% DATE: 6/11/19
 %
 %
 % PURPOSE: This function is specifically a prep function for PCA analysis.
@@ -9,6 +9,19 @@ function [ext_xDCSR, ext_yDCSR, ext_tDCSR, ext_rhoDCSR, int_xDCSR, int_yDCSR, in
 % certain point across many stalks. These x and y coordinates will be
 % downsampled, centered, scaled, and rotated.
 % 
+
+
+% UPDATES!!!!!!!!!!!!!!!!!!!!!!!!!
+% This code is meant to work with Jared's SMALL_Curves_V2_2.mat data table.
+% It should output the exact same things as PrepSections.m, but instead of
+% working directly with images, it works with the extracted (and
+% non-rotated, non-centered) boundaries. PrepSections_V2.m takes in a
+% vector of indices that determines which slices are examined. Since the
+% data table has a row for each slice, but the stalks are all put together,
+% another script must be used to create the set.
+
+
+
 % 
 % INPUTS: filename - a .mat file that has a cell array named "Scans" with
 %                           the slice information
@@ -37,18 +50,18 @@ function [ext_xDCSR, ext_yDCSR, ext_tDCSR, ext_rhoDCSR, int_xDCSR, int_yDCSR, in
 
 % HomeFolder = pwd;                           % obtain the name of this file's HomeFolder
 % cd('PCA Data')                   % change the directory to the parent
-load(filename, 'Scans')                              % load data for this example
+% load(filename, 'Scans')                              % load data for this example
 % cd(HomeFolder)                              % move back to the HomeFolder
 
 
 plotting = 0;                                           % a following function has a built-in plotting option, which we turn off
-[nslices,~] = size(Scans);
+% [nslices,~] = size(Scans);
 
 
 %%% Variable Initializations
 alpha = 0;
 prev_alpha = 0;
-
+nslices = length(indices);
 
 for g = 1:nslices
     
@@ -60,12 +73,29 @@ for g = 1:nslices
     ext_rhoi = [];
     ti_ext = [];
     
-    % Extracts the exterior boundaries
-    [ext_X, ext_Y, ~, ~]= exterior_boundaries_V4(cell2mat(Scans(g,1)), thresh, plotting);
-    npoints_slice_ext = length(ext_X);
+%     % Extracts the exterior boundaries
+%     [ext_X, ext_Y, ~, ~]= exterior_boundaries_V4(cell2mat(Scans(g,1)), thresh, plotting);
+%     npoints_slice_ext = length(ext_X);
+%     
+%     % Extract the rind thickness and interior boundaries
+%     [avgrindthickness, int_X, int_Y] = avg_rind_thickness_normal_method(cell2mat(Scans(g,1)), ext_X, ext_Y, plotting);
+%     npoints_slice_int = length(int_X);
+    ext_X = cell2mat(Table.Ext_X(indices(g)));
+    ext_Y = cell2mat(Table.Ext_Y(indices(g)));
+    int_X = cell2mat(Table.Int_X(indices(g)));
+    int_Y = cell2mat(Table.Int_Y(indices(g)));
+    avgrindthickness = Table.rind_t(indices(g));
     
-    % Extract the rind thickness and interior boundaries
-    [avgrindthickness, int_X, int_Y] = avg_rind_thickness_normal_method(cell2mat(Scans(g,1)), ext_X, ext_Y, plotting);
+    if plotting == 1
+        plot(ext_X,ext_Y);
+        hold on
+        plot(int_X,int_Y);
+        pause();
+        close;
+        hold off
+    end
+    
+    npoints_slice_ext = length(ext_X);
     npoints_slice_int = length(int_X);
     
     % Uses a fit ellipse function to identify the angle of rotation along the long axis of the cross-section
@@ -77,11 +107,15 @@ for g = 1:nslices
     [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_X, ext_Y, alpha-pi/2);
     [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2(int_X, int_Y, alpha-pi/2);
     
+    
+    
     close(gcf)
     ext_xi = ext_xi';
     ext_yi = ext_yi';
     int_xi = int_xi';
     int_yi = int_yi';
+    
+   
     
     % NEW POLAR COORDINATES
     ti_ext = 0:2*pi/npoints_slice_ext:2*pi;                             % Creates a theta vector according to the inputted resolution
@@ -158,6 +192,8 @@ for g = 1:nslices
     [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_xi, ext_yi, new_alpha);
     [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2(int_xi, int_yi, new_alpha);
     
+    
+    
     % Scaling by the major and minor axes (NOT SCALING HERE)
     ext_xscaled = ext_xi;
     ext_yscaled = ext_yi;
@@ -212,6 +248,8 @@ for g = 1:nslices
     int_yi = int_yi - ydif1;
     
     
+    
+    
     % Get interior and exterior data in polar coordinates
     [~, ~, ~, ~, ~, ~, ~, ~, ext_rhoDCSR(:,:,g), ext_tDCSR(:,:,g)] = reorder_V2(ext_xi, ext_yi, 0);
     [~, ~, ~, ~, ~, ~, ~, ~, int_rhoDCSR(:,:,g), int_tDCSR(:,:,g)] = reorder_V2(int_xi, int_yi, 0);
@@ -225,7 +263,10 @@ for g = 1:nslices
     avg_rind_thick(g) = avgrindthickness;
     %%%===========================
     
+    
+    
 end
+
 
 % Squeeze all variables so they are two-dimensional and the same size
 ext_xDCSR = squeeze(ext_xDCSR);
@@ -237,20 +278,23 @@ ext_tDCSR = squeeze(ext_tDCSR);
 int_rhoDCSR = squeeze(int_rhoDCSR);
 int_tDCSR = squeeze(int_tDCSR);
 
-% % Plot in Cartesian coordinates to check results
-% plot(ext_xDCSR(:,1),ext_yDCSR(:,1),'.','LineWidth',2);
-% hold on
-% plot(int_xDCSR(:,1),int_yDCSR(:,1),'.','LineWidth',2);
-% pause();
-% close;
-% 
-% % Plot in polar coordinates to check results
-% polarplot(ext_tDCSR(:,1),ext_rhoDCSR(:,1));
-% hold on
-% polarplot(int_tDCSR(:,1),int_rhoDCSR(:,1));
-% pause();
-% close;
-% close(gcf)
+if plotting == 1
+    
+    % Plot in Cartesian coordinates to check results
+    plot(ext_xDCSR(:,1),ext_yDCSR(:,1),'.','LineWidth',2);
+    hold on
+    plot(int_xDCSR(:,1),int_yDCSR(:,1),'.','LineWidth',2);
+    pause();
+    close;
+
+    % Plot in polar coordinates to check results
+    polarplot(ext_tDCSR(:,1),ext_rhoDCSR(:,1));
+    hold on
+    polarplot(int_tDCSR(:,1),int_rhoDCSR(:,1));
+    pause();
+    close;
+    close(gcf)
+end
 
 
 % INTERPOLATE DATA POINTS HERE IN POLAR COORDINATES
