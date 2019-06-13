@@ -104,15 +104,16 @@ for g = 1:nslices
         [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_X, ext_Y, alpha-pi/2);
         [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2(int_X, int_Y, alpha-pi/2);
 
-
-
         close(gcf)
         ext_xi = ext_xi';
         ext_yi = ext_yi';
         int_xi = int_xi';
         int_yi = int_yi';
 
-
+        ext_xi = ext_xi - mean(ext_xi);
+        ext_yi = ext_yi - mean(ext_yi);
+        int_xi = int_xi - mean(int_xi);
+        int_yi = int_yi - mean(int_yi);
 
         % NEW POLAR COORDINATES
         ti_ext = 0:2*pi/npoints_slice_ext:2*pi;                             % Creates a theta vector according to the inputted resolution
@@ -189,75 +190,54 @@ for g = 1:nslices
         [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_xi, ext_yi, new_alpha);
         [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2(int_xi, int_yi, new_alpha);
 
-%         % Scaling by the major and minor axes (NOT SCALING HERE)
-%         ext_xi = ext_xi;
-%         ext_yi = ext_yi;
-%         int_xi = int_xi;
-%         int_yi = int_yi;
-
         % Downsampling exterior/ Resampling interior
-        idx =  1:length(ext_xi)                               % Index
-        idxq = linspace(min(idx), max(idx), npoints)               % Interpolation Vector
-        ext_xi = interp1(idx, ext_xi, idxq, 'linear')         % Downsampled Vector
+        idx =  1:length(ext_xi);                            % Index
+        idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
+        ext_xi = interp1(idx, ext_xi, idxq, 'pchip');       % Downsampled Vector
 
-        idy = 1:length(ext_yi)                                % Index
-        idyq = linspace(min(idy), max(idy), npoints)               % Interpolation Vector
-        ext_yi = interp1(idy, ext_yi, idyq, 'linear')         % Downsampled Vector
+        idy = 1:length(ext_yi);                             % Index
+        idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
+        ext_yi = interp1(idy, ext_yi, idyq, 'pchip');       % Downsampled Vector
 
-        idx =  1:length(int_xi);                               % Index
-        idxq = linspace(min(idx), max(idx), npoints);               % Interpolation Vector
-        int_xi = interp1(idx, int_xi, idxq, 'linear');         % Downsampled Vector
-%         int_xi % good here
+        idx =  1:length(int_xi);                            % Index
+        idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
+        int_xi = interp1(idx, int_xi, idxq, 'pchip');       % Downsampled Vector
 
-        idy = 1:length(int_yi);                                % Index
-        idyq = linspace(min(idy), max(idy), npoints);               % Interpolation Vector
-        int_yi = interp1(idy, int_yi, idyq, 'linear');         % Downsampled Vector
-
-        % Constraining all the first indices to be exactly on the x-axis
-        % (exterior)
-        m_ext = (ext_yi(1)-ext_yi(end))/(ext_xi(1)-ext_xi(end));    % Solve for slope
-        ext_x1 = ext_xi(1);                                         % x-point on the right line
-        ext_y1 = ext_yi(1);                                         % y-point on the right line
-        b_ext = ext_y1 - m_ext*ext_x1;                              % Solve for y-intercept
-        ext_y2 = 0;                                                 % We want the x-value where y=0
-        ext_x2 = (ext_y2-b_ext)/m_ext;                              % Solving for the x-value
-
-        % Shift all the data according the the differences
-        xdif1 = ext_xi(1) - ext_x2;
-        ext_xi = ext_xi - xdif1; 
-        ydif1 = ext_yi(1);
-        ext_yi = ext_yi - ydif1;
-
-        % Constraining all the first indices to be exactly on the x-axis
-        % (interior)
-%         numerator = (int_yi(1)-int_yi(end))
-%         denominator = (int_xi(1)-int_xi(end))
-        m_int = (int_yi(1)-int_yi(end))/(int_xi(1)-int_xi(end));    % Solve for slope
-        int_x1 = int_xi(1);                                         % x-point on the right line
-        int_y1 = int_yi(1);                                         % y-point on the right line
-        b_int = int_y1 - m_int*int_x1;                              % Solve for y-intercept
-        int_y2 = 0;                                                 % We want the x-value where y=0
-        int_x2 = (int_y2-b_int)/m_int;                              % Solving for the x-value
-
-        % Shift all the data according the the differences
-        xdif1 = int_xi(1) - int_x2;
-        int_xi = int_xi - xdif1;
-        ydif1 = int_yi(1);
-        int_yi = int_yi - ydif1;
-
+        idy = 1:length(int_yi);                             % Index
+        idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
+        int_yi = interp1(idy, int_yi, idyq, 'pchip');       % Downsampled Vector
 
         % Get interior and exterior data in polar coordinates
         [~, ~, ~, ~, ~, ~, ~, ~, ext_rhoDCR(:,:,g), ext_tDCR(:,:,g)] = reorder_V2(ext_xi, ext_yi, 0);
         [~, ~, ~, ~, ~, ~, ~, ~, int_rhoDCR(:,:,g), int_tDCR(:,:,g)] = reorder_V2(int_xi, int_yi, 0);
+        
+        % Interpolate in polar to get first point exactly on the x-axis
+        % when converted back to Cartesian
+        theta = linspace(0,2*pi,npoints+1); % 361 points from 0 to 2*pi inclusive (puts the theta values right on degrees)
+        theta = transpose(theta(1:end-1)); % Remove the last point so there are 360 points in the end
+        
+        ext_rho_interp(:,:,g) = interp1(ext_tDCR(:,:,g),ext_rhoDCR(:,:,g),theta,'pchip','extrap');
+        int_rho_interp(:,:,g) = interp1(int_tDCR(:,:,g),int_rhoDCR(:,:,g),theta,'pchip','extrap');  
+        ext_tDCR(:,:,g) = theta;
+        int_tDCR(:,:,g) = theta;
+        
+%         polarplot(ext_tDCR(:,:,g),ext_rho_interp(:,:,g));
+%         hold on
+%         polarplot(int_tDCR(:,:,g),int_rho_interp(:,:,g));
+%         hold off
+%         pause();
+%         close;
+        
+        ext_rhoDCR(:,:,g) = ext_rho_interp(:,:,g);
+        int_rhoDCR(:,:,g) = int_rho_interp(:,:,g);
+        
+        % Convert the resampled polar points back to Cartesian before
+        % output
+        ext_xDCR(:,:,g) = ext_rhoDCR(:,:,g).*cos(ext_tDCR(:,:,g));
+        ext_yDCR(:,:,g) = ext_rhoDCR(:,:,g).*sin(ext_tDCR(:,:,g));
+        int_xDCR(:,:,g) = int_rhoDCR(:,:,g).*cos(int_tDCR(:,:,g));
+        int_yDCR(:,:,g) = int_rhoDCR(:,:,g).*sin(int_tDCR(:,:,g));
 
-
-        %%%======= OUTPUTS ===========
-        ext_xDCR(:,:,g) = ext_xi - mean(ext_xi);
-        ext_yDCR(:,:,g) = ext_yi - mean(ext_yi);
-        int_xDCR(:,:,g) = int_xi - mean(int_xi);
-        int_yDCR(:,:,g) = int_yi - mean(int_yi);
-        avg_rind_thick(g) = avgrindthickness;
-        %%%===========================
     
     catch
         error_indices = [error_indices, g];
@@ -278,7 +258,6 @@ int_rhoDCR = squeeze(int_rhoDCR);
 int_tDCR = squeeze(int_tDCR);
 
 if plotting == 1
-    
     % Plot in Cartesian coordinates to check results
     plot(ext_xDCR(:,1),ext_yDCR(:,1),'.','LineWidth',2);
     hold on
@@ -293,35 +272,6 @@ if plotting == 1
     pause();
     close;
     close(gcf)
-end
-
-assignin('base','int_tDCR',int_tDCR);
-assignin('base','int_rhoDCR',int_rhoDCR);
-assignin('base','ext_tDCR',ext_tDCR);
-assignin('base','ext_rhoDCR',ext_rhoDCR);
-
-% INTERPOLATE DATA POINTS HERE IN POLAR COORDINATES
-theta = linspace(0,2*pi,npoints+1); % 361 points from 0 to 2*pi inclusive (puts the theta values right on degrees)
-theta = transpose(theta(1:end-1)); % Remove the last point so there are 360 points in the end
-
-for g = 1:nslices
-    ext_rho_interp(:,g) = interp1(ext_tDCR(:,g),ext_rhoDCR(:,g),theta,'pchip','extrap');
-    int_rho_interp(:,g) = interp1(int_tDCR(:,g),int_rhoDCR(:,g),theta,'pchip','extrap');  
-    ext_tDCR(:,g) = theta;
-    int_tDCR(:,g) = theta;    
-end
-
-ext_rhoDCR = ext_rho_interp;
-int_rhoDCR = int_rho_interp;
-
-% Now that the polar coordinates have been interpolated, convert them from
-% polar to Cartesian coordinates and substitute back into the interior and
-% exterior xy data
-for g = 1:nslices
-    ext_xDCR(:,g) = ext_rhoDCR(:,g).*cos(ext_tDCR(:,g));
-    ext_yDCR(:,g) = ext_rhoDCR(:,g).*sin(ext_tDCR(:,g));
-    int_xDCR(:,g) = int_rhoDCR(:,g).*cos(int_tDCR(:,g));
-    int_yDCR(:,g) = int_rhoDCR(:,g).*sin(int_tDCR(:,g));    
 end
 
 
