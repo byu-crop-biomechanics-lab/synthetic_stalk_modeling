@@ -67,8 +67,8 @@ error_indices = [];
 
 for g = 1:nslices
     pct_loop1 = (g/nslices)*100
-    try
         
+    try
         % Restart all the variables each loop
         ext_X = [];
         ext_Y = [];
@@ -210,27 +210,27 @@ for g = 1:nslices
         % Get interior and exterior data in polar coordinates
         [~, ~, ~, ~, ~, ~, ~, ~, ext_rhoDCR(:,:,g), ext_tDCR(:,:,g)] = reorder_V2(ext_xi, ext_yi, 0);
         [~, ~, ~, ~, ~, ~, ~, ~, int_rhoDCR(:,:,g), int_tDCR(:,:,g)] = reorder_V2(int_xi, int_yi, 0);
-        
+
         % Interpolate in polar to get first point exactly on the x-axis
         % when converted back to Cartesian
         theta = linspace(0,2*pi,npoints+1); % 361 points from 0 to 2*pi inclusive (puts the theta values right on degrees)
         theta = transpose(theta(1:end-1)); % Remove the last point so there are 360 points in the end
-        
+
         ext_rho_interp(:,:,g) = interp1(ext_tDCR(:,:,g),ext_rhoDCR(:,:,g),theta,'pchip','extrap');
         int_rho_interp(:,:,g) = interp1(int_tDCR(:,:,g),int_rhoDCR(:,:,g),theta,'pchip','extrap');  
         ext_tDCR(:,:,g) = theta;
         int_tDCR(:,:,g) = theta;
-        
-%         polarplot(ext_tDCR(:,:,g),ext_rho_interp(:,:,g));
-%         hold on
-%         polarplot(int_tDCR(:,:,g),int_rho_interp(:,:,g));
-%         hold off
-%         pause();
-%         close;
-        
+
+    %         polarplot(ext_tDCR(:,:,g),ext_rho_interp(:,:,g));
+    %         hold on
+    %         polarplot(int_tDCR(:,:,g),int_rho_interp(:,:,g));
+    %         hold off
+    %         pause();
+    %         close;
+
         ext_rhoDCR(:,:,g) = ext_rho_interp(:,:,g);
         int_rhoDCR(:,:,g) = int_rho_interp(:,:,g);
-        
+
         % Convert the resampled polar points back to Cartesian before
         % output
         ext_xDCR(:,:,g) = ext_rhoDCR(:,:,g).*cos(ext_tDCR(:,:,g));
@@ -238,7 +238,6 @@ for g = 1:nslices
         int_xDCR(:,:,g) = int_rhoDCR(:,:,g).*cos(int_tDCR(:,:,g));
         int_yDCR(:,:,g) = int_rhoDCR(:,:,g).*sin(int_tDCR(:,:,g));
 
-    
     catch
         error_indices = [error_indices, g];
     end
