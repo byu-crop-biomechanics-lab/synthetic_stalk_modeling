@@ -65,13 +65,17 @@ switch method
         ext_Rho =   makearray(selectedTable,'Ext_Rho',360);
         int_T =     makearray(selectedTable,'Int_T',360);
         int_Rho =   makearray(selectedTable,'Int_Rho',360);
-        avg_rind_thick = makearray(selectedTable,'rind_t',360);
+        avg_rind_thick = Table.rind_t(range(1):range(2));
         
         
         % Output all variables into mat file
         FolderName = pwd;
         SaveFile = fullfile(FolderName, SaveName);
         save(SaveFile);
+        
+    case 'wholestalk'
+        % Choose a range of stalk numbers, and all the slices from each of
+        % the chosen stalks will be chosen
         
     otherwise
         disp('Unknown method.');
@@ -86,11 +90,11 @@ function [exported_array] = makearray(Table,Variable,npoints)
     % with the downstream process in ellipse_fittingV1.m and
     % PCA_ellipse_fits.m
     num_slices = size(Table,1);
-    exported_array = NaN(num_slices,npoints);
+    exported_array = NaN(npoints,num_slices);
     
     if iscell(Table.(Variable))
         for i = 1:num_slices
-            exported_array(i,:) = cell2mat(Table.(Variable)(i));
+            exported_array(:,i) = cell2mat(Table.(Variable)(i));
         end
     else
         for i = 1:num_slices
