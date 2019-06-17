@@ -1,4 +1,4 @@
-function ChooseSections(method,range,Table,SaveName)
+function ChooseSections(method,range,Table,npoints,SaveName)
 % ChooseSections.m: Determine the cross-sections to compile, which is
 % determined by a method
 
@@ -71,7 +71,8 @@ switch method
         % Output all variables into mat file
         FolderName = pwd;
         SaveFile = fullfile(FolderName, SaveName);
-        save(SaveFile);
+        save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_T','ext_Rho',...
+            'int_T','int_Rho','avg_rind_thick','indices','selectedTable','npoints');
         
     case 'wholestalk'
         % Choose a range of stalk numbers, and all the slices from each of
