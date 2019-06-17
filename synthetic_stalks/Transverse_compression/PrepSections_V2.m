@@ -1,4 +1,4 @@
-function [ext_xDCR, ext_yDCR, ext_tDCR, ext_rhoDCR, int_xDCR, int_yDCR, int_tDCR, int_rhoDCR] = PrepSections_V2(indices, npoints, Table)
+function [Stalk_TableDCR,error_indices,npoints] = PrepSections_V2(indices, npoints, Table)
 % FILENAME: PrepSections_V2.m
 % AUTHOR: Ryan Larson
 % DATE: 6/11/19
@@ -163,13 +163,13 @@ for g = 1:nslices
             spin = pi/2;
         end
 
-        % Force the variables into rows
-        ext_rhoi = ext_rhoi(:)';
-        ti_ext = ti_ext(:)';
-        ext_xi = ext_xi(:)';
-        ext_yi = ext_yi(:)';
-        int_xi = int_xi(:)';
-        int_yi = int_yi(:)';
+%         % Force the variables into rows
+%         ext_rhoi = ext_rhoi(:)';
+%         ti_ext = ti_ext(:)';
+%         ext_xi = ext_xi(:)';
+%         ext_yi = ext_yi(:)';
+%         int_xi = int_xi(:)';
+%         int_yi = int_yi(:)';
 
         % "Pie" vectors (the external cross sections with the notch cut out)
         pier = [ext_rhoi(cut2+1:end)   ext_rhoi(1:cut1-1)];
@@ -272,6 +272,11 @@ if plotting == 1
     close;
     close(gcf)
 end
+
+
+% Create new table using CreateDCRTable
+Stalk_TableDCR = CreateDCRTable(Table,[1 nslices],ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR);
+
 
 
 %% Localizing all of the functions used
