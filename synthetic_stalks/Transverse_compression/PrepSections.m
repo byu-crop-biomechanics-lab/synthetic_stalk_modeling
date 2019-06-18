@@ -64,7 +64,7 @@ for g = 1:nslices
     [ext_X, ext_Y, ~, ~]= exterior_boundaries_V4(cell2mat(Scans(g,1)), thresh, plotting);
     npoints_slice_ext = length(ext_X);
     
-    % Extract the rindd thickness and interior boundaries
+    % Extract the rind thickness and interior boundaries
     [avgrindthickness, int_X, int_Y] = avg_rind_thickness_normal_method(cell2mat(Scans(g,1)), ext_X, ext_Y, plotting);
     npoints_slice_int = length(int_X);
     

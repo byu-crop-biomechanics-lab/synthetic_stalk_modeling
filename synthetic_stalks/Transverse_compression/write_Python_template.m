@@ -35,7 +35,7 @@ Template = {
     '#name of output text file (must match looper script)';
     'filename = ''C:/Temp/Results.txt''';
     '#mesh seed size of part';
-    'SeedSize = 5';
+    'SeedSize = 1';   % CHANGE THE SEED SIZE HERE
     '#deflection of part';
     'PlatenMovement = 0.01';
     '#rind modulus';
