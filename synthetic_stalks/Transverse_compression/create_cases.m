@@ -1,82 +1,73 @@
-% create_cases.m: Calculate the necessary information to include in the
-% Python script template 
-
-clear; close;
-% Choose the .mat files to pull in the NEPC and ellipse fit information
-load NEPCs_bottom_987.mat
-load Ellipse_fits_bottom_987.mat
-
-numsections = 50;   % Choose the number of cross sections to examine
-startsection = 1;   % Choose the starting index of the 50 cross sections
-endsection = startsection + numsections - 1;
-numNEPCs = 5;       % Choose the number of NEPCs to use in case creation (5 was the original choice)
-
-write_Python_template;  % Create Template cell array that can be copied and used to make individualized Python scripts
-
-%% Create all geometry cases for a given cross section
-% Step through the cross sections
-for i = startsection:endsection
-    ID = sprintf('%d',i); % Cross-section number
+function create_cases(NEPCdata,EllipseData,numNEPCs)
+    % create_cases.m: Calculate the necessary information to include in the
+    % Python scripts
     
-    %% Real cross section (case 0)
-    case_num = 0; % increment this for each case within each cross section
-    Script = Template;
-    make_case(case_num,i,ID,R_ext,R_int,ELLIPSE_T,Script)
-    
-    %% Pure ellipse fit (case 1)
-    case_num = case_num + 1;
-    Script = Template; % Reset the script template
-    make_case(case_num,i,ID,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script)
-    
-    
-    %% Combined NEPC cases
-    for j = 1:numNEPCs
+    load(NEPCdata);
+    load(EllipseData);
+
+    N = size(ELLIPSE_T,1);
+
+    write_Python_template;  % Create Template cell array that can be copied and used to make individualized Python scripts
+
+    %% Create all geometry cases for a given cross section
+    % Step through the cross sections
+    for i = 1:N
+        ID = sprintf('%d',i); % Cross-section number
+
+        %% Real cross section (case 0)
+        case_num = 0; % increment this for each case within each cross section
+        Script = Template;
+        make_case(case_num,i,ID,R_ext,R_int,ELLIPSE_T,Script)
+
+        %% Pure ellipse fit (case 1)
         case_num = case_num + 1;
         Script = Template; % Reset the script template
-        
-        % Calculate the cases with NEPCs cumulatively added into the
-        % ellipse fit
-        NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-        NEPC_int = zeros(1,size(int_rhoPCAs,1));
-        for k = 1:j
-            % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
-            NEPC_ext = NEPC_ext + ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
-            NEPC_int = NEPC_int + int_rhocoeffs(i,k)*int_rhoPCAs(:,k)';
+        make_case(case_num,i,ID,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script)
+
+        %% Combined NEPC cases
+        for j = 1:numNEPCs
+            case_num = case_num + 1;
+            Script = Template; % Reset the script template
+
+            % Calculate the cases with NEPCs cumulatively added into the
+            % ellipse fit
+            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
+            NEPC_int = zeros(1,size(int_rhoPCAs,1));
+            for k = 1:j
+                % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
+                NEPC_ext = NEPC_ext + ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
+                NEPC_int = NEPC_int + int_rhocoeffs(i,k)*int_rhoPCAs(:,k)';
+            end
+
+            Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+            Rnew_int = Rnew_ext - AVG_RIND_T(i);
+
+            make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script)
+
         end
-        
-        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-%         Rnew_int = ELLIPSE_R_int(i,:) - NEPC_int;
-        Rnew_int = Rnew_ext - AVG_RIND_T(i);
 
-        make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script)
-        
+
+        %% Remaining individual NEPC cases
+        for j = 2:numNEPCs
+            case_num = case_num + 1;
+            Script = Template; % Reset the script template
+
+            % Add the current NEPC to the ellipse in polar coordinates
+            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
+            NEPC_int = zeros(1,size(int_rhoPCAs,1));
+            NEPC_ext = ext_rhocoeffs(i,j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
+            NEPC_int = int_rhocoeffs(i,j)*int_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
+            Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+            Rnew_int = Rnew_ext - AVG_RIND_T(i);
+
+            make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script)
+
+        end
+
     end
-    
-    
-    %% Remaining individual NEPC cases
-    for j = 2:numNEPCs
-        case_num = case_num + 1;
-        Script = Template; % Reset the script template
-        
-        % Add the current NEPC to the ellipse in polar coordinates
-        NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-        NEPC_int = zeros(1,size(int_rhoPCAs,1));
-        NEPC_ext = ext_rhocoeffs(i,j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
-        NEPC_int = int_rhocoeffs(i,j)*int_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
-        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-%         Rnew_int = ELLIPSE_R_int(i,:) - NEPC_int;
-        Rnew_int = Rnew_ext - AVG_RIND_T(i);
-        
-        make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script)
-        
-    end
-    
-    
-    
-    
+
 end
-
-
+    
 %% Local functions %%
 function make_case(case_num,i,ID,R_ext,R_int,T,Script)
     CASE = sprintf('%d',case_num);
