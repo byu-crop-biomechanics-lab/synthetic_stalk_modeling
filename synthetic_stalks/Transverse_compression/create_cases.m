@@ -96,11 +96,22 @@ function make_case(case_num,i,ID,R_ext,R_int,T,Script)
     section_int = [section_int; section_int(1,:)];
 
     % Get the reference point values in Cartesian coordinates for
-    % reference points at 90 and 270 degrees (indices 91 and 271)
-    RP1X = sprintf('%0.5g',X_ext(91));
-    RP1Y = sprintf('%0.5g',Y_ext(91));
-    RP2X = sprintf('%0.5g',X_ext(271));
-    RP2Y = sprintf('%0.5g',Y_ext(271));
+    % reference points closest to 90 and 270 degrees
+
+    diffs90 = NaN(size(T));
+    diffs270 = NaN(size(T));
+    for i = 1:length(T)
+        diffs90(i) = 90 - T(i);
+        diffs270(i) = 270 - T(i);
+    end
+    
+    [~,ind90] = min(abs(diffs90));
+    [~,ind270] = min(abs(diffs270));
+    
+    RP1X = sprintf('%0.5g',X_ext(ind90));
+    RP1Y = sprintf('%0.5g',Y_ext(ind90));
+    RP2X = sprintf('%0.5g',X_ext(ind270));
+    RP2Y = sprintf('%0.5g',Y_ext(ind270));
 
     % Write the spline points and save as a string
     S = size(section_ext);

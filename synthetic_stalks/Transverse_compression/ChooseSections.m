@@ -57,14 +57,14 @@ switch method
         selectedTable = Table(indices,:);
         
         % Save compiled slices in arrays for downstream use
-        ext_X =     makearray(selectedTable,'Ext_X',360);
-        ext_Y =     makearray(selectedTable,'Ext_Y',360);
-        int_X =     makearray(selectedTable,'Int_X',360);
-        int_Y =     makearray(selectedTable,'Int_Y',360);
-        ext_T =     makearray(selectedTable,'Ext_T',360);
-        ext_Rho =   makearray(selectedTable,'Ext_Rho',360);
-        int_T =     makearray(selectedTable,'Int_T',360);
-        int_Rho =   makearray(selectedTable,'Int_Rho',360);
+        ext_X =     makearray(selectedTable,'Ext_X',npoints);
+        ext_Y =     makearray(selectedTable,'Ext_Y',npoints);
+        int_X =     makearray(selectedTable,'Int_X',npoints);
+        int_Y =     makearray(selectedTable,'Int_Y',npoints);
+        ext_T =     makearray(selectedTable,'Ext_T',npoints);
+        ext_Rho =   makearray(selectedTable,'Ext_Rho',npoints);
+        int_T =     makearray(selectedTable,'Int_T',npoints);
+        int_Rho =   makearray(selectedTable,'Int_Rho',npoints);
         avg_rind_thick = Table.rind_t(range(1):range(2));
         
         
