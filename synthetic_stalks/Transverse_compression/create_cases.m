@@ -97,12 +97,11 @@ function make_case(case_num,i,ID,R_ext,R_int,T,Script)
 
     % Get the reference point values in Cartesian coordinates for
     % reference points closest to 90 and 270 degrees
-
-    diffs90 = NaN(size(T));
-    diffs270 = NaN(size(T));
-    for i = 1:length(T)
-        diffs90(i) = 90 - T(i);
-        diffs270(i) = 270 - T(i);
+    diffs90 = NaN(1,size(T,2));
+    diffs270 = NaN(1,size(T,2));
+    for j = 1:length(T(1,:))
+        diffs90(j) = pi/2 - T(1,j);
+        diffs270(j) = 3*pi/2 - T(1,j);
     end
     
     [~,ind90] = min(abs(diffs90));
