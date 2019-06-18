@@ -11,8 +11,8 @@ load(File,'DIFF_R_ext','DIFF_R_int','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int')
 [ext_rhoPCAs, ext_rhocoeffs, ext_rhoPCA_variances, ext_rhotstat, ext_rhoexplained, ext_rhovarMeans] = pca(DIFF_R_ext,'Centered',false);
 [int_rhoPCAs, int_rhocoeffs, int_rhoPCA_variances, int_rhotstat, int_rhoexplained, int_rhovarMeans] = pca(DIFF_R_int,'Centered',false);
 
-ext_rhoexplained_tot = zeros(36);
-int_rhoexplained_tot = zeros(36);
+ext_rhoexplained_tot = zeros(size(ext_rhoexplained));
+int_rhoexplained_tot = zeros(size(ext_rhoexplained));
 for i = 1:length(ext_rhoexplained_tot)
     ext_rhoexplained_tot(i) = sum(ext_rhoexplained(1:i));
     int_rhoexplained_tot(i) = sum(int_rhoexplained(1:i));

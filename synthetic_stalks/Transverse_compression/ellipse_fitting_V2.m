@@ -11,7 +11,7 @@ close all
 FolderName = pwd;
 File       = fullfile(FolderName, FileName);
 load(File,'avg_rind_thick','ext_Rho','ext_T','ext_X','ext_Y',...
-    'int_Rho','int_T','int_X','int_Y');
+    'int_Rho','int_T','int_X','int_Y','npoints');
 
 % Make copies of original data to work with
 R_ext = ext_Rho;
@@ -37,16 +37,16 @@ B = zeros(N,1);
 ALPHA = zeros(N,1);
 
 
-ELLIPSE_XY = zeros(N,360,2);
+ELLIPSE_XY = zeros(N,npoints,2);
 ELLIPSE_CENTERS = zeros(N,2);
-ELLIPSE_T = zeros(N,360);
-ELLIPSE_R_ext = zeros(N,360);
-ELLIPSE_R_int = zeros(N,360);
+ELLIPSE_T = zeros(N,npoints);
+ELLIPSE_R_ext = zeros(N,npoints);
+ELLIPSE_R_int = zeros(N,npoints);
 
-DIFF_R_ext = zeros(N,360);
-DIFF_R_int = zeros(N,360);
-R_ext = zeros(N,360);
-R_int = zeros(N,360);
+DIFF_R_ext = zeros(N,npoints);
+DIFF_R_int = zeros(N,npoints);
+R_ext = zeros(N,npoints);
+R_int = zeros(N,npoints);
 
 AVG_RIND_T = zeros(N,1);
 
@@ -59,14 +59,14 @@ max_angle = max_angle*(pi/180);
 
 for i = 1:N
     % Define the notch range
-    for j = 1:360
+    for j = 1:npoints
         if T(j) > min_angle
             min_index = j-1;
             break
         end
     end
     
-    for j = 1:360
+    for j = 1:npoints
         if T(j) > max_angle
             max_index = j;
             break
@@ -74,7 +74,7 @@ for i = 1:N
     end
     
     % Cut out the notch from the XY data
-    window = [linspace(1,min_index,min_index),linspace(max_index,360,(360-max_index + 1))];
+    window = [linspace(1,min_index,min_index),linspace(max_index,npoints,(npoints-max_index + 1))];
     xcut = X_ext(window,i);
     ycut = Y_ext(window,i);
 %     figure(2);
@@ -84,7 +84,7 @@ for i = 1:N
 %     pause();
 %     close;
 
-    [alpha, major, minor, xbar_e, ybar_e, X_ellipse, Y_ellipse] = fit_ellipse_R2( xcut, ycut, prev_alpha, gca );
+    [alpha, major, minor, xbar_e, ybar_e, X_ellipse, Y_ellipse] = fit_ellipse_R4( xcut, ycut, npoints, prev_alpha, gca );
 %     alpha
 %     xbar_e
 %     ybar_e
@@ -120,7 +120,7 @@ for i = 1:N
     
     
     % Convert X_ellipse and Y_ellipse to polar coordinates
-    theta = 0:2*pi/360:2*pi;
+    theta = 0:2*pi/npoints:2*pi;
     theta = theta(1:end-1);
     [thetatemp_ellipse, ext_rho_ellipse] = cart2pol(X_ellipse_shift,Y_ellipse_shift);
     thetatemp_ellipse = wrapTo2Pi(thetatemp_ellipse);   % Make all the negative pi values sit on a 0-2*pi system

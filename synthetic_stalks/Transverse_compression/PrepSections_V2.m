@@ -1,4 +1,4 @@
-function [Stalk_TableDCR,error_indices,npoints] = PrepSections_V2(indices, npoints, Table)
+function PrepSections_V2(indices, npoints, Table, SaveName)
 % FILENAME: PrepSections_V2.m
 % AUTHOR: Ryan Larson
 % DATE: 6/11/19
@@ -213,8 +213,8 @@ for g = 1:nslices
 
         % Interpolate in polar to get first point exactly on the x-axis
         % when converted back to Cartesian
-        theta = linspace(0,2*pi,npoints+1); % 361 points from 0 to 2*pi inclusive (puts the theta values right on degrees)
-        theta = transpose(theta(1:end-1)); % Remove the last point so there are 360 points in the end
+        theta = linspace(0,2*pi,npoints+1); % npoints points from 0 to 2*pi inclusive (puts the theta values right on degrees if npoints = 359)
+        theta = transpose(theta(1:end-1)); % Remove the last point so there are npoints points in the end
 
         ext_rho_interp(:,:,g) = interp1(ext_tDCR(:,:,g),ext_rhoDCR(:,:,g),theta,'pchip','extrap');
         int_rho_interp(:,:,g) = interp1(int_tDCR(:,:,g),int_rhoDCR(:,:,g),theta,'pchip','extrap');  
@@ -277,7 +277,10 @@ end
 % Create new table using CreateDCRTable
 Stalk_TableDCR = CreateDCRTable(Table,[1 nslices],ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR);
 
-
+% Output all variables into mat file
+FolderName = pwd;
+SaveFile = fullfile(FolderName, SaveName);
+save(SaveFile,'Stalk_TableDCR','error_indices','npoints');
 
 %% Localizing all of the functions used
 function [alpha, major, minor, xbar_e, ybar_e, X_ellipse, Y_ellipse] = fit_ellipse_R2( x, y, prev_alpha, axis_handle )
