@@ -22,20 +22,12 @@ Y_ext = ext_Y;
 X_int = int_X;
 Y_int = int_Y;
 
-% % Plot in Cartesian coordinates to check results
-% plot(X_ext(:,1),Y_ext(:,1),'.','LineWidth',2);
-% hold on
-% plot(X_int(:,1),Y_int(:,1),'.','LineWidth',2);
-% pause();
-% close;
-
-
 N = length(avg_rind_thick);
 
+% Instantiate output variables
 A = zeros(N,1);
 B = zeros(N,1);
 ALPHA = zeros(N,1);
-
 
 ELLIPSE_XY = zeros(N,npoints,2);
 ELLIPSE_CENTERS = zeros(N,2);
@@ -77,28 +69,14 @@ for i = 1:N
     window = [linspace(1,min_index,min_index),linspace(max_index,npoints,(npoints-max_index + 1))];
     xcut = X_ext(window,i);
     ycut = Y_ext(window,i);
-%     figure(2);
-%     plot(X_ext(:,i),Y_ext(:,i));
-%     hold on
-%     plot(xcut,ycut);
-%     pause();
-%     close;
 
+    % Fit an ellipse to the data with the notch removed
     [alpha, major, minor, xbar_e, ybar_e, X_ellipse, Y_ellipse] = fit_ellipse_R4( xcut, ycut, npoints, prev_alpha, gca );
-%     alpha
-%     xbar_e
-%     ybar_e
-%     major
-%     minor
-    
-    
-    % NEED TO SHIFT ELLIPSE CENTER TO THE GEOMETRIC CENTER IN ORDER TO
-    % COMPUTE THE TRANSFORMATION TO POLAR COORDINATES AS BELOW!
     
     % Save ellipse center shift
     ELLIPSE_CENTERS(i,:) = [mean(X_ellipse), mean(Y_ellipse)];
     
-    % Shift XY data before converting to polar
+    % Shift XY data to be centered at the origin before converting to polar
     X_ellipse_shift = X_ellipse - mean(X_ellipse);
     Y_ellipse_shift = Y_ellipse - mean(Y_ellipse);
     X_ext_shift = X_ext(:,i) - mean(X_ellipse);
@@ -109,15 +87,7 @@ for i = 1:N
     % Reorder indices to start at 0 degrees
     [X_ellipse_shift, Y_ellipse_shift, ~, ~, ~, ~, ~, ~, ~, ~] = reorder_V2(X_ellipse_shift, Y_ellipse_shift, 0);
     [X_ext_shift, Y_ext_shift, ~, ~, ~, ~, ~, ~, ~, ~] = reorder_V2(X_ext_shift, Y_ext_shift, 0);
-    [X_int_shift, Y_int_shift, ~, ~, ~, ~, ~, ~, ~, ~] = reorder_V2(X_int_shift, Y_int_shift, 0);
-    
-%     % Plot in Cartesian coordinates to check results
-%     plot(X_ext_shift,Y_ext_shift,'.','LineWidth',2);
-%     hold on
-%     plot(X_int_shift,Y_int_shift,'.','LineWidth',2);
-%     pause();
-%     close;
-    
+    [X_int_shift, Y_int_shift, ~, ~, ~, ~, ~, ~, ~, ~] = reorder_V2(X_int_shift, Y_int_shift, 0);    
     
     % Convert X_ellipse and Y_ellipse to polar coordinates
     theta = 0:2*pi/npoints:2*pi;
@@ -192,9 +162,6 @@ for i = 1:N
     DIFF_R_ext(i,:) = ext_rho_ellipse - ext_rho;
     DIFF_R_int(i,:) = int_rho_ellipse - int_rho;
     
-%     DIFF_R_ext(i,:) = ext_rho_ellipse - transpose(R_ext(:,i));
-%     DIFF_R_int(i,:) = int_rho_ellipse - transpose(R_int(:,i));
-    
     AVG_RIND_T(i) = avg_rind_thick(i);
     
     RIND_ELLIPSE_DIFF(i,:) = ELLIPSE_R_ext(i,:) - R_int(i,:);
@@ -209,10 +176,10 @@ save(SaveFile,'A','B','ELLIPSE_XY','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int',.
 end
 
 
-function [r] = rpts(N,theta,dmaj,dmin)
-    r = zeros(1,N);
-    for i = 1:N
-        r(i) = (dmaj*dmin/4)/sqrt(((dmin/2)*cos(theta(i)))^2 ...
-            + ((dmaj/2)*sin(theta(i)))^2);
-    end
-end
+% function [r] = rpts(N,theta,dmaj,dmin)
+%     r = zeros(1,N);
+%     for i = 1:N
+%         r(i) = (dmaj*dmin/4)/sqrt(((dmin/2)*cos(theta(i)))^2 ...
+%             + ((dmaj/2)*sin(theta(i)))^2);
+%     end
+% end
