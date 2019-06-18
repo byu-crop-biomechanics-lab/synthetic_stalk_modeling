@@ -32,11 +32,11 @@ function create_cases(NEPCdata,EllipseData,numNEPCs)
             % Calculate the cases with NEPCs cumulatively added into the
             % ellipse fit
             NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-            NEPC_int = zeros(1,size(int_rhoPCAs,1));
+%             NEPC_int = zeros(1,size(int_rhoPCAs,1));
             for k = 1:j
                 % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
                 NEPC_ext = NEPC_ext + ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
-                NEPC_int = NEPC_int + int_rhocoeffs(i,k)*int_rhoPCAs(:,k)';
+%                 NEPC_int = NEPC_int + int_rhocoeffs(i,k)*int_rhoPCAs(:,k)';
             end
 
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
@@ -54,9 +54,9 @@ function create_cases(NEPCdata,EllipseData,numNEPCs)
 
             % Add the current NEPC to the ellipse in polar coordinates
             NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-            NEPC_int = zeros(1,size(int_rhoPCAs,1));
+%             NEPC_int = zeros(1,size(int_rhoPCAs,1));
             NEPC_ext = ext_rhocoeffs(i,j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
-            NEPC_int = int_rhocoeffs(i,j)*int_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
+%             NEPC_int = int_rhocoeffs(i,j)*int_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
             Rnew_int = Rnew_ext - AVG_RIND_T(i);
 

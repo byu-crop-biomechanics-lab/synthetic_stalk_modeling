@@ -17,7 +17,7 @@ switch method
         % Step through stalks of interest (defined by range values)
         stalk = 1;
         for i = range(1):range(2)
-            A = (Table.StkNum == i); % NEED AN INTELLIGENT WAY TO GET THE STARTING AND ENDING INDICES FOR THE PARTS OF A THAT ARE TRUE (1)
+            A = (Table.StkNum == i);
             
             % Get index of first row that is part of the current stalk
             for j = 1:length(A)

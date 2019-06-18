@@ -1,6 +1,10 @@
 function [Stalk_TableDCR] = CreateDCRTable(Table,range,ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR)
 % CreateDCRTable.m: Take the variables created from PrepSections_V2.m and
-% make a new data table, copied from SMALL_CURVES_V2_3_1500.mat
+% make a new data table, copied from SMALL_CURVES_V2_3_1500.mat with some
+% deletions and additions
+%
+% Author: Ryan Larson
+% Date: 6/17/2019
 
 Stalk_TableDCR = Table(range(1):range(2),:);
 

@@ -3,14 +3,11 @@ function PrepSections_V2(indices, npoints, Table, SaveName)
 % AUTHOR: Ryan Larson
 % DATE: 6/11/19
 %
-%
 % PURPOSE: This function is specifically a prep function for PCA analysis.
 % Its goal is to output an array of x and y coordinates, representing a
 % certain point across many stalks. These x and y coordinates will be
 % downsampled, centered, and rotated.
 % 
-
-
 % UPDATES!!!!!!!!!!!!!!!!!!!!!!!!!
 % This code is meant to work with Jared's SMALL_Curves_V2_2.mat data table.
 % It should output the exact same things as PrepSections.m, but instead of
@@ -19,44 +16,56 @@ function PrepSections_V2(indices, npoints, Table, SaveName)
 % vector of indices that determines which slices are examined. Since the
 % data table has a row for each slice, but the stalks are all put together,
 % another script must be used to create the set.
-
-
-
 % 
-% INPUTS: filename - a .mat file that has a cell array named "Scans" with
-%                           the slice information
-%           thresh - the grayscale threshhold for identifying the stalk boundaries (between 0 and 65535 for 16-bit grayscale images)
-%          npoints - how many points the vectors will be downsampled to
-% 
-% 
-% OUTPUTS:  ext_xDCR - the downsampled, centered, scaled, and rotated x-coordinates
-%           ext_yDCR - the downsampled, centered, scaled, and rotated y-coordinates
+% INPUTS: 
+%       indices - A vector of consecutive indices that represents the rows
+%       from Stalk_Table (in SMALL_Curves_V2_3_1500.mat) that will be
+%       downsampled, centered, and rotated. To perform the conversion on
+%       all rows of the original data, use the following:
+%           indices = linspace(1,size(Stalk_Table,1),size(Stalk_Table,1));
+%
+%       npoints - An integer value for the number of evenly-spaced points
+%       in polar coordinates to use. This does not include a repeat of the
+%       first point to close the shape, so if you want the points to be
+%       exactly on 1-degree intervals, set npoints = 359.
+%
+%       Table - This should be the data table Stalk_Table from
+%       SMALL_CURVES_V2_3_1500.mat
+%
+%       SaveName - A string with an output file name, with .mat file
+%       extension.
 %
 %
-% NOTES: - Adapted from boundary_info_V4.m for PCA purposes
-%        - There are various commented out lines that will hopefully be
-%        used for interior boundaries in the future
+% OUTPUTS:
+%   This function outputs a .mat file containing the following variables:
+%       Stalk_TableDCR - A table that is the same as Stalk_Table from the
+%       input, except that Ext_X, Ext_Y, Int_X, and Int_Y are replaced with
+%       their downsampled, centered, and rotated versions. Added are Ext_T,
+%       Ext_Rho, Int_T, and Int_Rho, the polar coordinate versions of the 
+%       downsampled data. xbar and ybar from the original table are removed
+%       because they are no longer meaningful.
+%
+%       error_indices - A list of integers corresponding to rows in
+%       Stalk_Table that experienced errors during conversion, and should
+%       not be used for further analysis until the problems are fixed.
+%
+%       npoints - The same integer value from the input to this function,
+%       saved to ensure that all downstream functions assume the same
+%       number of downsampled cross-section points.
+%
+%
+% NOTES: - Originally adapted from boundary_info_V4.m for PCA purposes
 % 
 % 
 % VERSION HISTORY:
-% V1 - Changed the downsampling to happen as the last process
-%    - Now there is a new method for finding where the notch is. It no
-%    longer finds the specific location of the slice. Instead, the side
-%    with the notch is used. - Aaron Lewis 4/4/19
-% V2 - 
-% V3 - Fixing polar coordinate outputs so they line up with Cartesian data
+% V1 - 
+% V2 - Converted to work with Jared's data table rather than Joe and
+% Aaron's subset of data that they selected
+% V3 - 
 %
 % -------------------------------------------------------------------------
 
-% HomeFolder = pwd;                           % obtain the name of this file's HomeFolder
-% cd('PCA Data')                   % change the directory to the parent
-% load(filename, 'Scans')                              % load data for this example
-% cd(HomeFolder)                              % move back to the HomeFolder
-
-
-plotting = 0;                                           % a following function has a built-in plotting option, which we turn off
-% [nslices,~] = size(Scans);
-
+plotting = 0;       % a following function has a built-in plotting option, which we turn off
 
 %%% Variable Initializations
 alpha = 0;
@@ -66,7 +75,7 @@ nslices = length(indices);
 error_indices = [];
 
 for g = 1:nslices
-    pct_loop1 = (g/nslices)*100
+    pct_loop1 = (g/nslices)*100     % This function runs for a long time, so this line outputs the approximate percentage completed
         
     try
         % Restart all the variables each loop
@@ -77,12 +86,14 @@ for g = 1:nslices
         ext_rhoi = [];
         ti_ext = [];
 
+        % Convert cells to arrays for easier access
         ext_X = cell2mat(Table.Ext_X(indices(g)));
         ext_Y = cell2mat(Table.Ext_Y(indices(g)));
         int_X = cell2mat(Table.Int_X(indices(g)));
         int_Y = cell2mat(Table.Int_Y(indices(g)));
         avgrindthickness = Table.rind_t(indices(g));
 
+        % Check with a plot if the plotting option is enabled
         if plotting == 1
             plot(ext_X,ext_Y);
             hold on
@@ -92,6 +103,7 @@ for g = 1:nslices
             hold off
         end
 
+        % Get the number of points in the originally-detected boundaries
         npoints_slice_ext = length(ext_X);
         npoints_slice_int = length(int_X);
 
@@ -110,6 +122,8 @@ for g = 1:nslices
         int_xi = int_xi';
         int_yi = int_yi';
 
+        % Shift the points so they are centered at the geometric mean of
+        % the cross-section
         ext_xi = ext_xi - mean(ext_xi);
         ext_yi = ext_yi - mean(ext_yi);
         int_xi = int_xi - mean(int_xi);
@@ -163,14 +177,6 @@ for g = 1:nslices
             spin = pi/2;
         end
 
-%         % Force the variables into rows
-%         ext_rhoi = ext_rhoi(:)';
-%         ti_ext = ti_ext(:)';
-%         ext_xi = ext_xi(:)';
-%         ext_yi = ext_yi(:)';
-%         int_xi = int_xi(:)';
-%         int_yi = int_yi(:)';
-
         % "Pie" vectors (the external cross sections with the notch cut out)
         pier = [ext_rhoi(cut2+1:end)   ext_rhoi(1:cut1-1)];
         piet = [ti_ext(cut2+1:end)     ti_ext(1:cut1-1)];
@@ -220,14 +226,6 @@ for g = 1:nslices
         int_rho_interp(:,:,g) = interp1(int_tDCR(:,:,g),int_rhoDCR(:,:,g),theta,'pchip','extrap');  
         ext_tDCR(:,:,g) = theta;
         int_tDCR(:,:,g) = theta;
-
-    %         polarplot(ext_tDCR(:,:,g),ext_rho_interp(:,:,g));
-    %         hold on
-    %         polarplot(int_tDCR(:,:,g),int_rho_interp(:,:,g));
-    %         hold off
-    %         pause();
-    %         close;
-
         ext_rhoDCR(:,:,g) = ext_rho_interp(:,:,g);
         int_rhoDCR(:,:,g) = int_rho_interp(:,:,g);
 
@@ -241,9 +239,9 @@ for g = 1:nslices
     catch
         error_indices = [error_indices, g];
     end
-    
-    
+        
 end
+
 assignin('base','error_indices',error_indices);
 
 % Squeeze all variables so they are two-dimensional and the same size
@@ -256,6 +254,7 @@ ext_tDCR = squeeze(ext_tDCR);
 int_rhoDCR = squeeze(int_rhoDCR);
 int_tDCR = squeeze(int_tDCR);
 
+% Check with polar and Cartesian plots if plotting is enabled
 if plotting == 1
     % Plot in Cartesian coordinates to check results
     plot(ext_xDCR(:,1),ext_yDCR(:,1),'.','LineWidth',2);
@@ -273,14 +272,17 @@ if plotting == 1
     close(gcf)
 end
 
-
-% Create new table using CreateDCRTable
+% Create new table using CreateDCRTable function
 Stalk_TableDCR = CreateDCRTable(Table,[1 nslices],ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR);
 
 % Output all variables into mat file
 FolderName = pwd;
 SaveFile = fullfile(FolderName, SaveName);
 save(SaveFile,'Stalk_TableDCR','error_indices','npoints');
+
+
+
+
 
 %% Localizing all of the functions used
 function [alpha, major, minor, xbar_e, ybar_e, X_ellipse, Y_ellipse] = fit_ellipse_R2( x, y, prev_alpha, axis_handle )
@@ -925,5 +927,59 @@ end
 
 end
 
+function [Stalk_TableDCR] = CreateDCRTable(Table,range,ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR)
+% CreateDCRTable.m: Take the variables created from PrepSections_V2.m and
+% make a new data table, copied from SMALL_CURVES_V2_3_1500.mat with some
+% deletions and additions
+%
+% Author: Ryan Larson
+% Date: 6/17/2019
 
+Stalk_TableDCR = Table(range(1):range(2),:);
+
+Stalk_TableDCR = removevars(Stalk_TableDCR,{'Ext_X','Ext_Y','Int_X','Int_Y','xbar','ybar'});
+
+N = size(Stalk_TableDCR,1);
+
+ext_xDCR = single(ext_xDCR);
+ext_yDCR = single(ext_yDCR);
+ext_tDCR = single(ext_tDCR);
+ext_rhoDCR = single(ext_rhoDCR);
+int_xDCR = single(int_xDCR);
+int_yDCR = single(int_yDCR);
+int_tDCR = single(int_tDCR);
+int_rhoDCR = single(int_rhoDCR);
+
+Ext_X = cell(N,1);
+Ext_Y = cell(N,1);
+Ext_T = cell(N,1);
+Ext_Rho = cell(N,1);
+Int_X = cell(N,1);
+Int_Y = cell(N,1);
+Int_T = cell(N,1);
+Int_Rho = cell(N,1);
+
+for i = 1:N
+    Ext_X{i} = ext_xDCR(:,i);
+    Ext_Y{i} = ext_yDCR(:,i);
+    Ext_T{i} = ext_tDCR(:,i);
+    Ext_Rho{i} = ext_rhoDCR(:,i);
+    Int_X{i} = int_xDCR(:,i);
+    Int_Y{i} = int_yDCR(:,i);
+    Int_T{i} = int_tDCR(:,i);
+    Int_Rho{i} = int_rhoDCR(:,i);   
+end
+
+
+% Save new boundary profiles into Stalk_TableDCR
+Stalk_TableDCR = addvars(Stalk_TableDCR,Ext_X,'Before','rind_t');
+Stalk_TableDCR = addvars(Stalk_TableDCR,Ext_Y,'After','Ext_X');
+Stalk_TableDCR = addvars(Stalk_TableDCR,Int_X,'After','Ext_Y');
+Stalk_TableDCR = addvars(Stalk_TableDCR,Int_Y,'After','Int_X');
+Stalk_TableDCR = addvars(Stalk_TableDCR,Ext_T,'After','Int_Y');
+Stalk_TableDCR = addvars(Stalk_TableDCR,Ext_Rho,'After','Ext_T');
+Stalk_TableDCR = addvars(Stalk_TableDCR,Int_T,'After','Ext_Rho');
+Stalk_TableDCR = addvars(Stalk_TableDCR,Int_Rho,'After','Int_T');
+
+end
 end
