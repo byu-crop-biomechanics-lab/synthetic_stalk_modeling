@@ -23,12 +23,17 @@ function transverse_wrapper(range,slicedist)
 %       11 scripts are created per stalk.
 %
 %
-% NOTES: The closest slice to slicedist for a given stalk will be chosen,
+% NOTES: 
+%       - The closest slice to slicedist for a given stalk will be chosen,
 %       so when verifying results make sure to look at the distribution of
 %       chosen slice positions when choosing extremely large magnitude
-%       numbers. Don't go above a magnitude of 90 at all, since there are
+%       numbers.
+%       - Don't go above a magnitude of 90 at all, since there are
 %       very few stalks that have slices that far from the node. A value of
 %       0 for slicedist will give the closest slice to the node.
+%       - The PCA functions look at the first five NEPCs, so the range
+%       should always cover at least 5 stalks (realistically, the range
+%       should cover much more)
 % 
 % 
 % VERSION HISTORY:
