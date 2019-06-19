@@ -17,56 +17,6 @@ ELLIPSE_XY(problem_indices,:,:) = [];
 R_ext(problem_indices,:) = [];
 R_int(problem_indices,:) = [];
 
-
-% for i = problem_indices
-%     idx = i;
-%     if idx == 1
-%         A = A(2:end,:);
-%         AVG_RIND_T = AVG_RIND_T(2:end);
-%         B = B(2:end);
-%         DIFF_R_ext = DIFF_R_ext(2:end,:);
-%         DIFF_R_int = DIFF_R_int(2:end,:);
-%         ELLIPSE_CENTERS = ELLIPSE_CENTERS(2:end,:);
-%         ELLIPSE_R_ext = ELLIPSE_R_ext(2:end,:);
-%         ELLIPSE_R_int = ELLIPSE_R_int(2:end,:);
-%         ELLIPSE_T = ELLIPSE_T(2:end,:);
-%         ELLIPSE_XY = ELLIPSE_XY(2:end,:,:);
-%         R_ext = R_ext(2:end,:);
-%         R_int = R_int(2:end,:);
-%         
-%     elseif idx == N
-%         A = A(1:N-1,:);
-%         AVG_RIND_T = AVG_RIND_T(1:N-1);
-%         B = B(1:N-1);
-%         DIFF_R_ext = DIFF_R_ext(1:N-1,:);
-%         DIFF_R_int = DIFF_R_int(1:N-1,:);
-%         ELLIPSE_CENTERS = ELLIPSE_CENTERS(1:N-1,:);
-%         ELLIPSE_R_ext = ELLIPSE_R_ext(1:N-1,:);
-%         ELLIPSE_R_int = ELLIPSE_R_int(1:N-1,:);
-%         ELLIPSE_T = ELLIPSE_T(1:N-1,:);
-%         ELLIPSE_XY = ELLIPSE_XY(1:N-1,:,:);
-%         R_ext = R_ext(1:N-1,:);
-%         R_int = R_int(1:N-1,:);
-%         
-%     else
-%         A = [A(1:idx-1,:); A(idx+1:end,:)];
-%         AVG_RIND_T = [AVG_RIND_T(1:idx-1); AVG_RIND_T(idx+1:end)];
-%         B = [B(1:idx-1); B(idx+1:end)];
-%         DIFF_R_ext = [DIFF_R_ext(1:idx-1,:); DIFF_R_ext(idx+1:end,:)];
-%         DIFF_R_int = [DIFF_R_int(1:idx-1,:); DIFF_R_int(idx+1:end,:)];
-%         ELLIPSE_CENTERS = [ELLIPSE_CENTERS(1:idx-1,:); ELLIPSE_CENTERS(idx+1:end,:)];
-%         ELLIPSE_R_ext = [ELLIPSE_R_ext(1:idx-1,:); ELLIPSE_R_ext(idx+1:end,:)];
-%         ELLIPSE_R_int = [ELLIPSE_R_int(1:idx-1,:); ELLIPSE_R_int(idx+1:end,:)];
-%         ELLIPSE_T = [ELLIPSE_T(1:idx-1,:); ELLIPSE_T(idx+1:end,:)];
-%         ELLIPSE_XY = [ELLIPSE_XY(1:idx-1,:,:); ELLIPSE_XY(idx+1:end,:,:)];
-%         R_ext = [R_ext(1:idx-1,:); R_ext(idx+1:end,:)];
-%         R_int = [R_int(1:idx-1,:); R_int(idx+1:end,:)];
-%         
-%     end
-%     
-%     
-% end
-
 % Save the final data in a new mat file
 FolderName = pwd;
 SaveFile       = fullfile(FolderName, GoodEllipseFits);
