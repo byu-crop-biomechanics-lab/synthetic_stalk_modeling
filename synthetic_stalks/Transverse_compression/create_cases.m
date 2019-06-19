@@ -1,9 +1,10 @@
-function create_cases(NEPCdata,EllipseData,numNEPCs)
+function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numNEPCs)
     % create_cases.m: Calculate the necessary information to include in the
     % Python scripts
     
     load(NEPCdata);
-    load(EllipseData);
+    load(GoodEllipseData);
+    load(SelectedData);
 
     N = size(ELLIPSE_T,1);
 
@@ -11,8 +12,28 @@ function create_cases(NEPCdata,EllipseData,numNEPCs)
 
     %% Create all geometry cases for a given cross section
     % Step through the cross sections
+    stalks = selectedTable.StkNum;
+%     remove_rows = [];
+    
+%     % Find the stalk numbers that should be removed
+%     if ~isempty(problem_indices)
+%         for i = 1:length(problem_indices)
+%             for j = 1:length(stalks)
+%                 if stalks(j) == problem_indices(i)
+%                     remove_rows = [remove_rows,j];
+%                 end
+%             end
+%         end       
+%     end
+    
+    % Remove the stalk numbers that had ellipse fit problems
+    stalks(problem_indices) = [];
+%     for i = problem_indices
+%         stalks(i) = [];
+%     end
+    
     for i = 1:N
-        ID = sprintf('%d',i); % Cross-section number
+        ID = sprintf('%d',stalks(i)); % Cross-section number
 
         %% Real cross section (case 0)
         case_num = 0; % increment this for each case within each cross section
@@ -97,12 +118,11 @@ function make_case(case_num,i,ID,R_ext,R_int,T,Script)
 
     % Get the reference point values in Cartesian coordinates for
     % reference points closest to 90 and 270 degrees
-
-    diffs90 = NaN(size(T));
-    diffs270 = NaN(size(T));
-    for i = 1:length(T)
-        diffs90(i) = 90 - T(i);
-        diffs270(i) = 270 - T(i);
+    diffs90 = NaN(1,size(T,2));
+    diffs270 = NaN(1,size(T,2));
+    for j = 1:length(T(1,:))
+        diffs90(j) = pi/2 - T(1,j);
+        diffs270(j) = 3*pi/2 - T(1,j);
     end
     
     [~,ind90] = min(abs(diffs90));

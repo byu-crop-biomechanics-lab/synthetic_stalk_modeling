@@ -1,4 +1,4 @@
-function ChooseSections(method,range,Table,npoints,SaveName)
+function ChooseSections(method,range,dist,Table,npoints,SaveName)
 % ChooseSections.m: Determine the cross-sections to compile, which is
 % determined by a method
 
@@ -12,7 +12,7 @@ switch method
     % from the node
     case 'samedist'
         indices = zeros(1,(range(2) - range(1) + 1));
-        dist = input('Choose approximate slice distance to use: ');
+%         dist = input('Choose approximate slice distance to use: ');
         
         % Step through stalks of interest (defined by range values)
         stalk = 1;

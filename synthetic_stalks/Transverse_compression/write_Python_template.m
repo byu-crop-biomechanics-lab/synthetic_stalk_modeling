@@ -35,9 +35,9 @@ Template = {
     '#name of output text file (must match looper script)';
     'filename = ''C:/Temp/Results.txt''';
     '#mesh seed size of part';
-    'SeedSize = 1';   % CHANGE THE SEED SIZE HERE
+    'SeedSize = 0.1';   % CHANGE THE SEED SIZE HERE
     '#deflection of part';
-    'PlatenMovement = 0.01';
+    'PlatenMovement = 0.005';
     '#rind modulus';
     'rindE = 14672.916666667';
     '#rind modulus';
@@ -51,7 +51,7 @@ Template = {
     '#y location of reference point 1';
     'RP2y = ';
     '#influence area of fake contact constraint';
-    'influence = 11.0';
+    'influence = 1.25';
     '######################################################################################';
     '';
     '#Define additional parameters';
