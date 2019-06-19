@@ -145,7 +145,7 @@ if isempty(problem_indices)
     PCA_ellipse_fits(EllipseName,NEPCName);
     
     % Create the Abaqus Python scripts
-    create_cases(NEPCName,EllipseName,5);
+    create_cases(NEPCName,EllipseName,ChooseSectionsName,problem_indices,5);
 else
     % Remove the problem ellipses and then run PCA again
     GoodEllipseFits = strcat(output_prefix,'_GoodEllipses.mat');
@@ -155,7 +155,7 @@ else
     PCA_ellipse_fits(GoodEllipseFits,NEPCName);
     
     % Create the Abaqus Python scripts
-    create_cases(NEPCName,GoodEllipseFits,5);
+    create_cases(NEPCName,GoodEllipseFits,ChooseSectionsName,problem_indices,5);
 end
 
 set(0,'DefaultFigureWindowStyle','normal');

@@ -1,9 +1,10 @@
-function create_cases(NEPCdata,EllipseData,numNEPCs)
+function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numNEPCs)
     % create_cases.m: Calculate the necessary information to include in the
     % Python scripts
     
     load(NEPCdata);
-    load(EllipseData);
+    load(GoodEllipseData);
+    load(SelectedData);
 
     N = size(ELLIPSE_T,1);
 
@@ -11,8 +12,28 @@ function create_cases(NEPCdata,EllipseData,numNEPCs)
 
     %% Create all geometry cases for a given cross section
     % Step through the cross sections
+    stalks = selectedTable.StkNum;
+%     remove_rows = [];
+    
+%     % Find the stalk numbers that should be removed
+%     if ~isempty(problem_indices)
+%         for i = 1:length(problem_indices)
+%             for j = 1:length(stalks)
+%                 if stalks(j) == problem_indices(i)
+%                     remove_rows = [remove_rows,j];
+%                 end
+%             end
+%         end       
+%     end
+    
+    % Remove the stalk numbers that had ellipse fit problems
+    stalks(problem_indices) = [];
+%     for i = problem_indices
+%         stalks(i) = [];
+%     end
+    
     for i = 1:N
-        ID = sprintf('%d',i); % Cross-section number
+        ID = sprintf('%d',stalks(i)); % Cross-section number
 
         %% Real cross section (case 0)
         case_num = 0; % increment this for each case within each cross section
