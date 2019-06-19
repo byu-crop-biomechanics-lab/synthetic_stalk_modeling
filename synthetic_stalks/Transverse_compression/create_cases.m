@@ -62,6 +62,7 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
 
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
             Rnew_int = Rnew_ext - AVG_RIND_T(i);
+            
 
             make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script)
 
@@ -79,7 +80,7 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
             NEPC_ext = ext_rhocoeffs(i,j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
 %             NEPC_int = int_rhocoeffs(i,j)*int_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-            Rnew_int = Rnew_ext - AVG_RIND_T(i);
+%             Rnew_int = Rnew_ext - AVG_RIND_T(i);
 
             make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script)
 

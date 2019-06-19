@@ -5,10 +5,12 @@
 % Date: 5/31/2019
 
 clear; close;
-load NEPCs_bottom_987.mat
-load Ellipse_fits_bottom_987.mat
+% load NEPCs_bottom_987.mat
+% load Ellipse_fits_bottom_987.mat
+load Stalks_1_400_Below_5_PCA.mat
+load Stalks_1_400_Below_5_GoodEllipses.mat
 
-numsections = 60;   % Choose the number of cross sections to examine
+numsections = 10;   % Choose the number of cross sections to examine
 startsection = 1;   % Choose the starting index of the 50 cross sections
 endsection = startsection + numsections - 1;
 numNEPCs = 360;       % Choose the number of NEPCs to use in case creation (5 was the original choice)
@@ -39,15 +41,16 @@ for i = startsection:endsection
         % Calculate the cases with NEPCs cumulatively added into the
         % ellipse fit
         NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-        NEPC_int = zeros(1,size(int_rhoPCAs,1));
+%         NEPC_int = zeros(1,size(int_rhoPCAs,1));
         for k = 1:j
             % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
             NEPC_ext = NEPC_ext + ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
-            NEPC_int = NEPC_int + int_rhocoeffs(i,k)*int_rhoPCAs(:,k)';
+%             NEPC_int = NEPC_int + int_rhocoeffs(i,k)*int_rhoPCAs(:,k)';
         end
         
         Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-        Rnew_int = ELLIPSE_R_int(i,:) - NEPC_int;
+%         Rnew_int = ELLIPSE_R_int(i,:) - NEPC_int;
+        Rnew_int = Rnew_ext - AVG_RIND_T(i);
         
         if j == 1 || mod(j,10) == 0
             make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script)
