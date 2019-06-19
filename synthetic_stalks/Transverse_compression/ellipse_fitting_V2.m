@@ -153,7 +153,8 @@ for i = 1:N
     ELLIPSE_CENTERS(i,2) = mean(Y_ellipse);
     ELLIPSE_T(i,:) = theta;
     ELLIPSE_R_ext(i,:) = ext_rho_ellipse;
-    ELLIPSE_R_int(i,:) = ext_rho_ellipse - avg_rind_thick(i);
+%     ELLIPSE_R_int(i,:) = ext_rho_ellipse - avg_rind_thick(i);
+    ELLIPSE_R_int(i,:) = rpts(npoints,ELLIPSE_T(i,:),(A(i) - 2*avg_rind_thick(i)),(B(i) - 2*avg_rind_thick(i)));
     R_ext(i,:) = ext_rho;
     R_int(i,:) = int_rho;
     
@@ -176,10 +177,10 @@ save(SaveFile,'A','B','ELLIPSE_XY','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int',.
 end
 
 
-% function [r] = rpts(N,theta,dmaj,dmin)
-%     r = zeros(1,N);
-%     for i = 1:N
-%         r(i) = (dmaj*dmin/4)/sqrt(((dmin/2)*cos(theta(i)))^2 ...
-%             + ((dmaj/2)*sin(theta(i)))^2);
-%     end
-% end
+function [r] = rpts(N,theta,dmaj,dmin)
+    r = zeros(1,N);
+    for i = 1:N
+        r(i) = (dmaj*dmin/4)/sqrt(((dmin/2)*cos(theta(i)))^2 ...
+            + ((dmaj/2)*sin(theta(i)))^2);
+    end
+end

@@ -8,7 +8,7 @@ function transverse_wrapper(range,slicedist)
 % 
 % 
 % INPUTS:
-%       range - A 2 x 1 vector of integers, indicating the starting and
+%       range - A 1 x 2 vector of integers, indicating the starting and
 %       ending stalk numbers that will be used (values must be between 1
 %       and 990)
 %       slicedist - A number value (can be integer or decimal) that
@@ -609,7 +609,8 @@ for i = 1:N
     ELLIPSE_CENTERS(i,2) = mean(Y_ellipse);
     ELLIPSE_T(i,:) = theta;
     ELLIPSE_R_ext(i,:) = ext_rho_ellipse;
-    ELLIPSE_R_int(i,:) = ext_rho_ellipse - avg_rind_thick(i);
+%     ELLIPSE_R_int(i,:) = ext_rho_ellipse - avg_rind_thick(i);
+    ELLIPSE_R_int(i,:) = rpts(npoints,ELLIPSE_T(i,:),(A(i) - 2*avg_rind_thick(i)),(B(i) - 2*avg_rind_thick(i)));
     R_ext(i,:) = ext_rho;
     R_int(i,:) = int_rho;
     
@@ -629,6 +630,15 @@ SaveFile       = fullfile(FolderName, SaveName);
 save(SaveFile,'A','B','ELLIPSE_XY','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int',...
     'ELLIPSE_CENTERS','DIFF_R_ext','DIFF_R_int','R_ext','R_int','AVG_RIND_T');
 
+end
+
+
+function [r] = rpts(N,theta,dmaj,dmin)
+    r = zeros(1,N);
+    for i = 1:N
+        r(i) = (dmaj*dmin/4)/sqrt(((dmin/2)*cos(theta(i)))^2 ...
+            + ((dmaj/2)*sin(theta(i)))^2);
+    end
 end
 
 
