@@ -109,6 +109,12 @@ function make_case(case_num,i,ID,R_ext,R_int,T,Script)
         Y_int = R_int(1,:).*sin(T(1,:));
     end
 
+     % Scale units to micrometers from millimeters
+    X_ext = 1000*X_ext;
+    Y_ext = 1000*Y_ext;
+    X_int = 1000*X_int;
+    Y_int = 1000*Y_int;
+    
     % Transpose data and combine xy
     section_ext = [X_ext', Y_ext'];
     section_int = [X_int', Y_int'];

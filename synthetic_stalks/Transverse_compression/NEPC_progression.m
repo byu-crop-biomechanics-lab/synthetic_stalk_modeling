@@ -10,7 +10,7 @@ clear; close;
 load Stalks_1_400_Below_5_PCA.mat
 load Stalks_1_400_Below_5_GoodEllipses.mat
 
-numsections = 10;   % Choose the number of cross sections to examine
+numsections = 5;   % Choose the number of cross sections to examine
 startsection = 1;   % Choose the starting index of the 50 cross sections
 endsection = startsection + numsections - 1;
 numNEPCs = 360;       % Choose the number of NEPCs to use in case creation (5 was the original choice)

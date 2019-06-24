@@ -4,7 +4,10 @@
 % number. Cases 0-6 are used.
 clear; close;
 
-load NEPC_results_const_rind.mat
+load NEPC_results_const_rind.mat % MAKE THIS INTO A FUNCTION THAT CAN READ IN ANY OUTPUT MAT FILE
+
+% CONVERT FROM MICROMETER SCALE TO MILLIMETER SCALE FOR LOOKING AT ACTUAL
+% VALUES
 
 rows = 50;
 cols = 11;
