@@ -65,8 +65,7 @@ switch method
         ext_Rho =   makearray(selectedTable,'Ext_Rho',npoints);
         int_T =     makearray(selectedTable,'Int_T',npoints);
         int_Rho =   makearray(selectedTable,'Int_Rho',npoints);
-        avg_rind_thick = Table.rind_t(range(1):range(2));
-        
+        avg_rind_thick = selectedTable.rind_t;
         
         % Output all variables into mat file
         FolderName = pwd;
@@ -74,9 +73,34 @@ switch method
         save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_T','ext_Rho',...
             'int_T','int_Rho','avg_rind_thick','indices','selectedTable','npoints');
         
+        
+        
     case 'wholestalk'
         % Choose a range of stalk numbers, and all the slices from each of
         % the chosen stalks will be chosen
+        
+        
+        
+    case 'all'
+        % Chooses every slice and converts it into an array format for
+        % working with more easily.
+        
+        % Save compiled slices in arrays for downstream use
+        ext_X =     makearray(Table,'Ext_X',npoints);
+        ext_Y =     makearray(Table,'Ext_Y',npoints);
+        int_X =     makearray(Table,'Int_X',npoints);
+        int_Y =     makearray(Table,'Int_Y',npoints);
+        ext_T =     makearray(Table,'Ext_T',npoints);
+        ext_Rho =   makearray(Table,'Ext_Rho',npoints);
+        int_T =     makearray(Table,'Int_T',npoints);
+        int_Rho =   makearray(Table,'Int_Rho',npoints);
+        avg_rind_thick = Table.rind_t;
+        
+        % Output all variables into mat file
+        FolderName = pwd;
+        SaveFile = fullfile(FolderName, SaveName);
+        save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_T','ext_Rho',...
+            'int_T','int_Rho','avg_rind_thick','npoints');
         
     otherwise
         disp('Unknown method.');

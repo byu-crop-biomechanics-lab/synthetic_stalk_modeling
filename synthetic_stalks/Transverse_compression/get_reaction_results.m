@@ -9,7 +9,7 @@ load NEPC_results_const_rind.mat % MAKE THIS INTO A FUNCTION THAT CAN READ IN AN
 % CONVERT FROM MICROMETER SCALE TO MILLIMETER SCALE FOR LOOKING AT ACTUAL
 % VALUES
 
-rows = 50;
+rows = 75;
 cols = 11;
 
 Results_new = NaN(rows,cols);
@@ -43,7 +43,7 @@ figure(1);
 caselabels_cumulative = {'Real'; 'Ellipse'; 'NEPC 1'; 'NEPC 1-2'; 'NEPC 1-3'; 'NEPC 1-4'; 'NEPC 1-5'};
 bar(avg(1:7),'FaceColor',[0.75,0.75,0.75]);
 set(gca,'xticklabel',caselabels_cumulative);
-ylim([98,100.5]);
+ylim([93,100.5]);
 title('NEPC Response Progression (Cumulative)');
 xlabel('Case');
 ylabel('Reaction Force (% of Real Response)');
@@ -67,7 +67,7 @@ indices = [1 2 3 8 9 10 11];
 figure(2);
 bar(avg(indices),'FaceColor',[0.75,0.75,0.75]);
 set(gca,'xticklabel',caselabels_individual);
-ylim([98,100.5]);
+ylim([93,100.5]);
 title('NEPC Response Progression (Individual)');
 xlabel('Case');
 ylabel('Reaction Force (% of Real Response)');
