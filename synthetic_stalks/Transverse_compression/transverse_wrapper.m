@@ -75,9 +75,16 @@ end
 
 output_prefix = strcat('Stalks_',r1,'_',r2,slicepos);
 
-% Choose the cross-section samples
-ChooseSectionsName = strcat(output_prefix,'_Sampled.mat');
-ChooseSections('samedist',range,slicedist,Stalk_TableDCR,npoints,ChooseSectionsName)
+% Gather all the 
+AllSectionsName = strcat(output_prefix,'_All980.mat');
+ChooseSections('samedist',[1 980],slicedist,Stalk_TableDCR,npoints,AllSectionsName)
+
+
+% % Choose the cross-section samples
+% clearvars -except range slicedist output_prefix AllSectionsName
+% load(AllSectionsName);
+% ChooseSectionsName = strcat(output_prefix,'_Sampled.mat');
+% ChooseSections('samedist',range,slicedist,selectedTable,npoints,ChooseSectionsName)
 
 % Check if there's a flip vector with the appropriate FlipName. If it
 % exists already, load it and skip the manual flipping process.
@@ -86,7 +93,7 @@ if ~isfile(FlippedOutputName)
     disp('No flip index vector exists in the current folder. Create one now.');
     % Manually find the cross-sections that need to be flipped 180 degrees
     FlipName = strcat(output_prefix,'_flip_sections.mat');
-    find_flip_notches(ChooseSectionsName,FlipName)
+    find_flip_notches(AllSectionsName,FlipName)
 
     while 1
         fixes_needed = input('Does the flip vector need manual correction? Y/N ','s');
@@ -111,7 +118,7 @@ if ~isfile(FlippedOutputName)
     % of flip indicators
     % load(FlipName);
     FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
-    flip_notches(FlipName,ChooseSectionsName,FlippedOutputName);
+    flip_notches(FlipName,AllSectionsName,FlippedOutputName);
     
 else
     disp('A flip index vector for the chosen data has been found.');
@@ -357,7 +364,7 @@ for i = 1:N
     flip_sections(i) = s;
 %     pause(); 
 end
-
+close;
 
 % Save data as mat file
 FolderName = pwd;
@@ -432,38 +439,39 @@ for i = 1:N
     end
 end
 
-% % Plot the cross sections that should be flipped to verify that the notches
-% % are all on the left side
-% for i = 1:length(flipped)
-%     for j = 1:length(T)
-%         plot(ext_X(1:j,flipped(i)),ext_Y(1:j,flipped(i)));
-%         hold on
-%         plot(int_X(1:j,flipped(i)),int_Y(1:j,flipped(i)));
-%         axis equal
-%         hold off
-% %         pause(0.01);
-%     end
-%     pause();
-% end
-
-
 % Convert data from Cartesian to polar
+size(T)
 for i = 1:N
     for j = 1:length(T)
-        ext_Rho(i,j) = sqrt(ext_X(j,i)^2 + ext_Y(j,i)^2);
-        int_Rho(i,j) = sqrt(int_X(j,i)^2 + int_Y(j,i)^2);
+        ext_Rho(j,i) = sqrt(ext_X(j,i)^2 + ext_Y(j,i)^2);
+        int_Rho(j,i) = sqrt(int_X(j,i)^2 + int_Y(j,i)^2);
     end
 end
 
 % Transpose rho arrays so they are the same orientation as the other
 % variables
-ext_rho = ext_rho';
-int_rho = int_rho';
+% ext_rho = ext_rho';
+% int_rho = int_rho';
+
+flippedTable = selectedTable;
+
+for i = 1:N
+    flippedTable.Ext_X{i} = ext_X(:,i);
+    flippedTable.Ext_Y{i} = ext_Y(:,i);
+%     flippedTable.Ext_T{i} = ext_T(:,i);
+    flippedTable.Ext_Rho{i} = ext_Rho(:,i);
+    flippedTable.Int_X{i} = int_X(:,i);
+    flippedTable.Int_Y{i} = int_Y(:,i);
+%     flippedTable.Int_T{i} = int_T(:,i);
+    flippedTable.Int_Rho{i} = int_Rho(:,i);
+    
+end
 
 % Save data as mat file
 FolderName = pwd;
 SaveFile = fullfile(FolderName, FlippedOutputName);
-save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_Rho','int_Rho','ext_T','int_T','avg_rind_thick','flip_sections','npoints');
+save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_Rho','int_Rho','ext_T',...
+    'int_T','avg_rind_thick','flip_sections','flippedTable','npoints');
 
 end
 

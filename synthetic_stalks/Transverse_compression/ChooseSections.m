@@ -3,7 +3,7 @@ function ChooseSections(method,range,dist,Table,npoints,SaveName)
 % determined by a method
 
 % range: For Stalk_Table, this must be a row vector of two integer values
-% from 1 to 990.
+% from 1 to 980.
 
 allrows = size(Table,1);
 

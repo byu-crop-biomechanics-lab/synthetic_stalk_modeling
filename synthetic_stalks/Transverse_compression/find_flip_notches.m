@@ -54,7 +54,7 @@ for i = 1:N
     flip_sections(i) = s;
 %     pause(); 
 end
-
+close;
 
 % Save data as mat file
 FolderName = pwd;
