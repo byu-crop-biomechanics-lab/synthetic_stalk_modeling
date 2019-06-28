@@ -199,12 +199,12 @@ end
 
 
 %% Localizing all functions used
-function ChooseSections(method,range,dist,Table,npoints,SaveName)
+function ChooseSections(method,range,dist,Table,error_indices,npoints,SaveName)
 % ChooseSections.m: Determine the cross-sections to compile, which is
 % determined by a method
 
 % range: For Stalk_Table, this must be a row vector of two integer values
-% from 1 to 990.
+% from 1 to 980.
 
 allrows = size(Table,1);
 
@@ -257,6 +257,15 @@ switch method
         % Create table from indices for later reference
         selectedTable = Table(indices,:);
         
+        % Get rid of any cross-sections that were chosen that are also
+        % listed in error_indices
+        for i = 1:length(error_indices)
+            if ismember(error_indices(i),selectedTable.StkNum)
+                row = find(selectedTable.StkNum == error_indices(i));
+                selectedTable(row,:) = [];
+            end
+        end
+        
         % Save compiled slices in arrays for downstream use
         ext_X =     makearray(selectedTable,'Ext_X',npoints);
         ext_Y =     makearray(selectedTable,'Ext_Y',npoints);
@@ -268,16 +277,40 @@ switch method
         int_Rho =   makearray(selectedTable,'Int_Rho',npoints);
         avg_rind_thick = selectedTable.rind_t;
         
-        
         % Output all variables into mat file
         FolderName = pwd;
         SaveFile = fullfile(FolderName, SaveName);
         save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_T','ext_Rho',...
             'int_T','int_Rho','avg_rind_thick','indices','selectedTable','npoints');
         
+        
+        
     case 'wholestalk'
         % Choose a range of stalk numbers, and all the slices from each of
         % the chosen stalks will be chosen
+        
+        
+        
+    case 'all'
+        % Chooses every slice and converts it into an array format for
+        % working with more easily.
+        
+        % Save compiled slices in arrays for downstream use
+        ext_X =     makearray(Table,'Ext_X',npoints);
+        ext_Y =     makearray(Table,'Ext_Y',npoints);
+        int_X =     makearray(Table,'Int_X',npoints);
+        int_Y =     makearray(Table,'Int_Y',npoints);
+        ext_T =     makearray(Table,'Ext_T',npoints);
+        ext_Rho =   makearray(Table,'Ext_Rho',npoints);
+        int_T =     makearray(Table,'Int_T',npoints);
+        int_Rho =   makearray(Table,'Int_Rho',npoints);
+        avg_rind_thick = Table.rind_t;
+        
+        % Output all variables into mat file
+        FolderName = pwd;
+        SaveFile = fullfile(FolderName, SaveName);
+        save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_T','ext_Rho',...
+            'int_T','int_Rho','avg_rind_thick','npoints');
         
     otherwise
         disp('Unknown method.');

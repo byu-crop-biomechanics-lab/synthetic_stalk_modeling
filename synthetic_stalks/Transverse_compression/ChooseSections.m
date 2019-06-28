@@ -1,4 +1,4 @@
-function ChooseSections(method,range,dist,Table,npoints,SaveName)
+function ChooseSections(method,range,dist,Table,error_indices,npoints,SaveName)
 % ChooseSections.m: Determine the cross-sections to compile, which is
 % determined by a method
 
@@ -55,6 +55,15 @@ switch method
         
         % Create table from indices for later reference
         selectedTable = Table(indices,:);
+        
+        % Get rid of any cross-sections that were chosen that are also
+        % listed in error_indices
+        for i = 1:length(error_indices)
+            if ismember(error_indices(i),selectedTable.StkNum)
+                row = find(selectedTable.StkNum == error_indices(i));
+                selectedTable(row,:) = [];
+            end
+        end
         
         % Save compiled slices in arrays for downstream use
         ext_X =     makearray(selectedTable,'Ext_X',npoints);
