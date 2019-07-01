@@ -65,6 +65,30 @@ switch method
             end
         end
         
+        % Also get rid of any cross-sections that are made up of zeros
+        % (some sort of detection error)
+        deletesections = [];
+        for i = 1:size(selectedTable,1)
+            exterior_X = cell2mat(selectedTable.Ext_X(i));
+            exterior_Y = cell2mat(selectedTable.Ext_Y(i));
+            exterior_Rho = cell2mat(selectedTable.Ext_Rho(i));
+            interior_X = cell2mat(selectedTable.Int_X(i));
+            interior_Y = cell2mat(selectedTable.Int_Y(i));
+            interior_Rho = cell2mat(selectedTable.Int_Rho(i));
+
+            if (all(exterior_X == 0) || all(exterior_Y == 0) ||...
+                    all(exterior_Rho == 0) || all(interior_X == 0) ||...
+                    all(interior_Y == 0) || all(interior_Rho == 0))
+                    
+                deletesections = [deletesections, i];    
+                msg = sprintf('Section %d deleted',i);
+                disp(msg);
+            end
+        end
+        
+        %GET RID OF THE BAD SECTIONS HERE BY INDEXING
+        selectedTable(deletesections,:) = [];
+        
         % Save compiled slices in arrays for downstream use
         ext_X =     makearray(selectedTable,'Ext_X',npoints);
         ext_Y =     makearray(selectedTable,'Ext_Y',npoints);

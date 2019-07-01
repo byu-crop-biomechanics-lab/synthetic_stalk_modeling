@@ -75,10 +75,10 @@ end
 
 output_prefix = strcat('Stalks_',r1,'_',r2,slicepos);
 
-% Gather all the 
+% Gather all the cross-sections at the chosen slice distance
 AllSectionsName = strcat(output_prefix,'_All980.mat');
-ChooseSections('samedist',[1 980],slicedist,Stalk_TableDCR,npoints,AllSectionsName)
-
+ChooseSections('samedist',[1 980],slicedist,Stalk_TableDCR,error_indices,npoints,AllSectionsName)
+load(AllSectionsName);
 
 % % Choose the cross-section samples
 % clearvars -except range slicedist output_prefix AllSectionsName
@@ -125,71 +125,136 @@ else
 end
 
 
-% Calculate the ellipse fits
-EllipseName = strcat(output_prefix,'_Ellipses.mat');
-ellipse_fitting_V2(FlippedOutputName,EllipseName);
-
-% Plot the ellipse fits and see if any of them have problems
-load(EllipseName);
 load(FlippedOutputName);
 
-problem_indices = [];
-for i = 1:(range(2) - range(1) + 1)
-    i
-    polarplot(ELLIPSE_T(i,:),ELLIPSE_R_ext(i,:),'LineWidth',2);
-    hold on
-    polarplot(ELLIPSE_T(i,:),ELLIPSE_R_int(i,:),'LineWidth',2);
-    polarplot(ext_T(:,i),ext_Rho(:,i));
-    polarplot(int_T(:,i),int_Rho(:,i));
-    hold off
-    s = input('Enter 1 if the ellipse fit has a problem: ');
-    s
-    if s == 1
-        problem_indices = [problem_indices, i];
-    else
-        continue
-    end    
-end
 
-while 1
-    fixes_needed = input('Does the ellipse problems vector need manual correction? Y/N ','s');
-    switch fixes_needed
-        case 'Y'
-            load(FlipName);
-            openvar('problem_indices');
-            disp('Giving control to keyboard for manual editing of flip variable.');
-            disp('Use dbcont command to exit keyboard editing mode.');
-            keyboard;
-            break
-        case 'N'
-            break
-            
-        otherwise
-            disp('Not a recognized answer. Please try again.');
+
+% CHOOSE CROSS-SECTIONS IN RANGE HERE, FROM FLIPPED ARRAY. THEN MAKE TWO
+% ELLIPSE FIT ARRAYS, ONE FOR PCA AND ONE FOR THE CHOSEN SECTIONS. THAT
+% SHOULD MAKE THE PCA USE ALL CROSS-SECTIONS, BUT CREATE_CASES.M SHOULD
+% HAVE THE SMALLER SET THAT IT NEEDS
+
+% Make smaller chosen sections set
+ChooseSectionsName = strcat(output_prefix,'_Sampled.mat');
+ChooseSections('samedist',range,slicedist,flippedTable,error_indices,npoints,ChooseSectionsName);
+
+%% Check to see if there is already an ellipse fit for the chosen distance
+% Get file name to look for
+searchslice = sprintf('%d',slicedist);
+if slicedist > 0
+    searchname = strcat('*Above_',searchslice,'_AllGoodEllipses.mat');
+    fstruct = dir(searchname);
+    if isempty(fstruct)
+        searchname = strcat('*Above_',searchslice,'_AllEllipses.mat');
+        fstruct = dir(searchname);
+    end
+    searchname = fstruct.name % PROBLEM: IF fstruct is empty at this point, then an error occurs
+        
+elseif slicedist < 0
+    searchname = strcat('*Below_',searchslice,'_AllGoodEllipses.mat')
+    if ~isfile(searchname)
+        searchname = strcat('*Below_',searchslice,'_AllEllipses.mat')
+    end
+else
+    searchname = strcat('*_At_Node','_AllGoodEllipses.mat')
+    if ~isfile(searchname)
+        searchname = strcat('*_At_Node','_AllEllipses.mat')
     end
 end
+    
+% If the ellipse data already exists, use the existing data instead of
+% going through the process of tagging any bad fits
+if ~isfile(searchname)
+    disp('No ellipse data for this slice distance exists in the current folder. Create one now.');
+    
+    % Calculate the ellipse fits for all cross-sections at chosen distance
+    AllEllipseName = strcat(output_prefix,'_AllEllipses.mat');
+    ellipse_fitting_V2(FlippedOutputName,AllEllipseName);
 
-problem_indices
+    % Calculate the ellipse fits for the chosen set of cross-sections
+    ChosenEllipseName = strcat(output_prefix,'_ChosenEllipses.mat');
+    ellipse_fitting_V2(ChooseSectionsName,ChosenEllipseName);
+
+    % Plot the ellipse fits and see if any of them have problems
+    load(AllEllipseName);
+    load(FlippedOutputName);
+
+    problem_indices = [];
+    chosen_problem_indices = [];
+    for i = 1:size(flippedTable,1)
+        i
+        polarplot(ELLIPSE_T(i,:),ELLIPSE_R_ext(i,:),'LineWidth',2);
+        hold on
+        polarplot(ELLIPSE_T(i,:),ELLIPSE_R_int(i,:),'LineWidth',2);
+        polarplot(ext_T(:,i),ext_Rho(:,i));
+        polarplot(int_T(:,i),int_Rho(:,i));
+        hold off
+        s = input('Enter 1 if the ellipse fit has a problem: ');
+        s
+        if s == 1
+            problem_indices = [problem_indices, i];
+            if i >= range(1) && i <= range(2)
+                chosen_problem_indices = [chosen_problem_indices, i];
+            end
+        else
+            continue
+        end    
+    end
+
+    while 1
+        fixes_needed = input('Does the ellipse problems vector need manual correction? Y/N ','s');
+        switch fixes_needed
+            case 'Y'
+                load(FlipName);
+                openvar('problem_indices');
+                disp('Giving control to keyboard for manual editing of flip variable.');
+                disp('Use dbcont command to exit keyboard editing mode.');
+                keyboard;
+                break
+            case 'N'
+                break
+
+            otherwise
+                disp('Not a recognized answer. Please try again.');
+        end
+    end
+
+    problem_indices
+    chosen_problem_indices
+    
+    
+else
+    disp('Ellipse data for the chosen slice distance has been found.');
+    AllEllipseName = searchname;
+    
+    % Calculate the ellipse fits for the chosen set of cross-sections
+    ChosenEllipseName = strcat(output_prefix,'_ChosenEllipses.mat');
+    ellipse_fitting_V2(ChooseSectionsName,ChosenEllipseName);
+end
+
+
 
 NEPCName = strcat(output_prefix,'_PCA.mat');
 MaterialsName = strcat(output_prefix, '_Materials.mat');
 
 if isempty(problem_indices)
-    % Run PCA
-    PCA_ellipse_fits(EllipseName,NEPCName);
+    % Run PCA on all cases
+    PCA_ellipse_fits(AllEllipseName,NEPCName);
     
     % Create the Abaqus Python scripts
-    create_cases(NEPCName,EllipseName,ChooseSectionsName,problem_indices,5,MaterialsName);
+    create_cases(NEPCName,ChosenEllipseName,ChooseSectionsName,problem_indices,5,MaterialsName);
 else
     % Remove the problem ellipses and then run PCA again
-    GoodEllipseFits = strcat(output_prefix,'_GoodEllipses.mat');
-    remove_problem_ellipses(EllipseName,problem_indices,GoodEllipseFits);
+    AllGoodEllipseFits = strcat(output_prefix,'_AllGoodEllipses.mat');
+    ChosenGoodEllipseFits = strcat(output_prefix,'_ChosenGoodEllipses.mat');
+    remove_problem_ellipses(AllEllipseName,problem_indices,AllGoodEllipseFits);
+    remove_problem_ellipses(ChosenEllipseName,chosen_problem_indices,ChosenGoodEllipseFits);
     
     % Run PCA
-    PCA_ellipse_fits(GoodEllipseFits,NEPCName);
+    PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
     
     % Create the Abaqus Python scripts
-    create_cases(NEPCName,GoodEllipseFits,ChooseSectionsName,problem_indices,5,MaterialsName);
+    create_cases(NEPCName,ChosenGoodEllipseFits,ChooseSectionsName,problem_indices,5,MaterialsName);
 end
 
 set(0,'DefaultFigureWindowStyle','normal');
@@ -265,6 +330,30 @@ switch method
                 selectedTable(row,:) = [];
             end
         end
+        
+        % Also get rid of any cross-sections that are made up of zeros
+        % (some sort of detection error)
+        deletesections = [];
+        for i = 1:size(selectedTable,1)
+            exterior_X = cell2mat(selectedTable.Ext_X(i));
+            exterior_Y = cell2mat(selectedTable.Ext_Y(i));
+            exterior_Rho = cell2mat(selectedTable.Ext_Rho(i));
+            interior_X = cell2mat(selectedTable.Int_X(i));
+            interior_Y = cell2mat(selectedTable.Int_Y(i));
+            interior_Rho = cell2mat(selectedTable.Int_Rho(i));
+
+            if (all(exterior_X == 0) || all(exterior_Y == 0) ||...
+                    all(exterior_Rho == 0) || all(interior_X == 0) ||...
+                    all(interior_Y == 0) || all(interior_Rho == 0))
+                    
+                deletesections = [deletesections, i];    
+                msg = sprintf('Section %d deleted',i);
+                disp(msg);
+            end
+        end
+        
+        %GET RID OF THE BAD SECTIONS HERE BY INDEXING
+        selectedTable(deletesections,:) = [];
         
         % Save compiled slices in arrays for downstream use
         ext_X =     makearray(selectedTable,'Ext_X',npoints);
@@ -553,7 +642,7 @@ R_int = zeros(N,npoints);
 
 AVG_RIND_T = zeros(N,1);
 
-prev_alpha = 0;
+
 
 min_angle = 135;
 min_angle = min_angle*(pi/180);     % Convert angle to radians
@@ -561,6 +650,8 @@ max_angle = 225;
 max_angle = max_angle*(pi/180);
 
 for i = 1:N
+    prev_alpha = 0;
+%     i
     % Define the notch range
     for j = 1:npoints
         if T(j) > min_angle
@@ -580,6 +671,10 @@ for i = 1:N
     window = [linspace(1,min_index,min_index),linspace(max_index,npoints,(npoints-max_index + 1))];
     xcut = X_ext(window,i);
     ycut = Y_ext(window,i);
+%     if i == 892
+%         xcut
+%         ycut
+%     end
 
     % Fit an ellipse to the data with the notch removed
     [alpha, major, minor, xbar_e, ybar_e, X_ellipse, Y_ellipse] = fit_ellipse_R4( xcut, ycut, npoints, prev_alpha, gca );
