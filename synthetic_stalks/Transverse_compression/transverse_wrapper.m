@@ -80,14 +80,6 @@ AllSectionsName = strcat(output_prefix,'_All980.mat');
 ChooseSections('samedist',[1 980],slicedist,Stalk_TableDCR,error_indices,npoints,AllSectionsName)
 load(AllSectionsName);
 
-% % Choose the cross-section samples
-% clearvars -except range slicedist output_prefix AllSectionsName
-% load(AllSectionsName);
-% ChooseSectionsName = strcat(output_prefix,'_Sampled.mat');
-% ChooseSections('samedist',range,slicedist,selectedTable,npoints,ChooseSectionsName)
-
-% Check if there's a flip vector with an appropriate FlipName. If it
-% exists already, load it and skip the manual flipping process.
 
 %% Check to see if there is already a flip vector for the chosen distance
 % Get file name to look for
@@ -288,6 +280,14 @@ end
 set(0,'DefaultFigureWindowStyle','normal');
 
 end
+
+
+
+
+
+
+
+
 
 %% Localizing all functions used
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
