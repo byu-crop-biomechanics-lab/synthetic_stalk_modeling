@@ -9,7 +9,7 @@ load NEPC_results_const_rind.mat % MAKE THIS INTO A FUNCTION THAT CAN READ IN AN
 % CONVERT FROM MICROMETER SCALE TO MILLIMETER SCALE FOR LOOKING AT ACTUAL
 % VALUES
 
-rows = 75;
+rows = 50;
 cols = 11;
 
 Results_new = NaN(rows,cols);

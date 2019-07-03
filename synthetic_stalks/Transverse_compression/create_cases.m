@@ -238,21 +238,21 @@ function [Erind,Epith] = get_materials(method)
     
     switch method
         case 'random'
-        % Generate Erind from normal distribution
-        while 1
-            Erind = normrnd(Erind_mean,Erind_stdev);
-            if Erind >= Erind_95(1) && Erind <= Erind_95(2)
-                break
+            % Generate Erind from normal distribution
+            while 1
+                Erind = normrnd(Erind_mean,Erind_stdev);
+                if Erind >= Erind_95(1) && Erind <= Erind_95(2)
+                    break
+                end
             end
-        end
 
-        % Generate Epith from normal distribution
-        while 1
-            Epith = normrnd(Epith_mean,Epith_stdev);
-            if Epith >= Epith_95(1) && Epith <= Epith_95(2)
-                break
-            end 
-        end
+            % Generate Epith from normal distribution
+            while 1
+                Epith = normrnd(Epith_mean,Epith_stdev);
+                if Epith >= Epith_95(1) && Epith <= Epith_95(2)
+                    break
+                end 
+            end
 
     %     % Generate Epith from normal distribution of pith/rind ratios
     %     while 1
@@ -271,6 +271,10 @@ function [Erind,Epith] = get_materials(method)
         case 'max'
             Erind = Erind_95(2);
             Epith = Epith_95(2);
+            
+        case 'avg'
+            Erind = Erind_mean;
+            Epith = Epith_mean;
     
     end
     
