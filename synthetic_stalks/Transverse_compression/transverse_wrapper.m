@@ -1,4 +1,4 @@
-function transverse_wrapper(range,slicedist)
+function transverse_wrapper(range,slicedist,material_method)
 % FILENAME: transverse_wrapper.m
 % AUTHOR: Ryan Larson
 % DATE: 6/18/19
@@ -75,20 +75,34 @@ end
 
 output_prefix = strcat('Stalks_',r1,'_',r2,slicepos);
 
-% Gather all the 
+% Gather all the cross-sections at the chosen slice distance
 AllSectionsName = strcat(output_prefix,'_All980.mat');
-ChooseSections('samedist',[1 980],slicedist,Stalk_TableDCR,npoints,AllSectionsName)
+ChooseSections('samedist',[1 980],slicedist,Stalk_TableDCR,error_indices,npoints,AllSectionsName)
+load(AllSectionsName);
 
 
-% % Choose the cross-section samples
-% clearvars -except range slicedist output_prefix AllSectionsName
-% load(AllSectionsName);
-% ChooseSectionsName = strcat(output_prefix,'_Sampled.mat');
-% ChooseSections('samedist',range,slicedist,selectedTable,npoints,ChooseSectionsName)
+%% Check to see if there is already a flip vector for the chosen distance
+% Get file name to look for
+searchslice = sprintf('%d',abs(slicedist));
+if slicedist > 0
+    FlippedOutputName = strcat('*Above_',searchslice,'_FLIPPED.mat');
+    fstruct = dir(FlippedOutputName);
+elseif slicedist < 0
+    FlippedOutputName = strcat('*Below_',searchslice,'_FLIPPED.mat');
+    fstruct = dir(FlippedOutputName);
+else
+    FlippedOutputName = strcat('*At_Node','_FLIPPED.mat');
+    fstruct = dir(FlippedOutputName);        
+end
 
-% Check if there's a flip vector with the appropriate FlipName. If it
-% exists already, load it and skip the manual flipping process.
-FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
+if isempty(fstruct)
+    FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
+else
+    FlippedOutputName = fstruct(1).name;
+end
+
+
+% FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
 if ~isfile(FlippedOutputName)
     disp('No flip index vector exists in the current folder. Create one now.');
     % Manually find the cross-sections that need to be flipped 180 degrees
@@ -125,71 +139,142 @@ else
 end
 
 
-% Calculate the ellipse fits
-EllipseName = strcat(output_prefix,'_Ellipses.mat');
-ellipse_fitting_V2(FlippedOutputName,EllipseName);
-
-% Plot the ellipse fits and see if any of them have problems
-load(EllipseName);
 load(FlippedOutputName);
 
-problem_indices = [];
-for i = 1:(range(2) - range(1) + 1)
-    i
-    polarplot(ELLIPSE_T(i,:),ELLIPSE_R_ext(i,:),'LineWidth',2);
-    hold on
-    polarplot(ELLIPSE_T(i,:),ELLIPSE_R_int(i,:),'LineWidth',2);
-    polarplot(ext_T(:,i),ext_Rho(:,i));
-    polarplot(int_T(:,i),int_Rho(:,i));
-    hold off
-    s = input('Enter 1 if the ellipse fit has a problem: ');
-    s
-    if s == 1
-        problem_indices = [problem_indices, i];
-    else
-        continue
-    end    
-end
+% Make smaller chosen sections set
+ChooseSectionsName = strcat(output_prefix,'_Sampled.mat');
+ChooseSections('samedist',range,slicedist,flippedTable,error_indices,npoints,ChooseSectionsName);
 
-while 1
-    fixes_needed = input('Does the ellipse problems vector need manual correction? Y/N ','s');
-    switch fixes_needed
-        case 'Y'
-            load(FlipName);
-            openvar('problem_indices');
-            disp('Giving control to keyboard for manual editing of flip variable.');
-            disp('Use dbcont command to exit keyboard editing mode.');
-            keyboard;
-            break
-        case 'N'
-            break
-            
-        otherwise
-            disp('Not a recognized answer. Please try again.');
+%% Check to see if there is already an ellipse fit for the chosen distance
+% Get file name to look for
+searchslice = sprintf('%d',slicedist);
+if slicedist > 0
+    searchname = strcat('*Above_',searchslice,'_AllGoodEllipses.mat');
+    fstruct = dir(searchname);
+    if isempty(fstruct)
+        searchname = strcat('*Above_',searchslice,'_AllEllipses.mat');
     end
+        
+elseif slicedist < 0
+    searchname = strcat('*Below_',searchslice,'_AllGoodEllipses.mat');
+    fstruct = dir(searchname);
+    if isempty(fstruct)
+        searchname = strcat('*Below_',searchslice,'_AllEllipses.mat');
+    end
+    
+else
+    searchname = strcat('*At_Node','_AllGoodEllipses.mat');
+    fstruct = dir(searchname);
+    if isempty(fstruct)
+        searchname = strcat('*At_Node','_AllEllipses.mat');
+    end
+    
+end
+    
+fstruct = dir(searchname);
+if isempty(fstruct)
+    searchname = strcat(output_prefix,'_AllEllipses.mat');
+else
+    searchname = fstruct(1).name;
 end
 
-problem_indices
+
+
+% If the ellipse data already exists, use the existing data instead of
+% going through the process of tagging any bad fits
+problem_indices = [];
+chosen_problem_indices = [];
+    
+if ~isfile(searchname)
+    disp('No ellipse data for this slice distance exists in the current folder. Create one now.');
+    
+    % Calculate the ellipse fits for all cross-sections at chosen distance
+    AllEllipseName = strcat(output_prefix,'_AllEllipses.mat');
+    ellipse_fitting_V2(FlippedOutputName,AllEllipseName);
+
+    % Calculate the ellipse fits for the chosen set of cross-sections
+    ChosenEllipseName = strcat(output_prefix,'_ChosenEllipses.mat');
+    ellipse_fitting_V2(ChooseSectionsName,ChosenEllipseName);
+
+    % Plot the ellipse fits and see if any of them have problems
+    load(AllEllipseName);
+    load(FlippedOutputName);
+
+    
+    for i = 1:size(flippedTable,1)
+        i
+        polarplot(ELLIPSE_T(i,:),ELLIPSE_R_ext(i,:),'LineWidth',2);
+        hold on
+        polarplot(ELLIPSE_T(i,:),ELLIPSE_R_int(i,:),'LineWidth',2);
+        polarplot(ext_T(:,i),ext_Rho(:,i));
+        polarplot(int_T(:,i),int_Rho(:,i));
+        hold off
+        s = input('Enter 1 if the ellipse fit has a problem: ');
+        s
+        if s == 1
+            problem_indices = [problem_indices, i];
+            if i >= range(1) && i <= range(2)
+                chosen_problem_indices = [chosen_problem_indices, i];
+            end
+        else
+            continue
+        end    
+    end
+
+    while 1
+        fixes_needed = input('Does the ellipse problems vector need manual correction? Y/N ','s');
+        switch fixes_needed
+            case 'Y'
+                load(FlipName);
+                openvar('problem_indices');
+                disp('Giving control to keyboard for manual editing of flip variable.');
+                disp('Use dbcont command to exit keyboard editing mode.');
+                keyboard;
+                break
+            case 'N'
+                break
+
+            otherwise
+                disp('Not a recognized answer. Please try again.');
+        end
+    end
+
+    problem_indices
+    chosen_problem_indices
+    
+    
+else
+    disp('Ellipse data for the chosen slice distance has been found.');
+    AllEllipseName = searchname;
+    
+    % Calculate the ellipse fits for the chosen set of cross-sections
+    ChosenEllipseName = strcat(output_prefix,'_ChosenEllipses.mat');
+    ellipse_fitting_V2(ChooseSectionsName,ChosenEllipseName);
+end
+
+
 
 NEPCName = strcat(output_prefix,'_PCA.mat');
 MaterialsName = strcat(output_prefix, '_Materials.mat');
 
 if isempty(problem_indices)
-    % Run PCA
-    PCA_ellipse_fits(EllipseName,NEPCName);
+    % Run PCA on all cases
+    PCA_ellipse_fits(AllEllipseName,NEPCName);
     
     % Create the Abaqus Python scripts
-    create_cases(NEPCName,EllipseName,ChooseSectionsName,problem_indices,5,MaterialsName);
+    create_cases(NEPCName,ChosenEllipseName,ChooseSectionsName,problem_indices,5,material_method,MaterialsName);
 else
     % Remove the problem ellipses and then run PCA again
-    GoodEllipseFits = strcat(output_prefix,'_GoodEllipses.mat');
-    remove_problem_ellipses(EllipseName,problem_indices,GoodEllipseFits);
+    AllGoodEllipseFits = strcat(output_prefix,'_AllGoodEllipses.mat');
+    ChosenGoodEllipseFits = strcat(output_prefix,'_ChosenGoodEllipses.mat');
+    remove_problem_ellipses(AllEllipseName,problem_indices,AllGoodEllipseFits);
+    remove_problem_ellipses(ChosenEllipseName,chosen_problem_indices,ChosenGoodEllipseFits);
     
     % Run PCA
-    PCA_ellipse_fits(GoodEllipseFits,NEPCName);
+    PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
     
     % Create the Abaqus Python scripts
-    create_cases(NEPCName,GoodEllipseFits,ChooseSectionsName,problem_indices,5,MaterialsName);
+    create_cases(NEPCName,ChosenGoodEllipseFits,ChooseSectionsName,problem_indices,5,material_method,MaterialsName);
 end
 
 set(0,'DefaultFigureWindowStyle','normal');
@@ -198,7 +283,15 @@ end
 
 
 
+
+
+
+
+
+
 %% Localizing all functions used
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function ChooseSections(method,range,dist,Table,error_indices,npoints,SaveName)
 % ChooseSections.m: Determine the cross-sections to compile, which is
 % determined by a method
@@ -265,6 +358,30 @@ switch method
                 selectedTable(row,:) = [];
             end
         end
+        
+        % Also get rid of any cross-sections that are made up of zeros
+        % (some sort of detection error)
+        deletesections = [];
+        for i = 1:size(selectedTable,1)
+            exterior_X = cell2mat(selectedTable.Ext_X(i));
+            exterior_Y = cell2mat(selectedTable.Ext_Y(i));
+            exterior_Rho = cell2mat(selectedTable.Ext_Rho(i));
+            interior_X = cell2mat(selectedTable.Int_X(i));
+            interior_Y = cell2mat(selectedTable.Int_Y(i));
+            interior_Rho = cell2mat(selectedTable.Int_Rho(i));
+
+            if (all(exterior_X == 0) || all(exterior_Y == 0) ||...
+                    all(exterior_Rho == 0) || all(interior_X == 0) ||...
+                    all(interior_Y == 0) || all(interior_Rho == 0))
+                    
+                deletesections = [deletesections, i];    
+                msg = sprintf('Section %d deleted',i);
+                disp(msg);
+            end
+        end
+        
+        %GET RID OF THE BAD SECTIONS HERE BY INDEXING
+        selectedTable(deletesections,:) = [];
         
         % Save compiled slices in arrays for downstream use
         ext_X =     makearray(selectedTable,'Ext_X',npoints);
@@ -553,7 +670,7 @@ R_int = zeros(N,npoints);
 
 AVG_RIND_T = zeros(N,1);
 
-prev_alpha = 0;
+
 
 min_angle = 135;
 min_angle = min_angle*(pi/180);     % Convert angle to radians
@@ -561,6 +678,8 @@ max_angle = 225;
 max_angle = max_angle*(pi/180);
 
 for i = 1:N
+    prev_alpha = 0;
+%     i
     % Define the notch range
     for j = 1:npoints
         if T(j) > min_angle
@@ -580,6 +699,10 @@ for i = 1:N
     window = [linspace(1,min_index,min_index),linspace(max_index,npoints,(npoints-max_index + 1))];
     xcut = X_ext(window,i);
     ycut = Y_ext(window,i);
+%     if i == 892
+%         xcut
+%         ycut
+%     end
 
     % Fit an ellipse to the data with the notch removed
     [alpha, major, minor, xbar_e, ybar_e, X_ellipse, Y_ellipse] = fit_ellipse_R4( xcut, ycut, npoints, prev_alpha, gca );
@@ -792,7 +915,7 @@ save(SaveFile,'A','B','ELLIPSE_XY','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int',.
 
 end
 
-function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numNEPCs,SaveName)
+function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numNEPCs,material_method,SaveName)
     % create_cases.m: Calculate the necessary information to include in the
     % Python scripts
     
@@ -820,7 +943,7 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
         %% Real cross section (case 0)
         case_num = 0; % increment this for each case within each cross section
         Script = Template;
-        [Erind,Epith] = get_materials;
+        [Erind,Epith] = get_materials(material_method);
         make_case(case_num,i,ID,R_ext,R_int,ELLIPSE_T,Script,Erind,Epith);
         MaterialProps(i,case_num+1,1) = Erind;
         MaterialProps(i,case_num+1,2) = Epith;
@@ -828,7 +951,7 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
         %% Pure ellipse fit (case 1)
         case_num = case_num + 1;
         Script = Template; % Reset the script template
-        [Erind,Epith] = get_materials;
+        [Erind,Epith] = get_materials(material_method);
         make_case(case_num,i,ID,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script,Erind,Epith);
         MaterialProps(i,case_num+1,1) = Erind;
         MaterialProps(i,case_num+1,2) = Epith;
@@ -851,7 +974,7 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
             Rnew_int = Rnew_ext - AVG_RIND_T(i);
             
-            [Erind,Epith] = get_materials;
+            [Erind,Epith] = get_materials(material_method);
             make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
             MaterialProps(i,case_num+1,1) = Erind;
             MaterialProps(i,case_num+1,2) = Epith;
@@ -872,7 +995,7 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
 %             Rnew_int = Rnew_ext - AVG_RIND_T(i);
 
-            [Erind,Epith] = get_materials;
+            [Erind,Epith] = get_materials(material_method);
             make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
             MaterialProps(i,case_num+1,1) = Erind;
             MaterialProps(i,case_num+1,2) = Epith;
@@ -889,7 +1012,6 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
     
 
 end
-    
 
 function make_case(case_num,i,ID,R_ext,R_int,T,Script,Erind,Epith)
     CASE = sprintf('%d',case_num);
@@ -1016,7 +1138,7 @@ function [xy_columns] = convert_to_xy(R,theta)
     end
 end
 
-function [Erind,Epith] = get_materials()
+function [Erind,Epith] = get_materials(method)
 % Calculate the random material properties from a normal distribution.
     % Bound with 95% confidence interval, calculated from transverse
     % material properties used in another paper.
@@ -1030,29 +1152,46 @@ function [Erind,Epith] = get_materials()
     ratio_stdev = 0.0180;
     ratio_95 = [0.0300 0.0444];
     
-    % Generate Erind from normal distribution
-    while 1
-        Erind = normrnd(Erind_mean,Erind_stdev);
-        if Erind >= Erind_95(1) && Erind <= Erind_95(2)
-            break
-        end
-    end
-    
-    % Generate Epith from normal distribution
-    while 1
-        Epith = normrnd(Epith_mean,Epith_stdev);
-        if Epith >= Epith_95(1) && Epith <= Epith_95(2)
-            break
-        end 
-    end
+    switch method
+        case 'random'
+            % Generate Erind from normal distribution
+            while 1
+                Erind = normrnd(Erind_mean,Erind_stdev);
+                if Erind >= Erind_95(1) && Erind <= Erind_95(2)
+                    break
+                end
+            end
 
-%     % Generate Epith from normal distribution of pith/rind ratios
-%     while 1
-%         ratio = normrnd(ratio_mean,ratio_stdev);
-%         if ratio >= ratio_95(1) && ratio <= ratio_95(2)
-%             break
-%         end
-%     end
-%     Epith = ratio*Erind;
+            % Generate Epith from normal distribution
+            while 1
+                Epith = normrnd(Epith_mean,Epith_stdev);
+                if Epith >= Epith_95(1) && Epith <= Epith_95(2)
+                    break
+                end 
+            end
+            
+            
+    %     % Generate Epith from normal distribution of pith/rind ratios
+    %     while 1
+    %         ratio = normrnd(ratio_mean,ratio_stdev);
+    %         if ratio >= ratio_95(1) && ratio <= ratio_95(2)
+    %             break
+    %         end
+    %     end
+    %     Epith = ratio*Erind;
+
+    
+        case 'min'
+            Erind = Erind_95(1);
+            Epith = Epith_95(1);
+            
+        case 'max'
+            Erind = Erind_95(2);
+            Epith = Epith_95(2);
+    
+        case 'avg'
+            Erind = Erind_mean;
+            Epith = Epith_mean;
+    end
     
 end

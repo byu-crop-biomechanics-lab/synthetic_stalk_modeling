@@ -1,4 +1,4 @@
-function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numNEPCs,SaveName)
+function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numNEPCs,material_method,SaveName)
     % create_cases.m: Calculate the necessary information to include in the
     % Python scripts
     
@@ -26,7 +26,7 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
         %% Real cross section (case 0)
         case_num = 0; % increment this for each case within each cross section
         Script = Template;
-        [Erind,Epith] = get_materials;
+        [Erind,Epith] = get_materials(material_method);
         make_case(case_num,i,ID,R_ext,R_int,ELLIPSE_T,Script,Erind,Epith);
         MaterialProps(i,case_num+1,1) = Erind;
         MaterialProps(i,case_num+1,2) = Epith;
@@ -34,7 +34,7 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
         %% Pure ellipse fit (case 1)
         case_num = case_num + 1;
         Script = Template; % Reset the script template
-        [Erind,Epith] = get_materials;
+        [Erind,Epith] = get_materials(material_method);
         make_case(case_num,i,ID,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script,Erind,Epith);
         MaterialProps(i,case_num+1,1) = Erind;
         MaterialProps(i,case_num+1,2) = Epith;
@@ -57,7 +57,7 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
             Rnew_int = Rnew_ext - AVG_RIND_T(i);
             
-            [Erind,Epith] = get_materials;
+            [Erind,Epith] = get_materials(material_method);
             make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
             MaterialProps(i,case_num+1,1) = Erind;
             MaterialProps(i,case_num+1,2) = Epith;
@@ -78,7 +78,7 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
 %             Rnew_int = Rnew_ext - AVG_RIND_T(i);
 
-            [Erind,Epith] = get_materials;
+            [Erind,Epith] = get_materials(material_method);
             make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
             MaterialProps(i,case_num+1,1) = Erind;
             MaterialProps(i,case_num+1,2) = Epith;
@@ -222,7 +222,7 @@ function [xy_columns] = convert_to_xy(R,theta)
     end
 end
 
-function [Erind,Epith] = get_materials()
+function [Erind,Epith] = get_materials(method)
 % Calculate the random material properties from a normal distribution.
     % Bound with 95% confidence interval, calculated from transverse
     % material properties used in another paper.
@@ -236,29 +236,46 @@ function [Erind,Epith] = get_materials()
     ratio_stdev = 0.0180;
     ratio_95 = [0.0300 0.0444];
     
-    % Generate Erind from normal distribution
-    while 1
-        Erind = normrnd(Erind_mean,Erind_stdev);
-        if Erind >= Erind_95(1) && Erind <= Erind_95(2)
-            break
-        end
-    end
-    
-    % Generate Epith from normal distribution
-    while 1
-        Epith = normrnd(Epith_mean,Epith_stdev);
-        if Epith >= Epith_95(1) && Epith <= Epith_95(2)
-            break
-        end 
-    end
+    switch method
+        case 'random'
+            % Generate Erind from normal distribution
+            while 1
+                Erind = normrnd(Erind_mean,Erind_stdev);
+                if Erind >= Erind_95(1) && Erind <= Erind_95(2)
+                    break
+                end
+            end
 
-%     % Generate Epith from normal distribution of pith/rind ratios
-%     while 1
-%         ratio = normrnd(ratio_mean,ratio_stdev);
-%         if ratio >= ratio_95(1) && ratio <= ratio_95(2)
-%             break
-%         end
-%     end
-%     Epith = ratio*Erind;
+            % Generate Epith from normal distribution
+            while 1
+                Epith = normrnd(Epith_mean,Epith_stdev);
+                if Epith >= Epith_95(1) && Epith <= Epith_95(2)
+                    break
+                end 
+            end
+
+    %     % Generate Epith from normal distribution of pith/rind ratios
+    %     while 1
+    %         ratio = normrnd(ratio_mean,ratio_stdev);
+    %         if ratio >= ratio_95(1) && ratio <= ratio_95(2)
+    %             break
+    %         end
+    %     end
+    %     Epith = ratio*Erind;
+
+    
+        case 'min'
+            Erind = Erind_95(1);
+            Epith = Epith_95(1);
+            
+        case 'max'
+            Erind = Erind_95(2);
+            Epith = Epith_95(2);
+            
+        case 'avg'
+            Erind = Erind_mean;
+            Epith = Epith_mean;
+    
+    end
     
 end
