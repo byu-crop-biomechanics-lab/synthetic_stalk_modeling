@@ -1,4 +1,4 @@
-function transverse_wrapper(range,slicedist,material_method)
+function transverse_wrapper(range,slicedist,material_method,cpu)
 % FILENAME: transverse_wrapper.m
 % AUTHOR: Ryan Larson
 % DATE: 6/18/19
@@ -262,7 +262,7 @@ if isempty(problem_indices)
     PCA_ellipse_fits(AllEllipseName,NEPCName);
     
     % Create the Abaqus Python scripts
-    create_cases(NEPCName,ChosenEllipseName,ChooseSectionsName,problem_indices,5,material_method,MaterialsName);
+    create_cases(NEPCName,ChosenEllipseName,ChooseSectionsName,problem_indices,5,material_method,cpu,MaterialsName);
 else
     % Remove the problem ellipses and then run PCA again
     AllGoodEllipseFits = strcat(output_prefix,'_AllGoodEllipses.mat');
@@ -274,7 +274,7 @@ else
     PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
     
     % Create the Abaqus Python scripts
-    create_cases(NEPCName,ChosenGoodEllipseFits,ChooseSectionsName,problem_indices,5,material_method,MaterialsName);
+    create_cases(NEPCName,ChosenGoodEllipseFits,ChooseSectionsName,problem_indices,5,material_method,cpu,MaterialsName);
 end
 
 set(0,'DefaultFigureWindowStyle','normal');
@@ -915,7 +915,7 @@ save(SaveFile,'A','B','ELLIPSE_XY','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int',.
 
 end
 
-function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numNEPCs,material_method,SaveName)
+function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numNEPCs,material_method,cpu,SaveName)
     % create_cases.m: Calculate the necessary information to include in the
     % Python scripts
     
@@ -926,8 +926,11 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
     N = size(ELLIPSE_T,1);
     MaterialProps = zeros(N,(2 + 2*numNEPCs - 1),2);
     
-
-    write_Python_template;  % Create Template cell array that can be copied and used to make individualized Python scripts
+    if cpu == 'multi'
+        write_Python_template_mult_processor;
+    else
+        write_Python_template;  % Create Template cell array that can be copied and used to make individualized Python scripts
+    end
 
     %% Create all geometry cases for a given cross section
     % Step through the cross sections
