@@ -1,9 +1,9 @@
-function ChooseSections(method,range,dist,Table,npoints,SaveName)
+function ChooseSections(method,range,dist,Table,error_indices,npoints,SaveName)
 % ChooseSections.m: Determine the cross-sections to compile, which is
 % determined by a method
 
 % range: For Stalk_Table, this must be a row vector of two integer values
-% from 1 to 990.
+% from 1 to 980.
 
 allrows = size(Table,1);
 
@@ -56,6 +56,39 @@ switch method
         % Create table from indices for later reference
         selectedTable = Table(indices,:);
         
+        % Get rid of any cross-sections that were chosen that are also
+        % listed in error_indices
+        for i = 1:length(error_indices)
+            if ismember(error_indices(i),selectedTable.StkNum)
+                row = find(selectedTable.StkNum == error_indices(i));
+                selectedTable(row,:) = [];
+            end
+        end
+        
+        % Also get rid of any cross-sections that are made up of zeros
+        % (some sort of detection error)
+        deletesections = [];
+        for i = 1:size(selectedTable,1)
+            exterior_X = cell2mat(selectedTable.Ext_X(i));
+            exterior_Y = cell2mat(selectedTable.Ext_Y(i));
+            exterior_Rho = cell2mat(selectedTable.Ext_Rho(i));
+            interior_X = cell2mat(selectedTable.Int_X(i));
+            interior_Y = cell2mat(selectedTable.Int_Y(i));
+            interior_Rho = cell2mat(selectedTable.Int_Rho(i));
+
+            if (all(exterior_X == 0) || all(exterior_Y == 0) ||...
+                    all(exterior_Rho == 0) || all(interior_X == 0) ||...
+                    all(interior_Y == 0) || all(interior_Rho == 0))
+                    
+                deletesections = [deletesections, i];    
+                msg = sprintf('Section %d deleted',i);
+                disp(msg);
+            end
+        end
+        
+        %GET RID OF THE BAD SECTIONS HERE BY INDEXING
+        selectedTable(deletesections,:) = [];
+        
         % Save compiled slices in arrays for downstream use
         ext_X =     makearray(selectedTable,'Ext_X',npoints);
         ext_Y =     makearray(selectedTable,'Ext_Y',npoints);
@@ -65,8 +98,7 @@ switch method
         ext_Rho =   makearray(selectedTable,'Ext_Rho',npoints);
         int_T =     makearray(selectedTable,'Int_T',npoints);
         int_Rho =   makearray(selectedTable,'Int_Rho',npoints);
-        avg_rind_thick = Table.rind_t(range(1):range(2));
-        
+        avg_rind_thick = selectedTable.rind_t;
         
         % Output all variables into mat file
         FolderName = pwd;
@@ -74,9 +106,34 @@ switch method
         save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_T','ext_Rho',...
             'int_T','int_Rho','avg_rind_thick','indices','selectedTable','npoints');
         
+        
+        
     case 'wholestalk'
         % Choose a range of stalk numbers, and all the slices from each of
         % the chosen stalks will be chosen
+        
+        
+        
+    case 'all'
+        % Chooses every slice and converts it into an array format for
+        % working with more easily.
+        
+        % Save compiled slices in arrays for downstream use
+        ext_X =     makearray(Table,'Ext_X',npoints);
+        ext_Y =     makearray(Table,'Ext_Y',npoints);
+        int_X =     makearray(Table,'Int_X',npoints);
+        int_Y =     makearray(Table,'Int_Y',npoints);
+        ext_T =     makearray(Table,'Ext_T',npoints);
+        ext_Rho =   makearray(Table,'Ext_Rho',npoints);
+        int_T =     makearray(Table,'Int_T',npoints);
+        int_Rho =   makearray(Table,'Int_Rho',npoints);
+        avg_rind_thick = Table.rind_t;
+        
+        % Output all variables into mat file
+        FolderName = pwd;
+        SaveFile = fullfile(FolderName, SaveName);
+        save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_T','ext_Rho',...
+            'int_T','int_Rho','avg_rind_thick','npoints');
         
     otherwise
         disp('Unknown method.');

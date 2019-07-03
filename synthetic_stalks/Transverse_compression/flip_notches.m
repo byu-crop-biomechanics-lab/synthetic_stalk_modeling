@@ -62,22 +62,8 @@ for i = 1:N
     end
 end
 
-% % Plot the cross sections that should be flipped to verify that the notches
-% % are all on the left side
-% for i = 1:length(flipped)
-%     for j = 1:length(T)
-%         plot(ext_X(1:j,flipped(i)),ext_Y(1:j,flipped(i)));
-%         hold on
-%         plot(int_X(1:j,flipped(i)),int_Y(1:j,flipped(i)));
-%         axis equal
-%         hold off
-% %         pause(0.01);
-%     end
-%     pause();
-% end
-
-
 % Convert data from Cartesian to polar
+size(T)
 for i = 1:N
     for j = 1:length(T)
         ext_Rho(i,j) = sqrt(ext_X(j,i)^2 + ext_Y(j,i)^2);
@@ -87,12 +73,27 @@ end
 
 % Transpose rho arrays so they are the same orientation as the other
 % variables
-ext_rho = ext_rho';
-int_rho = int_rho';
+% ext_rho = ext_rho';
+% int_rho = int_rho';
+
+flippedTable = selectedTable;
+
+for i = flipped
+    flippedTable.Ext_X(i) = ext_X(:,i);
+    flippedTable.Ext_Y(i) = ext_Y(:,i);
+%     flippedTable.Ext_T(i) = ext_T(:,i);
+    flippedTable.Ext_Rho(i) = ext_Rho(:,i);
+    flippedTable.Int_X(i) = int_X(:,i);
+    flippedTable.Int_Y(i) = int_Y(:,i);
+%     flippedTable.Int_T(i) = int_T(:,i);
+    flippedTable.Int_Rho(i) = int_Rho(:,i);
+    
+end
 
 % Save data as mat file
 FolderName = pwd;
 SaveFile = fullfile(FolderName, FlippedOutputName);
-save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_Rho','int_Rho','ext_T','int_T','avg_rind_thick','flip_sections','npoints');
+save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_Rho','int_Rho','ext_T',...
+    'int_T','avg_rind_thick','flip_sections','flippedTable','npoints');
 
 end

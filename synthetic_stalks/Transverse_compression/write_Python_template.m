@@ -1,6 +1,6 @@
 % write_Python_template.m: Use Christopher's Python script for taking
 % cross-section points and running an Abaqus case and make a string array
-% that can be used to 
+% that can be used to
 
 
 % IMPORTANT NOTE: This script will not display properly when opened in
@@ -35,13 +35,13 @@ Template = {
     '#name of output text file (must match looper script)';
     'filename = ''C:/Temp/Results.txt''';
     '#mesh seed size of part';
-    'SeedSize = 0.1';   % CHANGE THE SEED SIZE HERE
+    'SeedSize = 100';   % CHANGE THE SEED SIZE HERE
     '#deflection of part';
-    'PlatenMovement = 0.005';
+    'PlatenMovement = 5';
     '#rind modulus';
-    'rindE = 14672.916666667';
+    'rindE = ';
     '#rind modulus';
-    'pithE = 1467.2916666667';
+    'pithE = ';
     '#x location of reference point 1';
     'RP1x = ';
     '#y location of reference point 1';
@@ -51,7 +51,7 @@ Template = {
     '#y location of reference point 1';
     'RP2y = ';
     '#influence area of fake contact constraint';
-    'influence = 1.25';
+    'influence = 1000';
     '######################################################################################';
     '';
     '#Define additional parameters';
