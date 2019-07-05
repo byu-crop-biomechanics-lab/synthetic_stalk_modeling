@@ -52,8 +52,8 @@ set(0,'DefaultFigureWindowStyle','docked');
 
 r1 = num2str(range(1));
 r2 = num2str(range(2));
-dist_int = num2str(round(abs(slicedist),0));
-deci = abs(slicedist) - round(abs(slicedist),0);
+dist_int = num2str(floor(abs(slicedist)));
+deci = abs(slicedist) - floor(abs(slicedist));
 dist_deci = num2str(deci);
 dist_deci = erase(dist_deci,'0.');
 
