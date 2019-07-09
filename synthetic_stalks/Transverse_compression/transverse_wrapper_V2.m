@@ -1,4 +1,4 @@
-function transverse_wrapper(range,slicedist,material_method,cpu)
+function transverse_wrapper_V2(stalknums,slicedist,material_method,cpu)
 % FILENAME: transverse_wrapper.m
 % AUTHOR: Ryan Larson
 % DATE: 6/18/19
@@ -8,9 +8,9 @@ function transverse_wrapper(range,slicedist,material_method,cpu)
 % 
 % 
 % INPUTS:
-%       range - A 1 x 2 vector of integers, indicating the starting and
-%       ending stalk numbers that will be used (values must be between 1
-%       and 990)
+%       stalknums - A vector of unique integers from 1 to 980 that determines
+%       which stalks to sample from (use randperm(980,K) to choose K
+%       unique integers from 1 to 980)
 %       slicedist - A number value (can be integer or decimal) that
 %       signifies the distance in millimeters from the nearest node on the
 %       stalk at the chosen slice.  
@@ -38,7 +38,8 @@ function transverse_wrapper(range,slicedist,material_method,cpu)
 % 
 % VERSION HISTORY:
 % V1 - Choose a continuous range of stalk numbers to sample
-% V2 - 
+% V2 - Input a vector of unique random integers to determine which stalks
+% to sample
 % V3 - 
 %
 % -------------------------------------------------------------------------
@@ -50,8 +51,8 @@ hold off
 close all;
 set(0,'DefaultFigureWindowStyle','docked');
 
-r1 = num2str(range(1));
-r2 = num2str(range(2));
+% r1 = num2str(range(1));
+% r2 = num2str(range(2));
 dist_int = num2str(floor(abs(slicedist)));
 deci = abs(slicedist) - floor(abs(slicedist));
 dist_deci = num2str(deci);
@@ -59,25 +60,31 @@ dist_deci = erase(dist_deci,'0.');
 
 if slicedist > 0
     if strcmp(dist_deci,'0')
-        slicepos = strcat('_Above_',dist_int);
+        slicepos = strcat('Random_Above_',dist_int);
     else
-        slicepos = strcat('_Above_',dist_int,'_',dist_deci);
+        slicepos = strcat('Random_Above_',dist_int,'_',dist_deci);
     end
 elseif slicedist < 0
     if strcmp(dist_deci,'0')
-        slicepos = strcat('_Below_',dist_int);
+        slicepos = strcat('Random_Below_',dist_int);
     else
-        slicepos = strcat('_Below_',dist_int,'_',dist_deci);
+        slicepos = strcat('Random_Below_',dist_int,'_',dist_deci);
     end
 else
-    slicepos = strcat('_At_Node');
+    slicepos = strcat('Random_At_Node');
 end
 
-output_prefix = strcat('Stalks_',r1,'_',r2,slicepos);
+output_prefix = strcat(slicepos);
+
+StalkNumsName = strcat(output_prefix,'_Stalks.mat');
+FolderName = pwd;
+SaveFile = fullfile(FolderName, StalkNumsName);
+save(SaveFile,'stalknums');
+
 
 % Gather all the cross-sections at the chosen slice distance
 AllSectionsName = strcat(output_prefix,'_All980.mat');
-ChooseSections('samedist',[1 980],slicedist,Stalk_TableDCR,error_indices,npoints,AllSectionsName)
+ChooseSections('samedist',linspace(1,980,980),slicedist,Stalk_TableDCR,error_indices,npoints,AllSectionsName)
 load(AllSectionsName);
 
 
@@ -98,7 +105,7 @@ end
 if isempty(fstruct)
     FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
 else
-    FlippedOutputName = fstruct(1).name;
+    FlippedOutputName = fstruct(1).name
 end
 
 
@@ -135,7 +142,7 @@ if ~isfile(FlippedOutputName)
     flip_notches(FlipName,AllSectionsName,FlippedOutputName);
     
 else
-    FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
+%     FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
     disp('A flip index vector for the chosen data has been found.');
 end
 
@@ -144,7 +151,7 @@ load(FlippedOutputName);
 
 % Make smaller chosen sections set
 ChooseSectionsName = strcat(output_prefix,'_Sampled.mat');
-ChooseSections('samedist',range,slicedist,flippedTable,error_indices,npoints,ChooseSectionsName);
+ChooseSections('samedist',stalknums,slicedist,flippedTable,error_indices,npoints,ChooseSectionsName);
 
 %% Check to see if there is already an ellipse fit for the chosen distance
 % Get file name to look for
@@ -293,7 +300,7 @@ end
 %% Localizing all functions used
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function ChooseSections(method,range,dist,Table,error_indices,npoints,SaveName)
+function ChooseSections(method,stalknums,dist,Table,error_indices,npoints,SaveName)
 % ChooseSections.m: Determine the cross-sections to compile, which is
 % determined by a method
 
@@ -306,12 +313,12 @@ switch method
     % Choose a number of cross-sections that are all at the same distance
     % from the node
     case 'samedist'
-        indices = zeros(1,(range(2) - range(1) + 1));
+        indices = zeros(1,length(stalknums));
 %         dist = input('Choose approximate slice distance to use: ');
         
         % Step through stalks of interest (defined by range values)
         stalk = 1;
-        for i = range(1):range(2)
+        for i = stalknums
             A = (Table.StkNum == i);
             
             % Get index of first row that is part of the current stalk
