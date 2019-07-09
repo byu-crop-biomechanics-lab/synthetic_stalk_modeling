@@ -105,15 +105,15 @@ end
 if isempty(fstruct)
     FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
 else
-    FlippedOutputName = fstruct(1).name
+    FlippedOutputName = fstruct(1).name;
 end
 
-
+FlipName = strcat(output_prefix,'_flip_sections.mat');
 % FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
 if ~isfile(FlippedOutputName)
     disp('No flip index vector exists in the current folder. Create one now.');
     % Manually find the cross-sections that need to be flipped 180 degrees
-    FlipName = strcat(output_prefix,'_flip_sections.mat');
+%     FlipName = strcat(output_prefix,'_flip_sections.mat');
     find_flip_notches(AllSectionsName,FlipName)
 
     while 1
@@ -221,19 +221,19 @@ if ~isfile(searchname)
         s
         if s == 1
             problem_indices = [problem_indices, i];
-            if i >= range(1) && i <= range(2)
-                chosen_problem_indices = [chosen_problem_indices, i];
-            end
+%             if any(ismember(i,stalknums))
+%                 chosen_problem_indices = [chosen_problem_indices, i];
+%             end
         else
             continue
         end    
-    end
-
+    end    
+    
     while 1
         fixes_needed = input('Does the ellipse problems vector need manual correction? Y/N ','s');
         switch fixes_needed
             case 'Y'
-                load(FlipName);
+%                 load(FlipName);
                 openvar('problem_indices');
                 disp('Giving control to keyboard for manual editing of flip variable.');
                 disp('Use dbcont command to exit keyboard editing mode.');
@@ -247,6 +247,9 @@ if ~isfile(searchname)
         end
     end
 
+    problocs = ismember(problem_indices,stalknums);
+    chosen_problem_indices = problem_indices(problocs);
+    
     problem_indices
     chosen_problem_indices
     
@@ -276,7 +279,19 @@ else
     AllGoodEllipseFits = strcat(output_prefix,'_AllGoodEllipses.mat');
     ChosenGoodEllipseFits = strcat(output_prefix,'_ChosenGoodEllipses.mat');
     remove_problem_ellipses(AllEllipseName,problem_indices,AllGoodEllipseFits);
-    remove_problem_ellipses(ChosenEllipseName,chosen_problem_indices,ChosenGoodEllipseFits);
+    
+    % Convert the chosen_problem_indices to values from 1 to 50 (or the
+    % number of chosen stalks) and remove the corresponding bad sections
+    % all at once
+    translated_prob_indices = [];
+    for i = 1:length(stalknums)
+        if any(ismember(stalknums(i),chosen_problem_indices))
+            translated_prob_indices = [translated_prob_indices,i];
+        end
+    end
+    translated_prob_indices
+    
+    remove_problem_ellipses(ChosenEllipseName,translated_prob_indices,ChosenGoodEllipseFits);
     
     % Run PCA
     PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
