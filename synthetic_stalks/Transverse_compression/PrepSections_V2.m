@@ -106,28 +106,49 @@ for g = 1:nslices
         % Get the number of points in the originally-detected boundaries
         npoints_slice_ext = length(ext_X);
         npoints_slice_int = length(int_X);
+        
+%         %% Trying shifting early
+%         % Shift the points so they are centered at the geometric mean of
+%         % the cross-section
+%         ext_xi = ext_xi - mean(ext_xi);
+%         ext_yi = ext_yi - mean(ext_yi);
+%         int_xi = int_xi - mean(ext_xi);
+%         int_yi = int_yi - mean(ext_yi);
+%         
+%         %% Trying downsampling early
+%         % Downsampling exterior/ Resampling interior
+%         idx =  1:length(ext_xi);                            % Index
+%         idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
+%         ext_xi = interp1(idx, ext_xi, idxq, 'pchip');       % Downsampled Vector
+% 
+%         idy = 1:length(ext_yi);                             % Index
+%         idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
+%         ext_yi = interp1(idy, ext_yi, idyq, 'pchip');       % Downsampled Vector
+% 
+%         idx =  1:length(int_xi);                            % Index
+%         idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
+%         int_xi = interp1(idx, int_xi, idxq, 'pchip');       % Downsampled Vector
+% 
+%         idy = 1:length(int_yi);                             % Index
+%         idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
+%         int_yi = interp1(idy, int_yi, idyq, 'pchip');       % Downsampled Vector
 
+        
+%%
         % Uses a fit ellipse function to identify the angle of rotation along the long axis of the cross-section
         % (only takes into account the exterior boundaries)
         [alpha, ~, ~, ~, ~, ~, ~] = fit_ellipse_R2( ext_X, ext_Y, prev_alpha, gca );
 
         % Reorders and rotates the stalk's exterior and interior
-        % Rotates an extra 90 degrees so the long axis is veritcal
+        % Rotates an extra 90 degrees so the long axis is vertical
         [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_X, ext_Y, alpha-pi/2);
-        [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2(int_X, int_Y, alpha-pi/2);
+        [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_X, int_Y, alpha-pi/2, mean(ext_X), mean(ext_Y));
 
         close(gcf)
         ext_xi = ext_xi';
         ext_yi = ext_yi';
         int_xi = int_xi';
         int_yi = int_yi';
-
-        % Shift the points so they are centered at the geometric mean of
-        % the cross-section
-        ext_xi = ext_xi - mean(ext_xi);
-        ext_yi = ext_yi - mean(ext_yi);
-        int_xi = int_xi - mean(int_xi);
-        int_yi = int_yi - mean(int_yi);
 
         % NEW POLAR COORDINATES
         ti_ext = 0:2*pi/npoints_slice_ext:2*pi;                             % Creates a theta vector according to the inputted resolution
@@ -185,7 +206,7 @@ for g = 1:nslices
 
         % Rotate the cross-section again to be horizontal / notch on the right
         [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_xi, ext_yi, spin);
-        [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2(int_xi, int_yi, spin);
+        [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_xi, int_yi, spin, mean(ext_xi), mean(ext_yi));
         [~, ~, ~, ~, ~, ~, piex,   piey,   ~, ~] = reorder_V2(piex,   piey,   spin);
 
         % Fitting an ellipse to the cross-section with the notch removed to
@@ -194,7 +215,7 @@ for g = 1:nslices
 
         % Rotating according to the new, more accurate alpha
         [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_xi, ext_yi, new_alpha);
-        [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2(int_xi, int_yi, new_alpha);
+        [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_xi, int_yi, new_alpha, mean(ext_xi), mean(ext_yi));
 
         % Downsampling exterior/ Resampling interior
         idx =  1:length(ext_xi);                            % Index
@@ -215,7 +236,7 @@ for g = 1:nslices
 
         % Get interior and exterior data in polar coordinates
         [~, ~, ~, ~, ~, ~, ~, ~, ext_rhoDCR(:,:,g), ext_tDCR(:,:,g)] = reorder_V2(ext_xi, ext_yi, 0);
-        [~, ~, ~, ~, ~, ~, ~, ~, int_rhoDCR(:,:,g), int_tDCR(:,:,g)] = reorder_V2(int_xi, int_yi, 0);
+        [~, ~, ~, ~, ~, ~, ~, ~, int_rhoDCR(:,:,g), int_tDCR(:,:,g)] = reorder_V2_interior(int_xi, int_yi, 0, mean(ext_xi), mean(ext_yi));
 
         % Interpolate in polar to get first point exactly on the x-axis
         % when converted back to Cartesian

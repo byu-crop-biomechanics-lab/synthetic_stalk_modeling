@@ -1,4 +1,4 @@
-function [] = PlotPCA_Variation_Polar(Theta, RprinComps_ext, Rcoeffs_ext, Rmu_ext, Rexplained_ext, Nviz, scaling)
+function [] = PlotPCA_Variation_Polar(Theta, RprinComps_ext, Rcoeffs_ext, R_ext, Rexplained_ext, Nviz, scaling)
 
 %--------------------------------------------------------------
 % FILE: PlotPCA_Variation_Polar.m
@@ -31,7 +31,7 @@ close;
 %% Exterior NEPCs
 
 N = size(RprinComps_ext,1);             % the size of rho vectors
-Means = Rmu_ext;
+Means = R_ext;
 Amps = median(abs(Rcoeffs_ext),1);      % Amplitudes of variation
 A = 1;
 
@@ -48,21 +48,21 @@ for i = Nviz
     
     if strcmp(scaling,'equal')
         Amps = Amps*0 + 1;
-        A = 15;
+        A = 5;
         Amp = max(avgRcoeffs(i)*RprinComps_ext(:,i));
         RprinComps_ext(:,i) = avgRcoeffs(i)*RprinComps_ext(:,i)/Amp;
     end
     
     for t = linspace(0,4*pi,400)
-        polarscatter(Theta(i,:)', Means,'.','MarkerFaceColor',[1 1 1]*0.0)
+        polarscatter(Theta, Means,'.','MarkerFaceColor',[1 1 1]*0.0)
         hold on
-        polarscatter(Theta(i,:)', Means - A*Amps(i)*sin(t)*RprinComps_ext(:,i)','o',...
+        polarscatter(Theta, Means - A*Amps(i)*sin(t)*RprinComps_ext(:,i)','o',...
             'MarkerEdgeColor', 'none', ...
             'MarkerFaceColor', [0 0 0], ...
             'MarkerFaceAlpha', 0.3);
         hold on
         ax = gca;
-        ax.RLim = [0 200];
+        ax.RLim = [0 15];
         
         NEPC_No = sprintf('NEPC No. %d',i);
         percent_explained = sprintf('%0.2f%% Non-ellipse variation',Rexplained_ext(i));

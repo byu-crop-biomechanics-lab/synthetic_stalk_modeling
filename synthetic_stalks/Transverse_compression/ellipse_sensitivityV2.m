@@ -1,4 +1,4 @@
-function ellipse_sensitivityV2(FileName,numsections,startsection)
+function ellipse_sensitivityV2(EllipseData,SampledData,plotting)
 % Take in a mat file with ellipse fit data (such as fivefits_top1.mat) and
 % create new data points that represent a shift in either a, b, or t, as
 % well as the original data points. Follows the organization and methods
@@ -10,13 +10,18 @@ function ellipse_sensitivityV2(FileName,numsections,startsection)
 % startsection: Index of the cross-section to start with (should be same
 % value as in create_cases.m)
 
-FolderName = pwd;
-File       = fullfile(FolderName, FileName);
-load(File,'A','B','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int','AVG_RIND_T');
 
-endsection = startsection + numsections - 1;
+load(EllipseData);
+load(SampledData);
+% FolderName = pwd;
+% File       = fullfile(FolderName, EllipseData);
+% load(File,'A','B','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int','AVG_RIND_T');
 
-percent_change = 0.05;
+startsection = selectedTable.StkNum(1);
+endsection = selectedTable.StkNum(end);
+% indices = selectedTable.StkNum;
+
+percent_change = 0.1;
 plus_change = 1 + percent_change;
 minus_change = 1 - percent_change;
 
@@ -43,15 +48,17 @@ write_Python_template;  % Create Template cell array that can be copied and used
         Aminus_int     = Aminus_ext - AVG_RIND_T(i);
 
 
-%         % Check shape
-%         polarplot(Tnew,Aplus_ext);
-%         hold on
-%         polarplot(Tnew,Aplus_int);
-%         pause();
-%         polarplot(Tnew,Aminus_ext);
-%         polarplot(Tnew,Aminus_int);
-%         pause();
-%         close;
+        % Check shape
+        if plotting == 1
+            polarplot(Tnew,Aplus_ext);
+            hold on
+            polarplot(Tnew,Aplus_int);
+            pause();
+            polarplot(Tnew,Aminus_ext);
+            polarplot(Tnew,Aminus_int);
+            pause();
+            close;
+        end
 
         % Create cases
         case_num = case_num + 1;
@@ -74,15 +81,17 @@ write_Python_template;  % Create Template cell array that can be copied and used
         Bminus_int     = Bminus_ext - AVG_RIND_T(i);
 
 
-%         % Check shape
-%         polarplot(Tnew,Bplus_ext);
-%         hold on
-%         polarplot(Tnew,Bplus_int);
-%         pause();
-%         polarplot(Tnew,Bminus_ext);
-%         polarplot(Tnew,Bminus_int);
-%         pause();
-%         close;
+        % Check shape
+        if plotting == 1
+            polarplot(Tnew,Bplus_ext);
+            hold on
+            polarplot(Tnew,Bplus_int);
+            pause();
+            polarplot(Tnew,Bminus_ext);
+            polarplot(Tnew,Bminus_int);
+            pause();
+            close;
+        end
 
         % Create cases
         case_num = case_num + 1;
@@ -102,14 +111,16 @@ write_Python_template;  % Create Template cell array that can be copied and used
         Tplus_int      = base_ext - plus_change*AVG_RIND_T(i);
         Tminus_int     = base_ext - minus_change*AVG_RIND_T(i);
 
-%         % Check shape
-%         polarplot(Tnew,base_ext);
-%         hold on
-%         polarplot(Tnew,Tplus_int);
-%         pause();
-%         polarplot(Tnew,Tminus_int);
-%         pause();
-%         close;
+        % Check shape
+        if plotting == 1
+            polarplot(Tnew,base_ext);
+            hold on
+            polarplot(Tnew,Tplus_int);
+            pause();
+            polarplot(Tnew,Tminus_int);
+            pause();
+            close;
+        end
 
         % Create cases
         case_num = case_num + 1;
