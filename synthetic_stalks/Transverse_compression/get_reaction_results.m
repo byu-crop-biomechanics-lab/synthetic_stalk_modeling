@@ -1,10 +1,11 @@
+function get_reaction_results(Data)
 % get_reaction_results.m: Take the text file structure of the NEPC
 % finite-element results and reorganize the data into an array, with the
 % rows being the cross-section number and the columns being the case
 % number. Cases 0-6 are used.
-clear; close;
+% clear; close;
 
-load NEPC_results_const_rind.mat % MAKE THIS INTO A FUNCTION THAT CAN READ IN ANY OUTPUT MAT FILE
+load(Data,'Results');
 
 % CONVERT FROM MICROMETER SCALE TO MILLIMETER SCALE FOR LOOKING AT ACTUAL
 % VALUES
@@ -15,7 +16,12 @@ cols = 11;
 Results_new = NaN(rows,cols);
 
 for i = 1:size(Results,1)
-    row = round(Results(i,1),0);
+    if i == 1
+        row = 1;
+    elseif Results(i,1) ~= Results(i-1,1)
+        row = row + 1;
+    end
+%     row = round(Results(i,1),0);
     col = round(Results(i,2),0) + 1;
     
     Results_new(row,col) = abs(Results(i,4));
@@ -43,7 +49,7 @@ figure(1);
 caselabels_cumulative = {'Real'; 'Ellipse'; 'NEPC 1'; 'NEPC 1-2'; 'NEPC 1-3'; 'NEPC 1-4'; 'NEPC 1-5'};
 bar(avg(1:7),'FaceColor',[0.75,0.75,0.75]);
 set(gca,'xticklabel',caselabels_cumulative);
-ylim([93,100.5]);
+ylim([93,102.5]);
 title('NEPC Response Progression (Cumulative)');
 xlabel('Case');
 ylabel('Reaction Force (% of Real Response)');
@@ -55,9 +61,9 @@ er.Color = [0 0 0];
 er.LineStyle = 'none';
 er.LineWidth = 0.5;
 
-% Define noisy region as +/- 0.2% of the real cross-section response
-yline(99.8,':k');
-yline(100.2,':k');
+% % Define noisy region as +/- 0.2% of the real cross-section response
+% yline(99.8,':k');
+% yline(100.2,':k');
 
 hold off
 
@@ -67,7 +73,7 @@ indices = [1 2 3 8 9 10 11];
 figure(2);
 bar(avg(indices),'FaceColor',[0.75,0.75,0.75]);
 set(gca,'xticklabel',caselabels_individual);
-ylim([93,100.5]);
+ylim([93,115.5]);
 title('NEPC Response Progression (Individual)');
 xlabel('Case');
 ylabel('Reaction Force (% of Real Response)');
@@ -79,8 +85,12 @@ er.Color = [0 0 0];
 er.LineStyle = 'none';
 er.LineWidth = 0.5;
 
-% Define noisy region as +/- 0.2% of the real cross-section response
-yline(99.8,':k');
-yline(100.2,':k');
+% % Define noisy region as +/- 0.2% of the real cross-section response
+% yline(99.8,':k');
+% yline(100.2,':k');
 
 hold off
+
+
+
+end
