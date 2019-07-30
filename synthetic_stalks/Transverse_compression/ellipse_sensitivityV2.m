@@ -1,4 +1,4 @@
-function ellipse_sensitivityV2(EllipseData,SampledData,plotting)
+function ellipse_sensitivityV2(EllipseData,PCAData,StalkNums,license,plotting)
 % Take in a mat file with ellipse fit data (such as fivefits_top1.mat) and
 % create new data points that represent a shift in either a, b, or t, as
 % well as the original data points. Follows the organization and methods
@@ -11,51 +11,79 @@ function ellipse_sensitivityV2(EllipseData,SampledData,plotting)
 % value as in create_cases.m)
 
 
-load(EllipseData);
-load(SampledData);
+load(EllipseData,'A','B','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int','AVG_RIND_T');
+load(PCAData,'ext_rhoPCAs','ext_rhocoeffs');
+load(StalkNums,'stalknums');
+% load(SampledData);
 % FolderName = pwd;
 % File       = fullfile(FolderName, EllipseData);
 % load(File,'A','B','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int','AVG_RIND_T');
 
-startsection = selectedTable.StkNum(1);
-endsection = selectedTable.StkNum(end);
+% startsection = selectedTable.StkNum(1);
+% endsection = selectedTable.StkNum(end);
 % indices = selectedTable.StkNum;
 
-percent_change = 0.1;
+percent_change = 0.05;
 plus_change = 1 + percent_change;
 minus_change = 1 - percent_change;
 
+if license == 1
+    write_Python_template;  % Create Template cell array that can be copied and used to make individualized Python scripts
+elseif license == 2
+    write_Python_template2;
+else
+    error('Choose a valid license option');
+end
+
 write_Python_template;  % Create Template cell array that can be copied and used to make individualized Python scripts
+
+Rind = zeros(length(A),11);
+Pith = zeros(size(Rind));
 
 %% Create all geometry cases for a given cross section
     % Step through the cross sections
-    for i = startsection:endsection
-        ID = sprintf('%d',i); % Cross-section number
+    for i = 1:length(A)
+        ID = sprintf('%d',stalknums(i)); % Cross-section number
+        
+        % Get material properties
+        [Erind,Epith] = get_materials('random');
+        
+        % Make profile that includes NEPCs 1-5
+        NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
 
-        %% Pure ellipse fit (case 0)
+        for k = 1:5
+            % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
+            NEPC_ext = NEPC_ext + ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
+        end
+        
+        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+        Rnew_int = Rnew_ext - AVG_RIND_T(i);
+
+        
+        %% Base case (case 0)
         case_num = 0;
         Script = Template; % Reset the script template
-        make_case(case_num,i,ID,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script)
+        make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith)
+        Rind(i,1) = Erind;
+        Pith(i,1) = Epith;
 
-        %% Change A (cases 1 and 2: +/-)
+        
+        %% Change A (case 1)
         % Adjust exterior points in polar
         Tnew = ELLIPSE_T(i,:);
-        Aplus_ext      = rpts(360,ELLIPSE_T(i,:),(plus_change*A(i)),B(i));
-        Aminus_ext     = rpts(360,ELLIPSE_T(i,:),(minus_change*A(i)),B(i));
+        Aplus_ellipse = rpts(360,ELLIPSE_T(i,:),(plus_change*A(i)),B(i));
+        Aplus_ext = Aplus_ellipse - NEPC_ext;
 
         % Calculate the interior points
-        Aplus_int      = Aplus_ext - AVG_RIND_T(i);
-        Aminus_int     = Aminus_ext - AVG_RIND_T(i);
-
+        Aplus_int = Aplus_ext - AVG_RIND_T(i);
 
         % Check shape
         if plotting == 1
             polarplot(Tnew,Aplus_ext);
             hold on
             polarplot(Tnew,Aplus_int);
-            pause();
-            polarplot(Tnew,Aminus_ext);
-            polarplot(Tnew,Aminus_int);
+            polarplot(Tnew,Rnew_ext);
+            polarplot(Tnew,Rnew_int);
             pause();
             close;
         end
@@ -63,32 +91,27 @@ write_Python_template;  % Create Template cell array that can be copied and used
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,i,ID,Aplus_ext,Aplus_int,Tnew,Script);
+        make_case(case_num,i,ID,Aplus_ext,Aplus_int,Tnew,Script,Erind,Epith);
+        Rind(i,2) = Erind;
+        Pith(i,2) = Epith;
+        
 
-        case_num = case_num + 1;
-        Script = Template; % Reset the script template
-        make_case(case_num,i,ID,Aminus_ext,Aminus_int,Tnew,Script);
-
-
-        %% Change B (cases 3 and 4: +/-)
+        %% Change B (case 2)
         % Adjust exterior points in polar
         Tnew = ELLIPSE_T(i,:);
-        Bplus_ext      = rpts(360,ELLIPSE_T(i,:),(A(i)),plus_change*B(i));
-        Bminus_ext     = rpts(360,ELLIPSE_T(i,:),(A(i)),minus_change*B(i));
+        Bplus_ellipse = rpts(360,ELLIPSE_T(i,:),(A(i)),plus_change*B(i));
+        Bplus_ext = Bplus_ellipse - NEPC_ext;
 
         % Calculate the interior points
         Bplus_int      = Bplus_ext - AVG_RIND_T(i);
-        Bminus_int     = Bminus_ext - AVG_RIND_T(i);
-
 
         % Check shape
         if plotting == 1
             polarplot(Tnew,Bplus_ext);
             hold on
             polarplot(Tnew,Bplus_int);
-            pause();
-            polarplot(Tnew,Bminus_ext);
-            polarplot(Tnew,Bminus_int);
+            polarplot(Tnew,Rnew_ext);
+            polarplot(Tnew,Rnew_int);
             pause();
             close;
         end
@@ -96,28 +119,25 @@ write_Python_template;  % Create Template cell array that can be copied and used
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,i,ID,Bplus_ext,Bplus_int,Tnew,Script);
+        make_case(case_num,i,ID,Bplus_ext,Bplus_int,Tnew,Script,Erind,Epith);
+        Rind(i,3) = Erind;
+        Pith(i,3) = Epith;
 
-        case_num = case_num + 1;
-        Script = Template; % Reset the script template
-        make_case(case_num,i,ID,Bminus_ext,Bminus_int,Tnew,Script);
-
-
-        %% Change T (cases 5 and 6: +/-)
+        
+        %% Change T (case 3)
         Tnew = ELLIPSE_T(i,:);
-        base_ext = rpts(360,ELLIPSE_T(i,:),(A(i)),B(i));
+        base_ext = Rnew_ext;
 
         % Calculate the interior points
         Tplus_int      = base_ext - plus_change*AVG_RIND_T(i);
-        Tminus_int     = base_ext - minus_change*AVG_RIND_T(i);
 
         % Check shape
         if plotting == 1
             polarplot(Tnew,base_ext);
             hold on
             polarplot(Tnew,Tplus_int);
-            pause();
-            polarplot(Tnew,Tminus_int);
+            polarplot(Tnew,Rnew_ext);
+            polarplot(Tnew,Rnew_int);
             pause();
             close;
         end
@@ -125,15 +145,170 @@ write_Python_template;  % Create Template cell array that can be copied and used
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,i,ID,base_ext,Tplus_int,Tnew,Script);
+        make_case(case_num,i,ID,base_ext,Tplus_int,Tnew,Script,Erind,Epith);
+        Rind(i,4) = Erind;
+        Pith(i,4) = Epith;
+        
+        
+        %% Change Erind (case 4)
+        Tnew = ELLIPSE_T(i,:);
+        
+        % Calculate the new Erind
+        Erind_plus = Erind*plus_change;
 
+        % Create cases
         case_num = case_num + 1;
-        Script = Template; % Reset the script template
-        make_case(case_num,i,ID,base_ext,Tminus_int,Tnew,Script);
+        Script = Template; % Reset the script template    
+        make_case(case_num,i,ID,Rnew_ext,Rnew_int,Tnew,Script,Erind_plus,Epith);
+        Rind(i,5) = Erind_plus;
+        Pith(i,5) = Epith;
+        
+        
+        %% Change Epith (case 5)
+        Tnew = ELLIPSE_T(i,:);
+        
+        % Calculate the new Erind
+        Epith_plus = Epith*plus_change;
 
+        % Create cases
+        case_num = case_num + 1;
+        Script = Template; % Reset the script template    
+        make_case(case_num,i,ID,Rnew_ext,Rnew_int,Tnew,Script,Erind,Epith_plus);
+        Rind(i,6) = Erind;
+        Pith(i,6) = Epith_plus;
+        
+        
+        %% Change NEPC 1 (case 6)
+        Tnew = ELLIPSE_T(i,:);
+        
+        % Make profile that includes NEPCs 1-5
+        NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
 
+        for k = 1:5
+            if k == 1
+                NEPC_ext = NEPC_ext + plus_change*ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
+            else
+                NEPC_ext = NEPC_ext + ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
+            end
+        end
+        
+        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+        Rnew_int = Rnew_ext - AVG_RIND_T(i);
+        
+        % Create cases
+        case_num = case_num + 1;
+        Script = Template; % Reset the script template    
+        make_case(case_num,i,ID,Rnew_ext,Rnew_int,Tnew,Script,Erind,Epith);
+        Rind(i,7) = Erind;
+        Pith(i,7) = Epith;
+        
+        
+        %% Change NEPC 2 (case 7)
+        Tnew = ELLIPSE_T(i,:);
+        
+        % Make profile that includes NEPCs 1-5
+        NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
+
+        for k = 1:5
+            if k == 2
+                NEPC_ext = NEPC_ext + plus_change*ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
+            else
+                NEPC_ext = NEPC_ext + ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
+            end
+        end
+        
+        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+        Rnew_int = Rnew_ext - AVG_RIND_T(i);
+        
+        % Create cases
+        case_num = case_num + 1;
+        Script = Template; % Reset the script template    
+        make_case(case_num,i,ID,Rnew_ext,Rnew_int,Tnew,Script,Erind,Epith);
+        Rind(i,8) = Erind;
+        Pith(i,8) = Epith;
+        
+        
+        %% Change NEPC 3 (case 8)
+        Tnew = ELLIPSE_T(i,:);
+        
+        % Make profile that includes NEPCs 1-5
+        NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
+
+        for k = 1:5
+            if k == 3
+                NEPC_ext = NEPC_ext + plus_change*ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
+            else
+                NEPC_ext = NEPC_ext + ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
+            end
+        end
+        
+        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+        Rnew_int = Rnew_ext - AVG_RIND_T(i);
+        
+        % Create cases
+        case_num = case_num + 1;
+        Script = Template; % Reset the script template    
+        make_case(case_num,i,ID,Rnew_ext,Rnew_int,Tnew,Script,Erind,Epith);
+        Rind(i,9) = Erind;
+        Pith(i,9) = Epith;
+        
+        
+        %% Change NEPC 4 (case 9)
+        Tnew = ELLIPSE_T(i,:);
+        
+        % Make profile that includes NEPCs 1-5
+        NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
+
+        for k = 1:5
+            if k == 4
+                NEPC_ext = NEPC_ext + plus_change*ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
+            else
+                NEPC_ext = NEPC_ext + ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
+            end
+        end
+        
+        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+        Rnew_int = Rnew_ext - AVG_RIND_T(i);
+        
+        % Create cases
+        case_num = case_num + 1;
+        Script = Template; % Reset the script template    
+        make_case(case_num,i,ID,Rnew_ext,Rnew_int,Tnew,Script,Erind,Epith);
+        Rind(i,10) = Erind;
+        Pith(i,10) = Epith;
+        
+        
+        %% Change NEPC 4 (case 10)
+        Tnew = ELLIPSE_T(i,:);
+        
+        % Make profile that includes NEPCs 1-5
+        NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
+
+        for k = 1:5
+            if k == 5
+                NEPC_ext = NEPC_ext + plus_change*ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
+            else
+                NEPC_ext = NEPC_ext + ext_rhocoeffs(i,k)*ext_rhoPCAs(:,k)';
+            end
+        end
+        
+        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+        Rnew_int = Rnew_ext - AVG_RIND_T(i);
+        
+        % Create cases
+        case_num = case_num + 1;
+        Script = Template; % Reset the script template    
+        make_case(case_num,i,ID,Rnew_ext,Rnew_int,Tnew,Script,Erind,Epith);
+        Rind(i,11) = Erind;
+        Pith(i,11) = Epith;
+        
+        
     end
 
+    FolderName = pwd;
+    Materials = 'MaterialsUsed.mat';
+    SaveFile = fullfile(FolderName, Materials);
+    save(SaveFile,'Rind','Pith');
 
 end
 
@@ -141,7 +316,7 @@ end
 
 
 %% Local functions %%
-function make_case(case_num,i,ID,R_ext,R_int,T,Script)
+function make_case(case_num,i,ID,R_ext,R_int,T,Script,Erind,Epith)
     CASE = sprintf('%d',case_num);
     jobname = strcat('''Sensitivity_',ID,'_',CASE,'''');
     scriptname = strcat('Sensitivity_',ID,'_',CASE,'.py');
@@ -159,6 +334,13 @@ function make_case(case_num,i,ID,R_ext,R_int,T,Script)
         Y_int = R_int(1,:).*sin(T(1,:));
     end
 
+     % Scale units to micrometers from millimeters
+    X_ext = 1000*X_ext;
+    Y_ext = 1000*Y_ext;
+    X_int = 1000*X_int;
+    Y_int = 1000*Y_int;
+    
+    
     % Transpose data and combine xy
     section_ext = [X_ext', Y_ext'];
     section_int = [X_int', Y_int'];
@@ -168,23 +350,64 @@ function make_case(case_num,i,ID,R_ext,R_int,T,Script)
     section_int = [section_int; section_int(1,:)];
 
     % Get the reference point values in Cartesian coordinates for
-    % reference points at 90 and 270 degrees (indices 91 and 271)
-    RP1X = sprintf('%0.5g',X_ext(91));
-    RP1Y = sprintf('%0.5g',Y_ext(91));
-    RP2X = sprintf('%0.5g',X_ext(271));
-    RP2Y = sprintf('%0.5g',Y_ext(271));
+    % reference points closest to 90 and 270 degrees
+    diffs90 = NaN(1,size(T,2));
+    diffs270 = NaN(1,size(T,2));
+    for j = 1:length(T(1,:))
+        diffs90(j) = pi/2 - T(1,j);
+        diffs270(j) = 3*pi/2 - T(1,j);
+    end
+    
+    [~,ind90] = min(abs(diffs90));
+    [~,ind270] = min(abs(diffs270));
+    
+    RP1X = sprintf('%0.5g',X_ext(ind90));
+    RP1Y = sprintf('%0.5g',Y_ext(ind90));
+    RP2X = sprintf('%0.5g',X_ext(ind270));
+    RP2Y = sprintf('%0.5g',Y_ext(ind270));
 
     % Write the spline points and save as a string
     S = size(section_ext);
     len = S(1);
     outer_spline = writespline_V2(len,section_ext);
     inner_spline = writespline_V2(len,section_int);
+    
+%     % Calculate the random material properties from a normal distribution.
+%     % Bound with 95% confidence interval, calculated from transverse
+%     % material properties used in another paper.
+%     Erind_mean = 8.0747e-04;
+%     Erind_stdev = 3.3517e-04;
+%     Erind_95 = [6.7414e-04 9.4081e-04];
+%     Epith_mean = 2.5976e-05;
+%     Epith_stdev = 1.0303e-05;
+%     Epith_95 = [2.1878e-05 3.0075e-05];
+%     
+%     % Generate Erind from normal distribution
+%     while 1
+%         Erind = normrnd(Erind_mean,Erind_stdev);
+%         if Erind >= Erind_95(1) && Erind <= Erind_95(2)
+%             break
+%         end
+%     end
+%     
+%     % Generate Epith from normal distribution
+%     while 1
+%         Epith = normrnd(Epith_mean,Epith_stdev);
+%         if Epith >= Epith_95(1) && Epith <= Epith_95(2)
+%             break
+%         end
+%     end
+    
+    rindE = sprintf('%0.5g',Erind);
+    pithE = sprintf('%0.5g',Epith);
 
     % Insert the case-specific values into the appropriate parts of the
     % Python script template (must be strings)
     Script(17,1) = strcat(Script(17,1),jobname);
     Script(21,1) = strcat(Script(21,1),ID);
     Script(23,1) = strcat(Script(23,1),CASE);
+    Script(31,1) = strcat(Script(31,1),rindE);
+    Script(33,1) = strcat(Script(33,1),pithE);
     Script(35,1) = strcat(Script(35,1),RP1X);
     Script(37,1) = strcat(Script(37,1),RP1Y);
     Script(39,1) = strcat(Script(39,1),RP2X);
@@ -198,6 +421,7 @@ function make_case(case_num,i,ID,R_ext,R_int,T,Script)
     fclose(filePh);
     
 end
+
 
 function [spline] = writespline_V2(len,data)
     %define empty spline and number of x-y points
@@ -224,4 +448,78 @@ function [r] = rpts(N,theta,dmaj,dmin)
         r(i) = (dmaj*dmin/4)/sqrt(((dmin/2)*cos(theta(i)))^2 ...
             + ((dmaj/2)*sin(theta(i)))^2);
     end
+end
+
+function [Erind,Epith] = get_materials(method)
+% Calculate the random material properties from a normal distribution.
+    % Bound with 95% confidence interval, calculated from transverse
+    % material properties used in another paper.
+    Erind_mean = 8.0747e-04;
+    Erind_stdev = 3.3517e-04;
+    Erind_95 = [6.7414e-04 9.4081e-04];
+    Epith_mean = 2.5976e-05;
+    Epith_stdev = 1.0303e-05;
+    Epith_95 = [2.1878e-05 3.0075e-05];
+    ratio_mean = 0.0372;
+    ratio_stdev = 0.0180;
+    ratio_95 = [0.0300 0.0444];
+    
+    switch method
+        case 'random'
+            % Generate Erind from normal distribution
+            while 1
+                Erind = normrnd(Erind_mean,Erind_stdev);
+                if Erind >= Erind_95(1) && Erind <= Erind_95(2)
+                    break
+                end
+            end
+
+            % Generate Epith from normal distribution
+            while 1
+                Epith = normrnd(Epith_mean,Epith_stdev);
+                if Epith >= Epith_95(1) && Epith <= Epith_95(2)
+                    break
+                end 
+            end
+            
+            
+    %     % Generate Epith from normal distribution of pith/rind ratios
+    %     while 1
+    %         ratio = normrnd(ratio_mean,ratio_stdev);
+    %         if ratio >= ratio_95(1) && ratio <= ratio_95(2)
+    %             break
+    %         end
+    %     end
+    %     Epith = ratio*Erind;
+
+    
+        case 'min'
+            Erind = Erind_95(1);
+            Epith = Epith_95(1);
+            
+        case 'max'
+            Erind = Erind_95(2);
+            Epith = Epith_95(2);
+            
+        case 'minpith'
+            Erind = Erind_mean;
+            Epith = Epith_95(1);
+            
+        case 'maxpith'
+            Erind = Erind_mean;
+            Epith = Epith_95(2);
+            
+        case 'minrind'
+            Erind = Erind_95(1);
+            Epith = Epith_mean;
+            
+        case 'maxrind'
+            Erind = Erind_95(2);
+            Epith = Epith_mean;
+    
+        case 'avg'
+            Erind = Erind_mean;
+            Epith = Epith_mean;
+    end
+    
 end

@@ -13,7 +13,7 @@ function transverse_wrapper_V2(stalknums,slicedist,material_method,cpu,license)
 %       unique integers from 1 to 980)
 %       slicedist - A number value (can be integer or decimal) that
 %       signifies the distance in millimeters from the nearest node on the
-%       stalk at the chosen slice.  
+%       stalk at the chosen slice.
 %       
 % OUTPUTS:
 %       - Several .mat files with variables saved from the steps in the
@@ -278,7 +278,9 @@ else
     % Remove the problem ellipses and then run PCA again
     AllGoodEllipseFits = strcat(output_prefix,'_AllGoodEllipses.mat');
     ChosenGoodEllipseFits = strcat(output_prefix,'_ChosenGoodEllipses.mat');
-    remove_problem_ellipses(AllEllipseName,problem_indices,AllGoodEllipseFits);
+    GoodStalkNumsName = strcat(output_prefix,'_GoodStalks.mat');
+%     remove_problem_ellipses(AllEllipseName,problem_indices,AllGoodEllipseFits);
+%     remove_problem_ellipses(AllEllipseName,StalkNumsName,problem_indices,AllGoodEllipseFits,GoodStalkNumsName)
     
     % Convert the chosen_problem_indices to values from 1 to 50 (or the
     % number of chosen stalks) and remove the corresponding bad sections
@@ -291,7 +293,8 @@ else
     end
     translated_prob_indices
     
-    remove_problem_ellipses(ChosenEllipseName,translated_prob_indices,ChosenGoodEllipseFits);
+%     remove_problem_ellipses(ChosenEllipseName,StalkOutput,translated_prob_indices,ChosenGoodEllipseFits);
+    remove_problem_ellipses(ChosenEllipseName,StalkNumsName,translated_prob_indices,ChosenGoodEllipseFits,GoodStalkNumsName)
     
     % Run PCA
     PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
@@ -911,8 +914,9 @@ save(SaveFile,'ELLIPSE_T','ELLIPSE_R_ext','ext_rhocoeffs',...
 end
 
 
-function remove_problem_ellipses(OriginalEllipseFits,problem_indices,GoodEllipseFits)
+function remove_problem_ellipses(OriginalEllipseFits,Stalks,problem_indices,GoodEllipseFits,GoodStalks)
 load(OriginalEllipseFits);
+load(Stalks,'stalknums');
 
 N = size(A,1);
 
@@ -929,12 +933,15 @@ ELLIPSE_T(problem_indices,:) = [];
 ELLIPSE_XY(problem_indices,:,:) = [];
 R_ext(problem_indices,:) = [];
 R_int(problem_indices,:) = [];
+stalknums(problem_indices,:) = [];
 
 % Save the final data in a new mat file
 FolderName = pwd;
 SaveFile       = fullfile(FolderName, GoodEllipseFits);
 save(SaveFile,'A','B','ELLIPSE_XY','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int',...
     'ELLIPSE_CENTERS','DIFF_R_ext','DIFF_R_int','R_ext','R_int','AVG_RIND_T','problem_indices');
+SaveFile = fullfile(FolderName,GoodStalks);
+save(SaveFile,'stalknums');
 
 end
 

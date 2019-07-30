@@ -53,6 +53,7 @@ for i = 1:N
 
 end
 
+mean(diff)
 
 histogram(diff);
 xlabel('Percent Difference (%)');
