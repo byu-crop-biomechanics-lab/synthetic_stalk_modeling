@@ -1,4 +1,4 @@
-function [ geom, iner, cpmo ] = polygeom( x, y ) 
+function [ geom, iner, cpmo, smod] = polygeomV2( x, y ) 
 %POLYGEOM Geometry of a planar polygon
 %
 %   POLYGEOM( X, Y ) returns area, X centroid,
@@ -51,8 +51,17 @@ yp = y( [2:end 1] );
 a = x.*yp - xp.*y;
  
 A = sum( a ) /2;
-xc = sum( (x+xp).*a  ) /6/A;
-yc = sum( (y+yp).*a  ) /6/A;
+xc = sum( (x+xp).*a  ) /6/A;    % x-coordinate of centroid
+yc = sum( (y+yp).*a  ) /6/A;    % y-coordinate of centroid
+x_from_centroid = x - xc;
+y_from_centroid = y - yc;
+[c_x, index] = max(abs(x_from_centroid(:)));
+% c_x = c_x * sign(x_from_centroid(index))
+[c_y, index] = max(abs(y_from_centroid(:)));
+% c_y = c_y * sign(y_from_centroid(index))
+
+% plot(x_from_centroid,y_from_centroid);
+
 Ixx = sum( (y.*y +y.*yp + yp.*yp).*a  ) /12;
 Iyy = sum( (x.*x +x.*xp + xp.*xp).*a  ) /12;
 Ixy = sum( (x.*yp +2*x.*y +2*xp.*yp + xp.*y).*a  ) /24;
@@ -95,5 +104,10 @@ ang2 = atan2( eig_vec(2,2), eig_vec(1,2) );
 geom = [ A  x_cen  y_cen  P ];
 iner = [ Ixx  Iyy  Ixy  Iuu  Ivv  Iuv ];
 cpmo = [ I1  ang1  I2  ang2  J ];
+smod = [ Ixx/c_y Iyy/c_x];
  
 % bottom of polygeom
+
+
+
+end

@@ -1,4 +1,4 @@
-function get_reaction_results(Data)
+function [cumulative,cumulative_err,individual,individual_err] = get_reaction_results(Data)
 % get_reaction_results.m: Take the text file structure of the NEPC
 % finite-element results and reorganize the data into an array, with the
 % rows being the cross-section number and the columns being the case
@@ -54,6 +54,9 @@ title('NEPC Response Progression (Cumulative)');
 xlabel('Case');
 ylabel('Reaction Force (% of Real Response)');
 
+cumulative = avg(1:7);
+cumulative_err = stderror(1:7);
+
 hold on
 
 er = errorbar(1:7,avg(1:7),stderror(1:7),stderror(1:7));
@@ -78,6 +81,9 @@ title('NEPC Response Progression (Individual)');
 xlabel('Case');
 ylabel('Reaction Force (% of Real Response)');
 
+individual = avg(indices);
+individual_err = stderror(indices);
+
 hold on
 
 er = errorbar(1:7,avg(indices),stderror(indices),stderror(indices));
@@ -90,7 +96,6 @@ er.LineWidth = 0.5;
 % yline(100.2,':k');
 
 hold off
-
 
 
 end
