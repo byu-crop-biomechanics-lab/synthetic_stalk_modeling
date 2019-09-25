@@ -1,5 +1,5 @@
 function [newgoodstalknums] = shift_indices(problem_indices,Nstalks,goodstalknums)
-    
+    % Deal with removal of problem_indices by shifting and renumbering the 
     
     original_indices = linspace(1,Nstalks,Nstalks)';
     original_indices(problem_indices) = [];     % Remove the problem indices from the list of indices
