@@ -13,7 +13,7 @@ load(Data,'Results');
 rows = 50;
 cols = 11;
 
-ylimits = 1;
+ylimits = 0;
 lowlim = 94;
 uplim = 102;
 

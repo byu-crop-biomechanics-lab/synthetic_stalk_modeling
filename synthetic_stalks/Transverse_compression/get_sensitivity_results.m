@@ -55,17 +55,31 @@ for i = 1:length(stdev)
     stderror(i) = stdev(i)/sqrt(n(i));
 end
 
+stderror = stderror';
 avg_sensitivities = abs(avg_sensitivities);
+avg_sensitivities = avg_sensitivities';
 normalized_sensitivities = avg_sensitivities/pct_change;
 normalized_stderror = stderror/pct_change;
 
+% Avg_Sensitivities = categorical(avg_sensitivities);
 
 % Local sensitivity bar chart
 figure(1);
 caselabels = {'Base'; 'A'; 'B'; 'T'; 'E_r'; 'E_p'; 'NEPC 1';...
-    'NEPC 2'; 'NEPC 3'; 'NEPC 4'; 'NEPC 5';};
-bar(avg_sensitivities,'FaceColor',[0.75,0.75,0.75]);
-set(gca,'xticklabel',caselabels);
+    'NEPC 2'; 'NEPC 3'; 'NEPC 4'; 'NEPC 5'};
+CaseLabels = categorical(caselabels);
+
+T = table(avg_sensitivities,CaseLabels,stderror,normalized_sensitivities,normalized_stderror);
+
+% Sort table values by sensitivities
+T = sortrows(T,'avg_sensitivities','descend');
+
+bar(T.avg_sensitivities);
+ax = gca;
+ax.XTickLabel = T.CaseLabels;
+
+% bar(T.Avg_Sensitivities,'FaceColor',[0.75,0.75,0.75]);
+% set(gca,'xticklabel',T.CaseLabels);
 % if ylimits == 1
 %     ylim([lowlim,uplim]);
 % end
@@ -75,7 +89,7 @@ ylabel('Local Sensitivity (% of Base Response)');
 
 hold on
 
-er = errorbar(1:11,avg_sensitivities,stderror,stderror);
+er = errorbar(1:11,T.avg_sensitivities,T.stderror,T.stderror);
 er.Color = [0 0 0];
 er.LineStyle = 'none';
 er.LineWidth = 0.5;
@@ -85,10 +99,14 @@ hold off
 
 % Normalized sensitivity bar chart
 figure(2);
-caselabels = {'Base'; 'A'; 'B'; 'T'; 'E_r'; 'E_p'; 'NEPC 1';...
-    'NEPC 2'; 'NEPC 3'; 'NEPC 4'; 'NEPC 5';};
-bar(normalized_sensitivities,'FaceColor',[0.75,0.75,0.75]);
-set(gca,'xticklabel',caselabels);
+bar(T.normalized_sensitivities);
+ax = gca;
+ax.XTickLabel = T.CaseLabels;
+
+% caselabels = {'Base'; 'A'; 'B'; 'T'; 'E_r'; 'E_p'; 'NEPC 1';...
+%     'NEPC 2'; 'NEPC 3'; 'NEPC 4'; 'NEPC 5';};
+% bar(normalized_sensitivities,'FaceColor',[0.75,0.75,0.75]);
+% set(gca,'xticklabel',caselabels);
 % if ylimits == 1
 %     ylim([lowlim,uplim]);
 % end
@@ -98,7 +116,7 @@ ylabel('Normalized Sensitivity');
 
 hold on
 
-er = errorbar(1:11,normalized_sensitivities,normalized_stderror,normalized_stderror);
+er = errorbar(1:11,T.normalized_sensitivities,T.normalized_stderror,T.normalized_stderror);
 er.Color = [0 0 0];
 er.LineStyle = 'none';
 er.LineWidth = 0.5;
