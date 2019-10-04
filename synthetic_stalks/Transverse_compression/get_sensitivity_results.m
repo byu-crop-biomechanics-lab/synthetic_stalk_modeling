@@ -4,46 +4,46 @@ function [sensitivities,avg_sensitivities,stderror,normalized_sensitivities] = g
 % rows being the cross-section number and the columns being the case
 % number. Cases 0-6 are used.
 % clear; close;
+close all
+load(Data,'AllResults');
 
-load(Data,'Results');
+% % CONVERT FROM MICROMETER SCALE TO MILLIMETER SCALE FOR LOOKING AT ACTUAL
+% % VALUES
+% 
+% rows = 50;
+% cols = 11;
+% 
+% % ylimits = 0;
+% % lowlim = -1.6;
+% % uplim = 0.1;
+% 
+% Results_new = NaN(rows,cols);
+% 
+% for i = 1:size(Results,1)
+%     if i == 1
+%         row = 1;
+%     elseif Results(i,1) ~= Results(i-1,1)
+%         row = row + 1;
+%     end
+% %     row = round(Results(i,1),0);
+%     col = round(Results(i,2),0) + 1;
+%     
+%     Results_new(row,col) = abs(Results(i,4));
+% end
 
-% CONVERT FROM MICROMETER SCALE TO MILLIMETER SCALE FOR LOOKING AT ACTUAL
-% VALUES
+percents = zeros(size(AllResults));
 
-rows = 50;
-cols = 11;
-
-% ylimits = 0;
-% lowlim = -1.6;
-% uplim = 0.1;
-
-Results_new = NaN(rows,cols);
-
-for i = 1:size(Results,1)
-    if i == 1
-        row = 1;
-    elseif Results(i,1) ~= Results(i-1,1)
-        row = row + 1;
+for i = 1:size(AllResults,1)
+    for j = 1:size(AllResults,2)
+        percents(i,j) = (AllResults(i,j)/AllResults(i,1))*100;
     end
-%     row = round(Results(i,1),0);
-    col = round(Results(i,2),0) + 1;
-    
-    Results_new(row,col) = abs(Results(i,4));
 end
 
-percents = zeros(size(Results_new));
-
-for i = 1:size(Results_new,1)
-    for j = 1:size(Results_new,2)
-        percents(i,j) = (Results_new(i,j)/Results_new(i,1))*100;
-    end
-end
-
-sensitivities = NaN(size(Results_new));
+sensitivities = NaN(size(AllResults));
 
 for i = 1:size(sensitivities,1)
     for j = 1:size(sensitivities,2)
-        sensitivities(i,j) = ((Results_new(i,j) - Results_new(i,1))/Results_new(i,1))*100;
+        sensitivities(i,j) = ((AllResults(i,j) - AllResults(i,1))/AllResults(i,1))*100;
     end
 end
 

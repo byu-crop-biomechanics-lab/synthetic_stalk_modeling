@@ -12,7 +12,9 @@ load(ChosenEllipseData,'ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int','R_ext','R_in
 load(NewGoodStalks,'newgoodstalknums');
 
 % Create output data structure
-M = length(AVG_RIND_T)*nNEPCs;
+npts = 360;
+M = length(AVG_RIND_T)*npts;
+m = length(AVG_RIND_T);
 N = nNEPCs + 1;
 geom_err_dist = zeros(M,N);
 
@@ -21,20 +23,20 @@ geom_err_dist = zeros(M,N);
 % For each stalk, take the difference between the original exterior data
 % and the current geometric case (ellipse + some NEPCs).
 
-for i = 1:M
+for i = 1:m
+    starting_ind = (i-1)*npts + 1;    
+    
     real_ext = R_ext(i,:);
     ellipse_ext = ELLIPSE_R_ext(i,:);
     
     % Calculate the differences for the ellipse-only case
-    geom_err = zeros(size(real_ext));
+    geom_err = zeros(size(real_ext'));
     for j = 1:length(geom_err)
-        geom_err(j) = abs(ellipse_ext(j) - real_ext(j)); % Should this be signed error or magnitude only?
+        geom_err(j) = ellipse_ext(j) - real_ext(j);
     end
     
-    % Take the sum of the error around the cross-section and insert it into
-    % the output structure in the first column
-    tot_err = sum(geom_err);
-    geom_err_dist(i,1) = tot_err;
+    % Place the ellipse errors in the array
+    geom_err_dist(starting_ind:(starting_ind+npts-1),1) = geom_err;
     
     for j = 1:N-1
         % Calculate the geometry of the current NEPC case
@@ -43,15 +45,13 @@ for i = 1:M
 %         pause();
         
         % Calculate the differences for the current NEPC case
-        geom_err = zeros(size(real_ext));
+        geom_err = zeros(size(real_ext'));
         for k = 1:length(geom_err)
-            geom_err(k) = abs(NEPC_ext(k) - real_ext(k)); % Should this be signed error or magnitude only?
+            geom_err(k) = NEPC_ext(k) - real_ext(k); % Should this be signed error or magnitude only?
         end
         
-        % Take the sum of the error around the cross-section and insert it into
-        % the output structure in the first column
-        tot_err = sum(geom_err);
-        geom_err_dist(i,j+1) = tot_err;
+        % Insert the calculated differences in the error array
+        geom_err_dist(starting_ind:(starting_ind+npts-1),j+1) = geom_err;
 
     end
     
