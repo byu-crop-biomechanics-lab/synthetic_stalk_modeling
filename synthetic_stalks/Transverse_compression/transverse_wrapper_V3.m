@@ -1,4 +1,4 @@
-function transverse_wrapper_V2(stalknums,slicedist,material_method,cpu,license)
+function transverse_wrapper_V3(stalknums,slicedist,material_method,group)
 % FILENAME: transverse_wrapper.m
 % AUTHOR: Ryan Larson
 % DATE: 6/18/19
@@ -40,7 +40,8 @@ function transverse_wrapper_V2(stalknums,slicedist,material_method,cpu,license)
 % V1 - Choose a continuous range of stalk numbers to sample
 % V2 - Input a vector of unique random integers to determine which stalks
 % to sample
-% V3 - 
+% V3 - Added group input to number the output scripts for putting in a
+% large folder of scripts for different purposes
 %
 % -------------------------------------------------------------------------
 
@@ -51,8 +52,6 @@ hold off
 close all;
 set(0,'DefaultFigureWindowStyle','docked');
 
-% r1 = num2str(range(1));
-% r2 = num2str(range(2));
 dist_int = num2str(floor(abs(slicedist)));
 deci = abs(slicedist) - floor(abs(slicedist));
 dist_deci = num2str(deci);
@@ -194,7 +193,7 @@ problem_indices = [];
 chosen_problem_indices = [];
     
 if ~isfile(searchname)
-    disp('No ellipse data for this slice distance exists in the current folder. Create one now.');
+    disp('No ellipse data for this slice distance exists in the current folder. Create data now.');
     
     % Calculate the ellipse fits for all cross-sections at chosen distance
     AllEllipseName = strcat(output_prefix,'_AllEllipses.mat');
@@ -208,7 +207,6 @@ if ~isfile(searchname)
     load(AllEllipseName);
     load(FlippedOutputName);
 
-    
     for i = 1:size(flippedTable,1)
         i
         polarplot(ELLIPSE_T(i,:),ELLIPSE_R_ext(i,:),'LineWidth',2);
@@ -246,9 +244,16 @@ if ~isfile(searchname)
                 disp('Not a recognized answer. Please try again.');
         end
     end
+    
+    
 
+    % Determine if any of the problem cases are in the selected stalks
     problocs = ismember(problem_indices,stalknums);
     chosen_problem_indices = problem_indices(problocs);
+    
+    % Save problem_indices for later use, after correcting the indices
+    ProblemEllipses = strcat(output_prefix,'_ProblemEllipses.mat');
+    save(ProblemEllipses,'problem_indices','problocs','chosen_problem_indices');
     
     problem_indices
     chosen_problem_indices
@@ -256,7 +261,10 @@ if ~isfile(searchname)
     
 else
     disp('Ellipse data for the chosen slice distance has been found.');
-    AllEllipseName = searchname;
+    AllEllipseName = strcat(output_prefix,'_AllEllipses.mat');
+    
+    ProblemEllipses = strcat(output_prefix,'_ProblemEllipses.mat');
+    load(ProblemEllipses,'problem_indices','chosen_problem_indices');
     
     % Calculate the ellipse fits for the chosen set of cross-sections
     ChosenEllipseName = strcat(output_prefix,'_ChosenEllipses.mat');
@@ -273,14 +281,15 @@ if isempty(problem_indices)
     PCA_ellipse_fits(AllEllipseName,NEPCName);
     
     % Create the Abaqus Python scripts
-    create_cases(NEPCName,ChosenEllipseName,ChooseSectionsName,problem_indices,5,material_method,cpu,license,MaterialsName);
+    create_cases(NEPCName,ChosenEllipseName,ChooseSectionsName,5,material_method,group,MaterialsName);
 else
-    % Remove the problem ellipses and then run PCA again
+    % Remove the problem ellipses and then run PCA
     AllGoodEllipseFits = strcat(output_prefix,'_AllGoodEllipses.mat');
     ChosenGoodEllipseFits = strcat(output_prefix,'_ChosenGoodEllipses.mat');
     GoodStalkNumsName = strcat(output_prefix,'_GoodStalks.mat');
-%     remove_problem_ellipses(AllEllipseName,problem_indices,AllGoodEllipseFits);
-    remove_problem_ellipses(AllEllipseName,StalkNumsName,problem_indices,AllGoodEllipseFits,GoodStalkNumsName,'all')
+
+    % Remove the problem indices from the complete set of ellipse fits
+    remove_problem_ellipses(AllEllipseName,stalknums,problem_indices,AllGoodEllipseFits,GoodStalkNumsName,'all')
     
     % Convert the chosen_problem_indices to values from 1 to 50 (or the
     % number of chosen stalks) and remove the corresponding bad sections
@@ -293,24 +302,55 @@ else
     end
     translated_prob_indices
     
-%     remove_problem_ellipses(ChosenEllipseName,StalkOutput,translated_prob_indices,ChosenGoodEllipseFits);
-    if ~isempty(translated_prob_indices)
-        remove_problem_ellipses(ChosenEllipseName,StalkNumsName,translated_prob_indices,ChosenGoodEllipseFits,GoodStalkNumsName,'chosen')
-        
-        % Run PCA
-        PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
+%     % Remove the problem indices that are within the chosen stalknums and
+%     % produce a new stalknums variable
+%     if ~isempty(translated_prob_indices)
+%         remove_problem_ellipses(ChosenEllipseName,stalknums,translated_prob_indices,ChosenGoodEllipseFits,GoodStalkNumsName,'chosen')
+%         
+%         % Adjust the indices in the new good stalknums variable
+%         load(GoodStalkNumsName,'stalknums');
+%         goodstalknums = stalknums;
+%         load(AllEllipseName,'A');
+%         Nstalks = length(A);
+%         [newgoodstalknums] = shift_indices(problem_indices,Nstalks,goodstalknums);
+%         
+%         NewGoodStalks = strcat(output_prefix,'_NewGoodStalks.mat');
+%         save(NewGoodStalks,'newgoodstalknums');
+%         
+%         % Run PCA
+%         PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
+% 
+%         % Create the Abaqus Python scripts
+%         create_cases_shifted(NEPCName,ChosenGoodEllipseFits,NewGoodStalks,5,material_method,group,MaterialsName);
+%         
+%     else
+%         % Run PCA
+%         PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
+% 
+%         % Create the Abaqus Python scripts
+%         create_cases(NEPCName,ChosenEllipseName,ChooseSectionsName,5,material_method,group,MaterialsName);
+%     end
 
-        % Create the Abaqus Python scripts
-        create_cases(NEPCName,ChosenGoodEllipseFits,ChooseSectionsName,problem_indices,5,material_method,cpu,license,MaterialsName);
-        
-    else
-        % Run PCA
-        PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
+    % Remove the problem indices that are within the chosen stalknums and
+    % produce a new stalknums variable
+    remove_problem_ellipses(ChosenEllipseName,stalknums,translated_prob_indices,ChosenGoodEllipseFits,GoodStalkNumsName,'chosen')
 
-        % Create the Abaqus Python scripts
-        create_cases(NEPCName,ChosenEllipseName,ChooseSectionsName,problem_indices,5,material_method,cpu,license,MaterialsName);
-    end
-    
+    % Adjust the indices in the new good stalknums variable
+    load(GoodStalkNumsName,'stalknums');
+    goodstalknums = stalknums;
+    load(AllEllipseName,'A');
+    Nstalks = length(A);
+    [newgoodstalknums] = shift_indices(problem_indices,Nstalks,goodstalknums);
+
+    NewGoodStalks = strcat(output_prefix,'_NewGoodStalks.mat');
+    save(NewGoodStalks,'newgoodstalknums');
+
+    % Run PCA
+    PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
+
+    % Create the Abaqus Python scripts
+    create_cases_shifted(NEPCName,ChosenGoodEllipseFits,GoodStalkNumsName,NewGoodStalks,5,material_method,group,MaterialsName);
+
     
 end
 
@@ -878,7 +918,7 @@ for i = 1:length(ext_rhoexplained_tot)
 end
 
 figure(1);
-plot(ext_rhoexplained_tot(:,1),'-*');
+plot(ext_rhoexplained_tot(1:50,1),'-*');
 title('Exterior Non-Ellipse PCs');
 xlabel('# of PCs');
 ylabel('% Variance Explained');
@@ -925,11 +965,9 @@ save(SaveFile,'ELLIPSE_T','ELLIPSE_R_ext','ext_rhocoeffs',...
 end
 
 
-function remove_problem_ellipses(OriginalEllipseFits,Stalks,problem_indices,GoodEllipseFits,GoodStalks,All)
+function remove_problem_ellipses(OriginalEllipseFits,stalknums,problem_indices,GoodEllipseFits,GoodStalks,All)
 load(OriginalEllipseFits);
-load(Stalks,'stalknums');
-
-N = size(A,1);
+% load(Stalks,'stalknums');
 
 % Remove the problem ellipses from the ellipse fit data
 A(problem_indices) = [];
@@ -945,8 +983,12 @@ ELLIPSE_XY(problem_indices,:,:) = [];
 R_ext(problem_indices,:) = [];
 R_int(problem_indices,:) = [];
 
+% If removing translated_problem_indices from the chosen set of stalks
+% only:
 if ~strcmp(All,'all')
-    stalknums(translated_prob_indices,:) = [];
+    if ~isempty(problem_indices)
+        stalknums(problem_indices) = []; % This line should only be executed if problem_indices is translated_problem_indices
+    end
 end
 
 % Save the final data in a new mat file
@@ -959,43 +1001,48 @@ save(SaveFile,'stalknums');
 
 end
 
-function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numNEPCs,material_method,cpu,license,SaveName)
+function create_cases_shifted(NEPCdata,GoodEllipseData,GoodStalkNumsName,NewGoodStalks,numNEPCs,material_method,group,SaveName)
     % create_cases.m: Calculate the necessary information to include in the
     % Python scripts
     
     load(NEPCdata);
     load(GoodEllipseData);
-    load(SelectedData);
+    load(GoodStalkNumsName,'stalknums');
+    load(NewGoodStalks,'newgoodstalknums'); % Load in the shifted stalknums
 
     N = size(ELLIPSE_T,1);
     MaterialProps = zeros(N,(2 + 2*numNEPCs - 1),2);
     
-    if strcmp(cpu,'multi')
-        write_Python_template_mult_processor;
-    elseif license == 1
-        write_Python_template;  % Create Template cell array that can be copied and used to make individualized Python scripts
-    elseif license == 2
-        write_Python_template2;
-    else
-        error('Choose a valid cpu/license combination');
-    end
+%     if strcmp(cpu,'multi')
+%         write_Python_template_mult_processor;
+%     elseif license == 1
+%         write_Python_template;  % Create Template cell array that can be copied and used to make individualized Python scripts
+%     elseif license == 2
+%         write_Python_template2;
+%     else
+%         error('Choose a valid cpu/license combination');
+%     end
+
+    write_Python_template3;
 
     %% Create all geometry cases for a given cross section
     % Step through the cross sections
-    stalks = selectedTable.StkNum;
+%     stalknums = selectedTable.StkNum; % NEED A TRANSLATED stalks VARIABLE SO IT DOESN'T CHOOSE CROSS-SECTIONS OUTSIDE
     
-    % Remove the stalk numbers that had ellipse fit problems
-    stalks(stalks==problem_indices) = [];
+%     % Remove the stalk numbers that had ellipse fit problems REDUNDANT
+%     if ~isempty(problem_indices)
+%         stalknums(stalknums==problem_indices) = [];
+%     end
     
     for i = 1:N
-        
-        ID = sprintf('%d',stalks(i)); % Cross-section number
+        GROUP = sprintf('%d',group); % Group number
+        ID = sprintf('%d',stalknums(i)); % Cross-section number
 
         %% Real cross section (case 0)
         case_num = 0; % increment this for each case within each cross section
         Script = Template;
         [Erind,Epith] = get_materials(material_method);
-        make_case(case_num,i,ID,R_ext,R_int,ELLIPSE_T,Script,Erind,Epith);
+        make_case(case_num,i,ID,GROUP,R_ext,R_int,ELLIPSE_T,Script,Erind,Epith);
         MaterialProps(i,case_num+1,1) = Erind;
         MaterialProps(i,case_num+1,2) = Epith;
 
@@ -1003,7 +1050,7 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
         case_num = case_num + 1;
         Script = Template; % Reset the script template
         [Erind,Epith] = get_materials(material_method);
-        make_case(case_num,i,ID,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script,Erind,Epith);
+        make_case(case_num,i,ID,GROUP,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script,Erind,Epith);
         MaterialProps(i,case_num+1,1) = Erind;
         MaterialProps(i,case_num+1,2) = Epith;
 
@@ -1018,7 +1065,7 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
 %             NEPC_int = zeros(1,size(int_rhoPCAs,1));
             for k = 1:j
                 % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
-                NEPC_ext = NEPC_ext + ext_rhocoeffs(stalks(i),k)*ext_rhoPCAs(:,k)';
+                NEPC_ext = NEPC_ext + ext_rhocoeffs(newgoodstalknums(i),k)*ext_rhoPCAs(:,k)';
 %                 NEPC_int = NEPC_int + int_rhocoeffs(i,k)*int_rhoPCAs(:,k)';
             end
 
@@ -1026,7 +1073,7 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
             Rnew_int = Rnew_ext - AVG_RIND_T(i);
             
             [Erind,Epith] = get_materials(material_method);
-            make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
+            make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
             MaterialProps(i,case_num+1,1) = Erind;
             MaterialProps(i,case_num+1,2) = Epith;
 
@@ -1041,13 +1088,13 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
             % Add the current NEPC to the ellipse in polar coordinates
             NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
 %             NEPC_int = zeros(1,size(int_rhoPCAs,1));
-            NEPC_ext = ext_rhocoeffs(stalks(i),j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
+            NEPC_ext = ext_rhocoeffs(newgoodstalknums(i),j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
 %             NEPC_int = int_rhocoeffs(i,j)*int_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
 %             Rnew_int = Rnew_ext - AVG_RIND_T(i);
 
             [Erind,Epith] = get_materials(material_method);
-            make_case(case_num,i,ID,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
+            make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
             MaterialProps(i,case_num+1,1) = Erind;
             MaterialProps(i,case_num+1,2) = Epith;
 
@@ -1064,10 +1111,121 @@ function create_cases(NEPCdata,GoodEllipseData,SelectedData,problem_indices,numN
 
 end
 
-function make_case(case_num,i,ID,R_ext,R_int,T,Script,Erind,Epith)
+
+function create_cases(NEPCdata,GoodEllipseData,ChosenSectionsData,numNEPCs,material_method,group,SaveName)
+    % create_cases.m: Calculate the necessary information to include in the
+    % Python scripts
+    
+    load(NEPCdata);
+    load(GoodEllipseData);
+    load(ChosenSectionsData,'stalknums');
+%     load(NewGoodStalks,'newgoodstalknums'); % Load in the shifted stalknums
+
+    N = size(ELLIPSE_T,1);
+    MaterialProps = zeros(N,(2 + 2*numNEPCs - 1),2);
+    
+%     if strcmp(cpu,'multi')
+%         write_Python_template_mult_processor;
+%     elseif license == 1
+%         write_Python_template;  % Create Template cell array that can be copied and used to make individualized Python scripts
+%     elseif license == 2
+%         write_Python_template2;
+%     else
+%         error('Choose a valid cpu/license combination');
+%     end
+
+    write_Python_template3;
+
+    %% Create all geometry cases for a given cross section
+    % Step through the cross sections
+%     stalknums = selectedTable.StkNum; % NEED A TRANSLATED stalks VARIABLE SO IT DOESN'T CHOOSE CROSS-SECTIONS OUTSIDE
+    
+%     % Remove the stalk numbers that had ellipse fit problems REDUNDANT
+%     if ~isempty(problem_indices)
+%         stalknums(stalknums==problem_indices) = [];
+%     end
+    
+    for i = 1:N
+        GROUP = sprintf('%d',group); % Group number
+        ID = sprintf('%d',stalknums(i)); % Cross-section number
+
+        %% Real cross section (case 0)
+        case_num = 0; % increment this for each case within each cross section
+        Script = Template;
+        [Erind,Epith] = get_materials(material_method);
+        make_case(case_num,i,ID,GROUP,R_ext,R_int,ELLIPSE_T,Script,Erind,Epith);
+        MaterialProps(i,case_num+1,1) = Erind;
+        MaterialProps(i,case_num+1,2) = Epith;
+
+        %% Pure ellipse fit (case 1)
+        case_num = case_num + 1;
+        Script = Template; % Reset the script template
+        [Erind,Epith] = get_materials(material_method);
+        make_case(case_num,i,ID,GROUP,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script,Erind,Epith);
+        MaterialProps(i,case_num+1,1) = Erind;
+        MaterialProps(i,case_num+1,2) = Epith;
+
+        %% Combined NEPC cases
+        for j = 1:numNEPCs
+            case_num = case_num + 1;
+            Script = Template; % Reset the script template
+
+            % Calculate the cases with NEPCs cumulatively added into the
+            % ellipse fit
+            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
+%             NEPC_int = zeros(1,size(int_rhoPCAs,1));
+            for k = 1:j
+                % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
+                NEPC_ext = NEPC_ext + ext_rhocoeffs(stalknums(i),k)*ext_rhoPCAs(:,k)';
+%                 NEPC_int = NEPC_int + int_rhocoeffs(i,k)*int_rhoPCAs(:,k)';
+            end
+
+            Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+            Rnew_int = Rnew_ext - AVG_RIND_T(i);
+            
+            [Erind,Epith] = get_materials(material_method);
+            make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
+            MaterialProps(i,case_num+1,1) = Erind;
+            MaterialProps(i,case_num+1,2) = Epith;
+
+        end
+
+
+        %% Remaining individual NEPC cases
+        for j = 2:numNEPCs
+            case_num = case_num + 1;
+            Script = Template; % Reset the script template
+
+            % Add the current NEPC to the ellipse in polar coordinates
+            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
+%             NEPC_int = zeros(1,size(int_rhoPCAs,1));
+            NEPC_ext = ext_rhocoeffs(stalknums(i),j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
+%             NEPC_int = int_rhocoeffs(i,j)*int_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
+            Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+%             Rnew_int = Rnew_ext - AVG_RIND_T(i);
+
+            [Erind,Epith] = get_materials(material_method);
+            make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
+            MaterialProps(i,case_num+1,1) = Erind;
+            MaterialProps(i,case_num+1,2) = Epith;
+
+        end
+
+    end
+    
+    % Save the final data in a new mat file
+    FolderName = pwd;
+    SaveFile = fullfile(FolderName, SaveName);
+    save(SaveFile,'MaterialProps');
+    
+    
+
+end
+
+function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
     CASE = sprintf('%d',case_num);
-    jobname = strcat('''Section_',ID,'_',CASE,'''');
-    scriptname = strcat('Section_',ID,'_',CASE,'.py');
+    jobname = strcat('''Group_',GROUP,'_','Section_',ID,'_',CASE,'''');
+    scriptname = strcat('Group_',GROUP,'_','Section_',ID,'_',CASE,'.py');
     
     % Convert data to Cartesian coordinates (read in as row vectors)
     if size(R_ext,1) > 1
@@ -1152,16 +1310,17 @@ function make_case(case_num,i,ID,R_ext,R_int,T,Script,Erind,Epith)
     % Insert the case-specific values into the appropriate parts of the
     % Python script template (must be strings)
     Script(17,1) = strcat(Script(17,1),jobname);
-    Script(21,1) = strcat(Script(21,1),ID);
-    Script(23,1) = strcat(Script(23,1),CASE);
-    Script(31,1) = strcat(Script(31,1),rindE);
-    Script(33,1) = strcat(Script(33,1),pithE);
-    Script(35,1) = strcat(Script(35,1),RP1X);
-    Script(37,1) = strcat(Script(37,1),RP1Y);
-    Script(39,1) = strcat(Script(39,1),RP2X);
-    Script(41,1) = strcat(Script(41,1),RP2Y);
-    Script(61,1) = strcat(Script(61,1),outer_spline);
-    Script(84,1) = strcat(Script(84,1),inner_spline);
+    Script(19,1) = strcat(Script(19,1),GROUP);
+    Script(23,1) = strcat(Script(23,1),ID);
+    Script(25,1) = strcat(Script(25,1),CASE);
+    Script(33,1) = strcat(Script(33,1),rindE);
+    Script(35,1) = strcat(Script(35,1),pithE);
+    Script(37,1) = strcat(Script(37,1),RP1X);
+    Script(39,1) = strcat(Script(39,1),RP1Y);
+    Script(41,1) = strcat(Script(41,1),RP2X);
+    Script(43,1) = strcat(Script(43,1),RP2Y);
+    Script(63,1) = strcat(Script(63,1),outer_spline);
+    Script(86,1) = strcat(Script(86,1),inner_spline);
     
     % Write Python script from the cell array
     filePh = fopen(scriptname,'w');

@@ -13,6 +13,10 @@ load(Data,'Results');
 rows = 50;
 cols = 11;
 
+ylimits = 0;
+lowlim = 94;
+uplim = 102;
+
 Results_new = NaN(rows,cols);
 
 for i = 1:size(Results,1)
@@ -35,6 +39,7 @@ for i = 1:size(Results_new,1)
     end
 end
 
+% avg = nanmean(percents)-100;
 avg = nanmean(percents);
 stdev = nanstd(percents);
 stderror = zeros(size(stdev));
@@ -49,7 +54,9 @@ figure(1);
 caselabels_cumulative = {'Real'; 'Ellipse'; 'NEPC 1'; 'NEPC 1-2'; 'NEPC 1-3'; 'NEPC 1-4'; 'NEPC 1-5'};
 bar(avg(1:7),'FaceColor',[0.75,0.75,0.75]);
 set(gca,'xticklabel',caselabels_cumulative);
-ylim([93,102.5]);
+if ylimits == 1
+    ylim([lowlim,uplim]);
+end
 title('NEPC Response Progression (Cumulative)');
 xlabel('Case');
 ylabel('Reaction Force (% of Real Response)');
@@ -76,7 +83,9 @@ indices = [1 2 3 8 9 10 11];
 figure(2);
 bar(avg(indices),'FaceColor',[0.75,0.75,0.75]);
 set(gca,'xticklabel',caselabels_individual);
-ylim([93,115.5]);
+if ylimits == 1
+    ylim([lowlim,uplim]);
+end
 title('NEPC Response Progression (Individual)');
 xlabel('Case');
 ylabel('Reaction Force (% of Real Response)');
