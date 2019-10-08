@@ -350,7 +350,7 @@ else
 
     % Create the Abaqus Python scripts
     create_cases_shifted(NEPCName,ChosenGoodEllipseFits,GoodStalkNumsName,NewGoodStalks,5,material_method,group,MaterialsName);
-
+    
     
 end
 
