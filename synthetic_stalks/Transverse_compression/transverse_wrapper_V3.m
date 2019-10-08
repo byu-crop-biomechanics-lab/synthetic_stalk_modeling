@@ -86,6 +86,12 @@ AllSectionsName = strcat(output_prefix,'_All980.mat');
 ChooseSections('samedist',linspace(1,980,980),slicedist,Stalk_TableDCR,error_indices,npoints,AllSectionsName)
 load(AllSectionsName);
 
+% If stalknums contains any cross-sections that were deleted, remove those
+% indices
+for i = 1:length(deleted_indices)
+    stalknums = stalknums(stalknums~=deleted_indices(i));
+end
+
 
 %% Check to see if there is already a flip vector for the chosen distance
 % Get file name to look for
@@ -148,9 +154,12 @@ end
 
 load(FlippedOutputName);
 
-% Make smaller chosen sections set
+%% Make smaller chosen sections set
+
+adjustedstalknums = shift_indices(deleted_indices,980,stalknums);
+
 ChooseSectionsName = strcat(output_prefix,'_Sampled.mat');
-ChooseSections('samedist',stalknums,slicedist,flippedTable,error_indices,npoints,ChooseSectionsName);
+ChooseSections('samedist',adjustedstalknums,slicedist,flippedTable,deleted_indices,npoints,ChooseSectionsName);
 
 %% Check to see if there is already an ellipse fit for the chosen distance
 % Get file name to look for
@@ -428,7 +437,7 @@ switch method
         selectedTable = Table(indices,:);
         
         
-        %% Get rid of problematic sections and re-index so there aren't any gaps
+        %% HERE'S THE SECTION TO TRY MOVING: Get rid of problematic sections and re-index so there aren't any gaps
         % Get rid of any cross-sections that were chosen that are also
         % listed in error_indices
         deleted_indices = [];
@@ -461,15 +470,16 @@ switch method
             end
         end
         
-        %GET RID OF THE BAD SECTIONS HERE BY INDEXING
-        selectedTable(deletesections,:) = [];
-        
-        
         % Re-index indices so indices reflects the true position in the
         % array of each cross-section.
         deleted_indices = [deletesections, deleted_indices];
         deleted_indices = sort(deleted_indices);
         
+        %% 
+        
+        %GET RID OF THE BAD SECTIONS HERE BY INDEXING
+        selectedTable(deletesections,:) = [];
+                
         % Save compiled slices in arrays for downstream use
         ext_X =     makearray(selectedTable,'Ext_X',npoints);
         ext_Y =     makearray(selectedTable,'Ext_Y',npoints);

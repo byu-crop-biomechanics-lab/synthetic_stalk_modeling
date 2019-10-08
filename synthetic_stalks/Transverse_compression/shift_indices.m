@@ -2,7 +2,8 @@ function [newgoodstalknums] = shift_indices(problem_indices,Nstalks,goodstalknum
     % Deal with removal of problem_indices by shifting and renumbering the 
     
     % goodstalknums is used as the chosen set of stalks for analysis, minus
-    % the bad ones that are also found in problem_indices
+    % the bad ones that are also found in problem_indices (doesn't
+    % necessarily come in ascending numerical order)
     
     % newgoodstalknums is supposed to indicate the shifted stalk numbers in
     % the whole 980-strong scheme of things
