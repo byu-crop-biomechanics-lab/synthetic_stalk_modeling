@@ -1,6 +1,9 @@
 function [newgoodstalknums] = shift_indices(problem_indices,Nstalks,goodstalknums)
     % Deal with removal of problem_indices by shifting and renumbering the 
     
+    % goodstalknums is used as the chosen set of stalks for analysis, minus
+    % the bad ones that are also found in problem_indices
+    
     original_indices = linspace(1,Nstalks,Nstalks)';
     original_indices(problem_indices) = [];     % Remove the problem indices from the list of indices
     

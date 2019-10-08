@@ -346,7 +346,7 @@ else
     save(NewGoodStalks,'newgoodstalknums');
 
     % Run PCA
-    PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
+    PCA_ellipse_fits(AllGoodEllipseFits,NEPCName); % At this point PCA is run on all good ellipse data
 
     % Create the Abaqus Python scripts
     create_cases_shifted(NEPCName,ChosenGoodEllipseFits,GoodStalkNumsName,NewGoodStalks,5,material_method,group,MaterialsName);
