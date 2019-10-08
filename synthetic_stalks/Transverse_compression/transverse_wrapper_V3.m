@@ -427,12 +427,16 @@ switch method
         % Create table from indices for later reference
         selectedTable = Table(indices,:);
         
+        
+        %% Get rid of problematic sections and re-index so there aren't any gaps
         % Get rid of any cross-sections that were chosen that are also
         % listed in error_indices
+        deleted_indices = [];
         for i = 1:length(error_indices)
             if ismember(error_indices(i),selectedTable.StkNum)
                 row = find(selectedTable.StkNum == error_indices(i));
                 selectedTable(row,:) = [];
+                deleted_indices = [deleted_indices, error_indices(i)];
             end
         end
         
@@ -460,6 +464,12 @@ switch method
         %GET RID OF THE BAD SECTIONS HERE BY INDEXING
         selectedTable(deletesections,:) = [];
         
+        
+        % Re-index indices so indices reflects the true position in the
+        % array of each cross-section.
+        deleted_indices = [deletesections, deleted_indices];
+        deleted_indices = sort(deleted_indices);
+        
         % Save compiled slices in arrays for downstream use
         ext_X =     makearray(selectedTable,'Ext_X',npoints);
         ext_Y =     makearray(selectedTable,'Ext_Y',npoints);
@@ -470,12 +480,14 @@ switch method
         int_T =     makearray(selectedTable,'Int_T',npoints);
         int_Rho =   makearray(selectedTable,'Int_Rho',npoints);
         avg_rind_thick = selectedTable.rind_t;
+        indices = selectedTable.StkNum;
         
         % Output all variables into mat file
         FolderName = pwd;
         SaveFile = fullfile(FolderName, SaveName);
         save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_T','ext_Rho',...
-            'int_T','int_Rho','avg_rind_thick','indices','selectedTable','npoints');
+            'int_T','int_Rho','avg_rind_thick','indices','selectedTable',...
+            'deleted_indices','npoints');
         
         
         
