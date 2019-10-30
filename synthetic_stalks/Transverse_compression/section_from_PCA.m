@@ -10,7 +10,7 @@ function [Rnew_ext,Rnew_int] = section_from_PCA(newgoodstalks,i,ELLIPSE_R_ext,ex
         NEPC_ext = NEPC_ext + ext_rhocoeffs(newgoodstalks(i),k)*ext_rhoPCAs(:,k)';
     end
 
-    Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+    Rnew_ext = ELLIPSE_R_ext(newgoodstalks(i),:) - NEPC_ext;
     Rnew_int = Rnew_ext - AVG_RIND_T(i);
 
 end

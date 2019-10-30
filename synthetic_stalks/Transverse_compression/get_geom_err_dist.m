@@ -39,7 +39,8 @@ for i = 1:m
     geom_err_dist(starting_ind:(starting_ind+npts-1),1) = geom_err;
     
     for j = 1:N-1
-        % Calculate the geometry of the current NEPC case
+        % Calculate the geometry of the current NEPC case (i is the index
+        % in newgoodstalknums)
         [NEPC_ext,~] = section_from_PCA(newgoodstalknums,i,ELLIPSE_R_ext,ext_rhoPCAs,ext_rhocoeffs,AVG_RIND_T,j);
 %         polarplot(ELLIPSE_T(i,:),NEPC_ext);
 %         pause();
