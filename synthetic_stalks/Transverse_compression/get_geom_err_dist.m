@@ -13,8 +13,8 @@ load(NewGoodStalks,'newgoodstalknums');
 
 % Create output data structure
 npts = 360;
-M = length(AVG_RIND_T)*npts;
-m = length(AVG_RIND_T);
+M = length(newgoodstalknums)*npts;
+m = length(newgoodstalknums);
 N = nNEPCs + 1;
 geom_err_dist = zeros(M,N);
 
@@ -32,7 +32,7 @@ for i = 1:m
     % Calculate the differences for the ellipse-only case
     geom_err = zeros(size(real_ext'));
     for j = 1:length(geom_err)
-        geom_err(j) = ellipse_ext(j) - real_ext(j);
+        geom_err(j) = 100*(ellipse_ext(j) - real_ext(j))/B(i);
     end
     
     % Place the ellipse errors in the array
@@ -48,7 +48,7 @@ for i = 1:m
         % Calculate the differences for the current NEPC case
         geom_err = zeros(size(real_ext'));
         for k = 1:length(geom_err)
-            geom_err(k) = NEPC_ext(k) - real_ext(k); % Should this be signed error or magnitude only?
+            geom_err(k) = 100*(NEPC_ext(k) - real_ext(k))/B(i); % Should this be signed error or magnitude only?
         end
         
         % Insert the calculated differences in the error array
