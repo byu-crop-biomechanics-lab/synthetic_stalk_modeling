@@ -3,9 +3,9 @@
 % Polar implementation of stalk_cross_sections.m
 % Generates lots of stalk cross sections with random noise and feature
 % variation. 
-clear all;
+% clear all;
 close all;
-clc;
+% clc;
 
 % Choose the number of data points to define the stalk shape
 N = 180;
@@ -26,25 +26,32 @@ dmin_up = 20;
 dmaj_low = dmin_up;
 dmaj_up = 25;
 
-aAmplim = 5;
+aAmplim = 2;
+aSymlim = -1.5;
 
 %% Main loop
-for i = 1:n
-    dmaj = unifrnd(dmaj_low,dmaj_up);
-    dmin = unifrnd(dmin_low,dmin_up);
+for i = 1:1
+%     dmaj = unifrnd(dmaj_low,dmaj_up);
+%     dmin = unifrnd(dmin_low,dmin_up);
+    dmaj = 23;
+    dmin = 18.4731;
     
-    ndepth = unifrnd(1,5);
-    nwidth = unifrnd(1,5);
-    nloc = unifrnd(pi-0.2,pi+0.2);      
+%     ndepth = unifrnd(1,5);
+%     nwidth = unifrnd(1,5);
+%     nloc = unifrnd(pi-0.2,pi+0.2);      
+    ndepth = 1.5;
+    nwidth = 2;
+    nloc = pi;
     
-    asymmetry = Asymmetry(aAmplim,theta);    
+    asymmetry = Asymmetry(aAmplim,aSymlim,theta);    
     
     % Random noise in shape to prevent them from being perfectly smooth
     noise = unifrnd(-0.05,0.05,1,N);
     
     % Generate points to define the cross section
     notch = notch_fn(N,ndepth,nwidth,nloc,theta);    
-    r = rpts(N,theta,dmaj,dmin,noise,asymmetry,notch);
+    rext = rpts(N,theta,dmaj,dmin,noise,asymmetry,notch);
+    rint = rext - 1.4693;
 
 %     % Scale the x and y points by a factor related to dmin and dmaj
 %     factor = 1/(dmaj + dmin);
@@ -53,7 +60,7 @@ for i = 1:n
 %     y = y*factor;
     
     % Place cross section data in the larger array of data
-    sections(i,:) = r;
+    sections(i,:) = rext;
 
     
 end
@@ -65,8 +72,14 @@ end
 %     pause(0.1);
 % end
 
+polarplot(rext);
+hold on
+polarplot(rint);
+hold off
+
+
 % Save data as a mat file for ease of use
-save polar_cross_sections.mat sections
+% save polar_cross_sections.mat sections
 
 
 
@@ -88,9 +101,11 @@ function [notch] = notch_fn(N,ndepth,nwidth,nloc,theta)
     end
 end
 
-function [asymmetry] = Asymmetry(aAmplim,theta)
+function [asymmetry] = Asymmetry(aAmplim,aSymlim,theta)
 %     asymmetry = zeros(1,N);
-    aAmp = unifrnd(-aAmplim,aAmplim);
-    aSym = unifrnd(-pi,pi);
+%     aAmp = unifrnd(-aAmplim,aAmplim);
+%     aSym = unifrnd(-pi,pi);
+    aAmp = aAmplim;
+    aSym = aSymlim;
     asymmetry = aAmp*sin(theta - aSym);
 end

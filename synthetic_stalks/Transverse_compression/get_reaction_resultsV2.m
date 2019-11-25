@@ -88,6 +88,14 @@ for i = 2:7
     percent_boxlabels = [percent_boxlabels; percent_labels(:,i)];
 end
 
+percent_box_ind = [];
+percent_boxlabels_ind = [];
+ind_cases = [2 3 8 9 10 11];
+for i = ind_cases
+    percent_box_ind = [percent_box_ind; percent_err(:,i)];
+    percent_boxlabels_ind = [percent_boxlabels_ind; percent_labels(:,i)];
+end
+
 
 % Calculate relative error for boxplots
 errdiffs = zeros(size(percent_err,1),10);
@@ -228,6 +236,7 @@ er.LineWidth = 0.5;
 
 %% Boxplots (cumulative, percent error and relative percent error)
 % Percent error
+% Cumulative NEPC cases
 figure(5);
 boxplot(percent_box,percent_boxlabels,'Notch','on','symbol','');
 ylim([-4.5,2]);
@@ -239,8 +248,20 @@ hold on
 yline(0);
 hold off
 
-% Relative percent error
+% Individual NEPC cases
 figure(6);
+boxplot(percent_box_ind,percent_boxlabels_ind,'Notch','on','symbol','');
+ylim([-8,3]);
+set(gca,'YTick',-8:0.5:3);
+ytickformat('percentage');
+title('Reaction Error Distributions');
+ylabel('Error');
+hold on
+yline(0);
+hold off
+
+% Relative percent error
+figure(7);
 % boxplot(boxerrdiffs,boxerrlabels,'Notch','on');
 boxplot(boxerrdiffs,boxerrlabels,'Notch','on','symbol','');
 ylim([-4.5,3.5]);
