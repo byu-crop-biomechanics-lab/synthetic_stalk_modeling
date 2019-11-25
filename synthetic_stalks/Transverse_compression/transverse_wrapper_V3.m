@@ -346,7 +346,11 @@ else
     save(NewGoodStalks,'newgoodstalknums');
 
     % Run PCA
-    PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
+
+    % NOTE: NOT ALL CHOSEN STALKNUMS ARE ENDING UP IN THE PCA. CHECK INPUTS
+    % AND OUTPUTS TO CONFIRM.
+    PCA_ellipse_fits(AllGoodEllipseFits,NEPCName); % At this point PCA is run on all good ellipse data
+
 
     % Create the Abaqus Python scripts
     create_cases_shifted(NEPCName,ChosenGoodEllipseFits,GoodStalkNumsName,NewGoodStalks,5,material_method,group,MaterialsName);
@@ -1049,7 +1053,7 @@ function create_cases_shifted(NEPCdata,GoodEllipseData,GoodStalkNumsName,NewGood
         %% Pure ellipse fit (case 1)
         case_num = case_num + 1;
         Script = Template; % Reset the script template
-        [Erind,Epith] = get_materials(material_method);
+%         [Erind,Epith] = get_materials(material_method);
         make_case(case_num,i,ID,GROUP,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script,Erind,Epith);
         MaterialProps(i,case_num+1,1) = Erind;
         MaterialProps(i,case_num+1,2) = Epith;
@@ -1072,7 +1076,7 @@ function create_cases_shifted(NEPCdata,GoodEllipseData,GoodStalkNumsName,NewGood
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
             Rnew_int = Rnew_ext - AVG_RIND_T(i);
             
-            [Erind,Epith] = get_materials(material_method);
+%             [Erind,Epith] = get_materials(material_method);
             make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
             MaterialProps(i,case_num+1,1) = Erind;
             MaterialProps(i,case_num+1,2) = Epith;
@@ -1093,7 +1097,7 @@ function create_cases_shifted(NEPCdata,GoodEllipseData,GoodStalkNumsName,NewGood
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
 %             Rnew_int = Rnew_ext - AVG_RIND_T(i);
 
-            [Erind,Epith] = get_materials(material_method);
+%             [Erind,Epith] = get_materials(material_method);
             make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
             MaterialProps(i,case_num+1,1) = Erind;
             MaterialProps(i,case_num+1,2) = Epith;
@@ -1160,7 +1164,7 @@ function create_cases(NEPCdata,GoodEllipseData,ChosenSectionsData,numNEPCs,mater
         %% Pure ellipse fit (case 1)
         case_num = case_num + 1;
         Script = Template; % Reset the script template
-        [Erind,Epith] = get_materials(material_method);
+%         [Erind,Epith] = get_materials(material_method);
         make_case(case_num,i,ID,GROUP,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script,Erind,Epith);
         MaterialProps(i,case_num+1,1) = Erind;
         MaterialProps(i,case_num+1,2) = Epith;
@@ -1183,7 +1187,7 @@ function create_cases(NEPCdata,GoodEllipseData,ChosenSectionsData,numNEPCs,mater
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
             Rnew_int = Rnew_ext - AVG_RIND_T(i);
             
-            [Erind,Epith] = get_materials(material_method);
+%             [Erind,Epith] = get_materials(material_method);
             make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
             MaterialProps(i,case_num+1,1) = Erind;
             MaterialProps(i,case_num+1,2) = Epith;
@@ -1204,7 +1208,7 @@ function create_cases(NEPCdata,GoodEllipseData,ChosenSectionsData,numNEPCs,mater
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
 %             Rnew_int = Rnew_ext - AVG_RIND_T(i);
 
-            [Erind,Epith] = get_materials(material_method);
+%             [Erind,Epith] = get_materials(material_method);
             make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
             MaterialProps(i,case_num+1,1) = Erind;
             MaterialProps(i,case_num+1,2) = Epith;
