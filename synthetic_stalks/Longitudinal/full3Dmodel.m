@@ -1,3 +1,5 @@
+function full3Dmodel(DataTable,totstalks,nstalks)
+
 % FILENAME: full3Dmodel.m
 % AUTHOR: Ryan Larson
 % DATE: 1/7/2020
@@ -8,7 +10,14 @@
 % 
 % 
 % INPUTS:
-%        
+%       DataTable - Table with A, B, T, and theta_rot values, as well as
+%       cross-section longitudinal position and stalk number (simplified
+%       from the original downsampled data table, like the DCR table was
+%       
+%       totstalks - Total number of stalks used for PCA (should be close to
+%       980)
+%       
+%       nstalks - Number of stalks to create 
 %       
 % OUTPUTS:
 %       
@@ -45,10 +54,34 @@
 % axis of the node cross-section is 0 degrees from the x-axis and the notch
 % is on the left for cross-sections below the node
 
+% Get rid of problem cases where ellipse fitting doesn't work
 
-%% 
+% Make sure notches are all pointed the correct way (might need a
+% notch-direction checking function to do this)
+
+
+%% Select stalks
+
+% Read the input number of stalks and get a random, ordered array of stalk
+% numbers
+stalks = randperm(980,nstalks);
+stalks = sort(stalks);
 
 
 
+%% Create PCA data table if not already created
+% Check if PCA variable table exists in the current directory. If yes, skip
+% this section
+
+PCAvars = NaN(totstalks,(nslices*4)); % 4 variables: A,B,T,theta_rot
+
+% Fill in PCAvars with the corresponding A,B,T,theta_rot data
+
+% Run PCA on PCAvars table
+% Save output table as .mat file
 
 
+%% Create geometric cases and corresponding Python scripts
+
+
+end
