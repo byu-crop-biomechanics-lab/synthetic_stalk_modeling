@@ -1,5 +1,5 @@
-function PrepSections_V3(indices, npoints, Table, SaveName)
-% FILENAME: PrepSections_V3.m
+function PrepSections_Longitudinal(indices, npoints, Table, SaveName)
+% FILENAME: PrepSections_Longitudinal.m
 % AUTHOR: Ryan Larson
 % DATE: 1/8/2020
 %
