@@ -42,9 +42,8 @@ function PrepSections_Longitudinal(indices, npoints, Table, SaveName)
 %       input, except that Ext_X, Ext_Y, Int_X, and Int_Y are replaced with
 %       their downsampled, centered, and rotated versions. Added are Ext_T,
 %       Ext_Rho, Int_T, and Int_Rho, the polar coordinate versions of the 
-%       downsampled data. xbar and ybar from the original table are removed
-%       because they are no longer meaningful.
-%
+%       downsampled data.
+% 
 %       error_indices - A list of integers corresponding to rows in
 %       Stalk_Table that experienced errors during conversion, and should
 %       not be used for further analysis until the problems are fixed.
@@ -74,6 +73,8 @@ nslices = length(indices);
 
 error_indices = [];
 theta_rot = zeros(nslices,1);
+A = zeros(nslices,1);
+B = zeros(nslices,1);
 
 for g = 1:nslices
     pct_loop1 = (g/nslices)*100     % This function runs for a long time, so this line outputs the approximate percentage completed
@@ -138,7 +139,9 @@ for g = 1:nslices
     %%
         % Uses a fit ellipse function to identify the angle of rotation along the long axis of the cross-section
         % (only takes into account the exterior boundaries)
-        [alpha, ~, ~, ~, ~, ~, ~] = fit_ellipse_R2( ext_X, ext_Y, prev_alpha, gca );
+        [alpha, major, minor, ~, ~, ~, ~] = fit_ellipse_R2( ext_X, ext_Y, prev_alpha, gca );
+        A(g) = major;
+        B(g) = minor;
 
         % Reorders and rotates the stalk's exterior and interior
         % Rotates an extra 90 degrees so the long axis is vertical
@@ -267,6 +270,8 @@ end
 
 assignin('base','error_indices',error_indices);
 assignin('base','theta_rot',theta_rot);
+assignin('base','A',A);
+assignin('base','B',B);
 
 % Squeeze all variables so they are two-dimensional and the same size
 ext_xDCR = squeeze(ext_xDCR);
@@ -296,13 +301,13 @@ if plotting == 1
     close(gcf)
 end
 
-% Create new table using CreateDCRTable function
-Stalk_TableDCR = CreateDCRTable(Table,[1 nslices],ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR);
+% Create new table using CreatePCATable function
+Stalk_TablePCA = CreateDCRTable(Table,[1 nslices],ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR);
 
 % Output all variables into mat file
 FolderName = pwd;
 SaveFile = fullfile(FolderName, SaveName);
-save(SaveFile,'Stalk_TableDCR','error_indices','npoints');
+save(SaveFile,'Stalk_TablePCA','error_indices','npoints');
 
 
 
@@ -1004,6 +1009,63 @@ Stalk_TableDCR = addvars(Stalk_TableDCR,Ext_T,'After','Int_Y');
 Stalk_TableDCR = addvars(Stalk_TableDCR,Ext_Rho,'After','Ext_T');
 Stalk_TableDCR = addvars(Stalk_TableDCR,Int_T,'After','Ext_Rho');
 Stalk_TableDCR = addvars(Stalk_TableDCR,Int_Rho,'After','Int_T');
+
+end
+
+
+function [Stalk_TablePCA] = CreatePCATable(Table,range,ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR)
+% CreatePCATable.m: Take the variables created from PrepSections_Longitudinal.m and
+% make a new data table, copied from SMALL_CURVES_V2_3_1500.mat with some
+% deletions and additions
+%
+% Author: Ryan Larson
+% Date: 1/9/2020
+
+Stalk_TablePCA = Table(range(1):range(2),:);
+
+Stalk_TablePCA = removevars(Stalk_TablePCA,{'Ext_X','Ext_Y','Int_X','Int_Y'});
+
+N = size(Stalk_TablePCA,1);
+
+ext_xDCR = single(ext_xDCR);
+ext_yDCR = single(ext_yDCR);
+ext_tDCR = single(ext_tDCR);
+ext_rhoDCR = single(ext_rhoDCR);
+int_xDCR = single(int_xDCR);
+int_yDCR = single(int_yDCR);
+int_tDCR = single(int_tDCR);
+int_rhoDCR = single(int_rhoDCR);
+
+Ext_X = cell(N,1);
+Ext_Y = cell(N,1);
+Ext_T = cell(N,1);
+Ext_Rho = cell(N,1);
+Int_X = cell(N,1);
+Int_Y = cell(N,1);
+Int_T = cell(N,1);
+Int_Rho = cell(N,1);
+
+for i = 1:N
+    Ext_X{i} = ext_xDCR(:,i);
+    Ext_Y{i} = ext_yDCR(:,i);
+    Ext_T{i} = ext_tDCR(:,i);
+    Ext_Rho{i} = ext_rhoDCR(:,i);
+    Int_X{i} = int_xDCR(:,i);
+    Int_Y{i} = int_yDCR(:,i);
+    Int_T{i} = int_tDCR(:,i);
+    Int_Rho{i} = int_rhoDCR(:,i);   
+end
+
+
+% Save new boundary profiles into Stalk_TableDCR
+Stalk_TablePCA = addvars(Stalk_TablePCA,Ext_X,'Before','rind_t');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Ext_Y,'After','Ext_X');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Int_X,'After','Ext_Y');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Int_Y,'After','Int_X');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Ext_T,'After','Int_Y');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Ext_Rho,'After','Ext_T');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Int_T,'After','Ext_Rho');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Int_Rho,'After','Int_T');
 
 end
 end
