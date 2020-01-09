@@ -74,31 +74,30 @@ for n = stalknums(1):stalknums(2)
     n
     % Get the starting and ending indices of the table for the current stalk
     % number
-    tempTable = (DataTable.StkNum == n);
+    indices = (DataTable.StkNum == n); % This outputs a logical where the condition is true, not a table
             
     % Get index of first row that is part of the current stalk
-    for i = 1:length(tempTable)
-        if tempTable(1) == 1
+    for i = 1:length(indices)
+        if indices(1) == 1
             idx_first = 1;
             break
-        elseif tempTable(i) == 1 && tempTable(i-1) == 0
+        elseif indices(i) == 1 && indices(i-1) == 0
             idx_first = i;
         end
     end
 
     % Get index of last row that is part of the current stalk
-    for i = 2:length(tempTable)
-        if tempTable(i) == 0 && tempTable(i-1) == 1
+    for i = 2:length(indices)
+        if indices(i) == 0 && indices(i-1) == 1
             idx_last = i-1;
             break
         end
     end
     
-    idx_first
-    idx_last
+    tempTable = DataTable((idx_first:idx_last),:);
 
     % Locate node cross-section in the complete original DataTable, not the
-    % tempTable selection
+    % indices selection
     diffs = NaN(size(DataTable.StkNum));            
     for i = idx_first:idx_last
         diffs(i) = 0 - DataTable.SlP(i);
@@ -116,12 +115,12 @@ for n = stalknums(1):stalknums(2)
     % cross-section shift
     xshift = xcnode;
     yshift = ycnode;
-    for i = 1:length(tempTable)
+    for i = 1:size(tempTable,1)
         % Convert cells to arrays for easier access
-        ext_X = cell2mat(tempTable.Ext_X(indices(g)));
-        ext_Y = cell2mat(tempTable.Ext_Y(indices(g)));
-        int_X = cell2mat(tempTable.Int_X(indices(g)));
-        int_Y = cell2mat(tempTable.Int_Y(indices(g)));
+        ext_X = cell2mat(tempTable.Ext_X(i));
+        ext_Y = cell2mat(tempTable.Ext_Y(i));
+        int_X = cell2mat(tempTable.Int_X(i));
+        int_Y = cell2mat(tempTable.Int_Y(i));
         
         % Shift current cross-section by xshift and yshift
         for j = 1:length(ext_X)
@@ -136,7 +135,18 @@ for n = stalknums(1):stalknums(2)
         for j = 1:length(int_Y)
             int_Y(j) = int_Y(j) - yshift;
         end
+        
+        tempTable.Ext_X(i) = {ext_X};
+        tempTable.Ext_Y(i) = {ext_Y};
+        tempTable.Int_X(i) = {int_X};
+        tempTable.Int_Y(i) = {int_Y};
+        
+        tempTable.xbar(i) = mean(ext_X);
+        tempTable.ybar(i) = mean(ext_Y);
+        
     end
+    
+    %% At this point, a smaller table exists for the current stalk only, with all cross-sections shifted together so that the node cross-section is centered at the origin
     
     % Check the notch angle of the first 10 cross-sections. Determine the
     % correct hemisphere to rotate the node into by taking the rough angle
