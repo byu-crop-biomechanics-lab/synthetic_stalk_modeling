@@ -58,14 +58,37 @@ plotting = 0;       % a following function has a built-in plotting option, which
 %%% Variable Initializations
 alpha = 0;
 prev_alpha = 0;
-nslices = stalknums(2) - stalknums(1) + 1;
+
+nslices = 0; % Initialize the total number of slices in the chosen stalks
+startslice = 1;
+endslice = 1;
+
+if stalknums(1) ~= 1
+    for i = 1:size(DataTable,1)-1
+        if DataTable.StkNum(i) == stalknums(1) && DataTable.StkNum(i-1) ~= DataTable.StkNum(i)
+            startslice = i;
+        end
+    end
+else
+    startslice = 1;
+end
+
+for i = 1:size(DataTable,1)-1
+    if DataTable.StkNum(i) == stalknums(2) && DataTable.StkNum(i+1) ~= DataTable.StkNum(i)
+        endslice = i;
+    end
+end
+
+nslices = endslice - startslice + 1;
+
 
 error_indices = [];
 theta_rot = zeros(nslices,1);
 A = zeros(nslices,1);
 B = zeros(nslices,1);
 
-nodeindices = zeros(nslices,1);
+nstalks = stalknums(2) - stalknums(1) + 1;
+nodeindices = zeros(nstalks,1); % Holding vector for global indices of nodes
 
 Stalk_TablePCA = DataTable(stalknums(1):stalknums(2),:);
 
@@ -258,14 +281,14 @@ for n = stalknums(1):stalknums(2)
 %         int_t = theta;
 %         ext_rho = ext_rho_interp;
 %         int_rho = int_rho_interp;
-
-        % Convert the resampled polar points back to Cartesian before
-        % output
-        ext_xi = ext_rho.*cos(ext_t);
-        ext_yi = ext_rho.*sin(ext_t);
-        int_xi = int_rho.*cos(int_t);
-        int_yi = int_rho.*sin(int_t);
-        
+% 
+%         % Convert the resampled polar points back to Cartesian before
+%         % output
+%         ext_xi = ext_rho.*cos(ext_t);
+%         ext_yi = ext_rho.*sin(ext_t);
+%         int_xi = int_rho.*cos(int_t);
+%         int_yi = int_rho.*sin(int_t);
+%         
         
         % Insert rotated and downsampled data back into tempTable
         tempTable.Ext_X(i) = {ext_xi};
