@@ -67,6 +67,7 @@ B = zeros(nslices,1);
 
 nodeindices = zeros(nslices,1);
 
+Stalk_TablePCA = DataTable(stalknums(1):stalknums(2),:);
 
 %% Start loop
 % Loop through stalk numbers
@@ -168,7 +169,7 @@ for n = stalknums(1):stalknums(2)
     ext_X = cell2mat(tempTable.Ext_X(localNodeIndex));
     ext_Y = cell2mat(tempTable.Ext_Y(localNodeIndex));
     
-    [node_alpha] = getrotation(ext_X, ext_Y, prev_alpha);
+    [node_alpha,~,~] = getrotation(ext_X, ext_Y, prev_alpha);
     
     % Check the notch angle of the first 10 cross-sections. Determine the
     % correct hemisphere to rotate the node into by taking the rough angle
@@ -176,14 +177,14 @@ for n = stalknums(1):stalknums(2)
     % notch at the left for these cross-sections. Then use this as a
     % correction if the notch is difficult to locate for the node. This
     % should avoid whole stalks being turned the wrong way.
-    nbottom = 3;
+    nbottom = 4;
     bottom_angles = zeros(nbottom,1);
     notch_indicator = zeros(nbottom,1);
     for i = 1:nbottom
         prev_alpha = 0;
         ext_X = cell2mat(tempTable.Ext_X(i));
         ext_Y = cell2mat(tempTable.Ext_Y(i));
-        bottom_angles(i) = getrotation(ext_X, ext_Y, prev_alpha);
+        [bottom_angles(i),~,~] = getrotation(ext_X, ext_Y, prev_alpha);
         [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_X, ext_Y, bottom_angles(i));
 
         plot(ext_xi,ext_yi);
@@ -228,21 +229,46 @@ for n = stalknums(1):stalknums(2)
     
     % Save rotation angles of each cross-section relative to the x-axis.
     % Verify that there aren't any weirdos.
+    indices = linspace(idx_first,idx_last,(idx_last-idx_first+1));
+    for i = 1:size(tempTable,1)
+        prev_alpha = 0;
+        ext_X = cell2mat(tempTable.Ext_X(i));
+        ext_Y = cell2mat(tempTable.Ext_Y(i));
+        
+%         [~, major, minor, ~, ~, ~, ~] = fit_ellipse_R2( ext_X, ext_Y, prev_alpha, gca );
+%         A(indices(i)) = major;
+%         B(indices(i)) = minor;
+        
+        [theta_rot(indices(i)),A(indices(i)),B(indices(i))] = getrotation(ext_X, ext_Y, prev_alpha);
+    end
     
-    % Get major and minor diameters of ellipse fits
-    
-    % Downsample all cross-sections
+    % Downsample all cross-sections?
     
     
     % Catch error cases from try block
     
-    
+    % Insert tempTable into copy of DataTable
+    Stalk_TablePCA(idx_first:idx_last,:) = tempTable;
 
 end
 
 assignin('base','nodeindices',nodeindices);
+assignin('base','A',A);
+assignin('base','B',B);
+assignin('base','theta_rot',theta_rot);
+Stalk_TablePCA = addvars(Stalk_TablePCA,A);
+Stalk_TablePCA = addvars(Stalk_TablePCA,B);
+Stalk_TablePCA = addvars(Stalk_TablePCA,theta_rot);
+
+
+
 % Remove error cases from the table
 
+
+% Output all variables into mat file
+FolderName = pwd;
+SaveFile = fullfile(FolderName, SaveName);
+save(SaveFile,'Stalk_TablePCA','error_indices','npoints');
 
 
 end
@@ -556,7 +582,7 @@ Y_ellipse = rotated_ellipse(2,:);
 end
 
 
-function [tot_alpha] = getrotation(ext_X, ext_Y, prev_alpha)
+function [tot_alpha,major,minor] = getrotation(ext_X, ext_Y, prev_alpha)
 % Get the accurate angle of rotation for the current cross-section. Used on
 % the node and the first 10 cross-sections below the node to verify the
 % notch orientation of the stalk
@@ -639,7 +665,7 @@ piey = [ext_yi(cut2+1:end)     ext_yi(1:cut1-1)];
 
 % Fitting an ellipse to the cross-section with the notch removed to
 % get a more accurate alpha
-[new_alpha, ~, ~, ~, ~, ~, ~] = fit_ellipse_R2( piex, piey, alpha, gca );
+[new_alpha, major, minor, ~, ~, ~, ~] = fit_ellipse_R2( piex, piey, alpha, gca );
 tot_alpha = alpha + new_alpha;
 
 end
