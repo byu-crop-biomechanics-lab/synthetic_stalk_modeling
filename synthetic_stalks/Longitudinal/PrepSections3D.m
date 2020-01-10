@@ -102,14 +102,25 @@ for n = stalknums(1):stalknums(2)
     for i = idx_first:idx_last
         diffs(i) = 0 - DataTable.SlP(i);
     end
-
-    % Get index of closest slice
-    [~,nodeIndex] = min(abs(diffs));
-    nodeindices(n) = nodeIndex; % Save the node indices
-
+    
+    % Get index of node on full table level
+    [~,globalNodeIndex] = min(abs(diffs));
+    nodeindices(n) = globalNodeIndex; % Save the global node indices
+    
+    % Locate node cross-section in the sub-table for just this stalk
+    diffs = NaN(size(tempTable.StkNum));            
+    for i = 1:size(tempTable,1)
+        diffs(i) = 0 - tempTable.SlP(i);
+    end
+    
+    % Get index of node on current stalk table level
+    [~,localNodeIndex] = min(abs(diffs));
+    nodeindices(n) = localNodeIndex; % Save the global node indices
+    
+    
     % Define geometric center of the node cross-section
-    xcnode = DataTable.xbar(nodeIndex);
-    ycnode = DataTable.ybar(nodeIndex);
+    xcnode = DataTable.xbar(globalNodeIndex);
+    ycnode = DataTable.ybar(globalNodeIndex);
     
     % Shift all cross-sections in the current stalk by the node
     % cross-section shift
@@ -147,6 +158,17 @@ for n = stalknums(1):stalknums(2)
     end
     
     %% At this point, a smaller table exists for the current stalk only, with all cross-sections shifted together so that the node cross-section is centered at the origin
+    % All operations should be done on this, then inserted into the
+    % original table at the appropriate rows.
+    
+    %% Rotate all cross-sections about the center of the node cross-section  (which should be at 0,0)
+    
+    % Determine the angle of the node cross-section
+    prev_alpha = 0;
+    ext_X = cell2mat(tempTable.Ext_X(localNodeIndex));
+    ext_Y = cell2mat(tempTable.Ext_Y(localNodeIndex));
+    
+    [node_alpha] = getrotation(ext_X, ext_Y, prev_alpha);
     
     % Check the notch angle of the first 10 cross-sections. Determine the
     % correct hemisphere to rotate the node into by taking the rough angle
@@ -154,9 +176,55 @@ for n = stalknums(1):stalknums(2)
     % notch at the left for these cross-sections. Then use this as a
     % correction if the notch is difficult to locate for the node. This
     % should avoid whole stalks being turned the wrong way.
+    nbottom = 3;
+    bottom_angles = zeros(nbottom,1);
+    notch_indicator = zeros(nbottom,1);
+    for i = 1:nbottom
+        prev_alpha = 0;
+        ext_X = cell2mat(tempTable.Ext_X(i));
+        ext_Y = cell2mat(tempTable.Ext_Y(i));
+        bottom_angles(i) = getrotation(ext_X, ext_Y, prev_alpha);
+        [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_X, ext_Y, bottom_angles(i));
+
+        plot(ext_xi,ext_yi);
+        axis equal
+        
+        s = input('Enter 1 if notch is NOT on the left: ');
+        if isempty(s) || s ~= 1
+            s = 0;
+        end
+        notch_indicator(i) = s;
+    end
     
-    % Rotate all cross-sections about the center of the node cross-section
-    % (which should be at 0,0)
+    
+    % Add rotation to node_alpha if the notch at the bottom of the stalk is
+    % not on the left
+    
+    count_flip = sum(notch_indicator(:) == 1);
+    
+    if count_flip > 2
+        if node_alpha > 0
+            node_alpha = node_alpha + pi;
+        else
+            node_alpha = node_alpha - pi;
+        end
+    end
+    
+    % Rotate all exteriors and interiors by node_alpha, about 0,0
+    for i = 1:size(tempTable,1)
+        ext_X = cell2mat(tempTable.Ext_X(i));
+        ext_Y = cell2mat(tempTable.Ext_Y(i));
+        int_X = cell2mat(tempTable.Int_X(i));
+        int_Y = cell2mat(tempTable.Int_Y(i));
+        [~, ~, ~, ~, ~, ~, ext_X, ext_Y, ~, ~] = reorder_V2_interior(ext_X, ext_Y, node_alpha, 0, 0);
+        [~, ~, ~, ~, ~, ~, int_X, int_Y, ~, ~] = reorder_V2_interior(int_X, int_Y, node_alpha, 0, 0);
+        
+        tempTable.Ext_X(i) = {ext_X};
+        tempTable.Ext_Y(i) = {ext_Y};
+        tempTable.Int_X(i) = {int_X};
+        tempTable.Int_Y(i) = {int_Y};
+        
+    end
     
     % Save rotation angles of each cross-section relative to the x-axis.
     % Verify that there aren't any weirdos.
@@ -484,5 +552,437 @@ X_ellipse = rotated_ellipse(1,:);
 Y_ellipse = rotated_ellipse(2,:);
 
 % axis equal
+
+end
+
+
+function [tot_alpha] = getrotation(ext_X, ext_Y, prev_alpha)
+% Get the accurate angle of rotation for the current cross-section. Used on
+% the node and the first 10 cross-sections below the node to verify the
+% notch orientation of the stalk
+
+npoints_slice_ext = length(ext_X);
+
+% Uses a fit ellipse function to identify the angle of rotation along the long axis of the cross-section
+% (only takes into account the exterior boundaries)
+[alpha, ~, ~, ~, ~, ~, ~] = fit_ellipse_R2( ext_X, ext_Y, prev_alpha, gca );
+
+% Reorders and rotates the stalk's exterior and interior
+% Rotates an extra 90 degrees so the long axis is vertical
+[~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_X, ext_Y, alpha-pi/2);
+% [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_X, int_Y, alpha-pi/2, mean(ext_X), mean(ext_Y));
+
+%         close(gcf)
+ext_xi = ext_xi';
+ext_yi = ext_yi';
+% int_xi = int_xi';
+% int_yi = int_yi';
+
+% NEW POLAR COORDINATES
+ti_ext = 0:2*pi/npoints_slice_ext:2*pi;                             % Creates a theta vector according to the inputted resolution
+ti_ext = ti_ext(1:end-1);                                           % The last point is not necessary
+
+for j = 1:length(ti_ext)                                        
+    ext_rhoi(:,j) = sqrt(ext_xi(:,j)^2 + ext_yi(:,j)^2);  % Creates an exterior rho vector using the Pythagorean theorem 
+end
+
+% LOCATES THE NOTCH -----------------------------------
+
+% Creates the two cut-outs to look for the notch in
+window1 = find(ti_ext >   pi/4 & ti_ext < 3*pi/4);
+window2 = find(ti_ext > 5*pi/4 & ti_ext < 7*pi/4);
+
+% The 2 windows on all the coordinates
+w1_ti = ti_ext(window1);
+w2_ti = ti_ext(window2);
+w1_rhoi = ext_rhoi(window1);
+w2_rhoi = ext_rhoi(window2);
+w1_ext_xi = ext_xi(window1);
+w2_ext_xi = ext_xi(window2);
+w1_ext_yi = ext_yi(window1);
+w2_ext_yi = ext_yi(window2);
+
+% Extreme smoothing needed to find peaks
+w1_rhoi = smooth(w1_rhoi, 30);
+w2_rhoi = smooth(w2_rhoi, 30);
+
+% Peakfinding on the two windows
+sel1 = (max(w1_rhoi)-min(w1_rhoi))/32;
+w1_peaklocs = peakfinder(w1_rhoi,sel1);
+sel2 = (max(w2_rhoi)-min(w2_rhoi))/32;
+w2_peaklocs = peakfinder(w2_rhoi,sel2);
+
+% The amount of peaks in each window
+w1peaks = length(w1_peaklocs);
+w2peaks = length(w2_peaklocs);
+
+if w1peaks >= w2peaks % notch on top
+    cut1 = window1(1);
+    cut2 = window1(end);
+    spin = -pi/2;
+elseif w1peaks < w2peaks % notch on bottom
+    cut1 = window2(1);
+    cut2 = window2(end);
+    spin = pi/2;
+end
+
+% "Pie" vectors (the external cross sections with the notch cut out)
+pier = [ext_rhoi(cut2+1:end)   ext_rhoi(1:cut1-1)];
+piet = [ti_ext(cut2+1:end)     ti_ext(1:cut1-1)];
+piex = [ext_xi(cut2+1:end)     ext_xi(1:cut1-1)];
+piey = [ext_yi(cut2+1:end)     ext_yi(1:cut1-1)];
+
+% Rotate the cross-section again to be horizontal / notch on the right
+[~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_xi, ext_yi, spin);
+% [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_xi, int_yi, spin, mean(ext_xi), mean(ext_yi));
+[~, ~, ~, ~, ~, ~, piex,   piey,   ~, ~] = reorder_V2(piex,   piey,   spin);
+
+% Fitting an ellipse to the cross-section with the notch removed to
+% get a more accurate alpha
+[new_alpha, ~, ~, ~, ~, ~, ~] = fit_ellipse_R2( piex, piey, alpha, gca );
+tot_alpha = alpha + new_alpha;
+
+end
+
+
+
+
+function [X, Y, x, y, r, t, xp, yp, rp, tp] = reorder_V2(x, y, alpha)
+% function centers and reorders the parametric curves described
+% by x and y.
+%
+% INPUTS:   x,y - column vectors of x & y values
+%           alpha - angular orientation of the stalk           
+%
+% OUTPUTS:  Nomenclature: CAPS variables in image coordinates, lower case relative to stalk coordinate system. "p" indicates "prime" - for a rotated coordinate system.
+%           X and Y - reordered x and y values.
+%           x, y - reordered x and y values relative to xbar and ybar (but not rotated)
+%           r, t - reordered polar coordinates: r and theta values (NOT rotated)
+%           xp, yp - reordered x and y values relative to xbar and ybar AND rotated.
+%           rp, tp - reordered polar coordinates: r and theta values, AND rotated
+%
+% Note: designed for use with external contour only (hard to do both since int and ext have different numbers of data points).
+%
+% VERSION HISTORY
+%   V2 - 4/5/18 - updated inputs and comments to reflect changes since conversion from smorder_R2
+%
+%
+
+% 1. shift origin to center
+X = x;
+Y = y;
+
+% Locate Center
+xbar = mean(x);
+ybar = mean(y);
+
+% shift origin to center
+y = y - ybar;
+x = x - xbar;
+
+% 2. compute theta values in the (xbar, ybar) coordinate system
+t = atan2(y,x);        
+
+% 3. correct progression direction    
+% make sure points progress in the positive direction - this is done by checking
+% the sign of the median difference between theta values. If positive, rotation is positive. If
+% negative, all indices are reversed.
+theta_diff = diff(t);                   % differences between subsequent theta values
+med_diff = median(theta_diff);              % find the MEDIAN theta difference (required because a theta shift value of +/-2pi is always present)
+
+if med_diff < 0                             % check if theta differences are negative
+    t = t(end:-1:1);                % if so, reverse indices in all variables
+    x = x(end:-1:1);
+    y = y(end:-1:1);
+    X = X(end:-1:1);
+    Y = Y(end:-1:1);
+end
+
+t = t(:);
+x = x(:);
+y = y(:);
+X = X(:);
+Y = Y(:);
+
+% 4. Reorder variables starting from the value closest to alpha and shift theta values to the stalk coordinate system
+temp_theta = t;                         % temp_theta variable used for convenience
+index = (t<=alpha);                     % indices of theta values less than alpha
+temp_theta(index) = NaN;                    % these values are ignored using NaN
+[minval, alphloc] = min(temp_theta);         % find the smallest remaining value
+t = [t(alphloc:end); t(1:alphloc-1)];      % all indices are reordered accordingly.
+x = [x(alphloc:end); x(1:alphloc-1)];
+y = [y(alphloc:end); y(1:alphloc-1)];
+X = [X(alphloc:end); X(1:alphloc-1)];
+Y = [Y(alphloc:end); Y(1:alphloc-1)];
+
+
+
+% 5. Shift theta values so that they are continuous (no jumps) 
+% this loop is fairly wasteful, costs about 0.04 seconds.  There are much faster ways, for example just searching for sudden jumps in theta.  But these are likely less robust.
+for i = 2:length(t)    
+    poss_theta = [t(i) - 2*pi, t(i)-pi, t(i), t(i) + pi, t(i)+2*pi];
+    [minval, alphloc] = min(abs(t(i-1) - poss_theta));
+    t(i) = poss_theta(alphloc);   
+end
+% IS THIS STEP EVEN NECESSARY????
+
+
+% 6. Define radius values
+rsq = x.^2 + y.^2;
+
+
+% 7. Data for coordinate system centered at (xbar, ybar) (no tilt) - First point is at the major axis
+x = x; 
+y = y;
+r = rsq.^0.5;
+t = t;
+
+% 8. Data for tilted coordinate system centered at (xbar, ybar) (no tilt)
+xp = x*cos(-alpha)-y*sin(-alpha);
+yp = x*sin(-alpha)+y*cos(-alpha);
+rp = (x.^2 + y.^2).^0.5;
+tp = t-alpha;
+
+
+end
+
+
+
+
+function varargout = peakfinder(x0, sel, thresh, extrema)
+%PEAKFINDER Noise tolerant fast peak finding algorithm
+%   INPUTS:
+%       x0 - A real vector from the maxima will be found (required)
+%       sel - The amount above surrounding data for a peak to be
+%           identified (default = (max(x0)-min(x0))/4). Larger values mean
+%           the algorithm is more selective in finding peaks.
+%       thresh - A threshold value which peaks must be larger than to be
+%           maxima or smaller than to be minima.
+%       extrema - 1 if maxima are desired, -1 if minima are desired
+%           (default = maxima, 1)
+%   OUTPUTS:
+%       peakLoc - The indicies of the identified peaks in x0
+%       peakMag - The magnitude of the identified peaks
+%
+%   [peakLoc] = peakfinder(x0) returns the indicies of local maxima that
+%       are at least 1/4 the range of the data above surrounding data.
+%
+%   [peakLoc] = peakfinder(x0,sel) returns the indicies of local maxima
+%       that are at least sel above surrounding data.
+%
+%   [peakLoc] = peakfinder(x0,sel,thresh) returns the indicies of local 
+%       maxima that are at least sel above surrounding data and larger
+%       (smaller) than thresh if you are finding maxima (minima).
+%
+%   [peakLoc] = peakfinder(x0,sel,thresh,extrema) returns the maxima of the
+%       data if extrema > 0 and the minima of the data if extrema < 0
+%
+%   [peakLoc, peakMag] = peakfinder(x0,...) returns the indicies of the
+%       local maxima as well as the magnitudes of those maxima
+%
+%   If called with no output the identified maxima will be plotted along
+%       with the input data.
+%
+%   Note: If repeated values are found the first is identified as the peak
+%
+% Ex:
+% t = 0:.0001:10;
+% x = 12*sin(10*2*pi*t)-3*sin(.1*2*pi*t)+randn(1,numel(t));
+% x(1250:1255) = max(x);
+% peakfinder(x)
+%
+% Copyright Nathanael C. Yoder 2011 (nyoder@gmail.com)
+
+% Perform error checking and set defaults if not passed in
+error(nargchk(1,4,nargin,'struct'));
+error(nargoutchk(0,2,nargout,'struct'));
+
+s = size(x0);
+flipData =  s(1) < s(2);
+len0 = numel(x0);
+if len0 ~= s(1) && len0 ~= s(2)
+    error('PEAKFINDER:Input','The input data must be a vector')
+elseif isempty(x0)
+    varargout = {[],[]};
+    return;
+end
+if ~isreal(x0)
+    warning('PEAKFINDER:NotReal','Absolute value of data will be used')
+    x0 = abs(x0);
+end
+
+if nargin < 2 || isempty(sel)
+    sel = (max(x0)-min(x0))/4;
+elseif ~isnumeric(sel) || ~isreal(sel)
+    sel = (max(x0)-min(x0))/4;
+    warning('PEAKFINDER:InvalidSel',...
+        'The selectivity must be a real scalar.  A selectivity of %.4g will be used',sel)
+elseif numel(sel) > 1
+    warning('PEAKFINDER:InvalidSel',...
+        'The selectivity must be a scalar.  The first selectivity value in the vector will be used.')
+    sel = sel(1);
+end
+
+if nargin < 3 || isempty(thresh)
+    thresh = [];
+elseif ~isnumeric(thresh) || ~isreal(thresh)
+    thresh = [];
+    warning('PEAKFINDER:InvalidThreshold',...
+        'The threshold must be a real scalar. No threshold will be used.')
+elseif numel(thresh) > 1
+    thresh = thresh(1);
+    warning('PEAKFINDER:InvalidThreshold',...
+        'The threshold must be a scalar.  The first threshold value in the vector will be used.')
+end
+
+if nargin < 4 || isempty(extrema)
+    extrema = 1;
+else
+    extrema = sign(extrema(1)); % Should only be 1 or -1 but make sure
+    if extrema == 0
+        error('PEAKFINDER:ZeroMaxima','Either 1 (for maxima) or -1 (for minima) must be input for extrema');
+    end
+end
+
+x0 = extrema*x0(:); % Make it so we are finding maxima regardless
+thresh = thresh*extrema; % Adjust threshold according to extrema.
+dx0 = diff(x0); % Find derivative
+dx0(dx0 == 0) = -eps; % This is so we find the first of repeated values
+ind = find(dx0(1:end-1).*dx0(2:end) < 0)+1; % Find where the derivative changes sign
+
+% Include endpoints in potential peaks and valleys
+x = [x0(1);x0(ind);x0(end)];
+ind = [1;ind;len0];
+
+% x only has the peaks, valleys, and endpoints
+len = numel(x);
+minMag = min(x);
+
+
+if len > 2 % Function with peaks and valleys
+    
+    % Set initial parameters for loop
+    tempMag = minMag;
+    foundPeak = false;
+    leftMin = minMag;
+    
+    % Deal with first point a little differently since tacked it on
+    % Calculate the sign of the derivative since we taked the first point
+    %  on it does not neccessarily alternate like the rest.
+    signDx = sign(diff(x(1:3)));
+    if signDx(1) <= 0 % The first point is larger or equal to the second
+        ii = 0;
+        if signDx(1) == signDx(2) % Want alternating signs
+            x(2) = [];
+            ind(2) = [];
+            len = len-1;
+        end
+    else % First point is smaller than the second
+        ii = 1;
+        if signDx(1) == signDx(2) % Want alternating signs
+            x(1) = [];
+            ind(1) = [];
+            len = len-1;
+        end
+    end
+    
+    % Preallocate max number of maxima
+    maxPeaks = ceil(len/2);
+    peakLoc = zeros(maxPeaks,1);
+    peakMag = zeros(maxPeaks,1);
+    cInd = 1;
+    % Loop through extrema which should be peaks and then valleys
+    while ii < len
+        ii = ii+1; % This is a peak
+        % Reset peak finding if we had a peak and the next peak is bigger
+        %   than the last or the left min was small enough to reset.
+        if foundPeak
+            tempMag = minMag;
+            foundPeak = false;
+        end
+        
+        % Make sure we don't iterate past the length of our vector
+        if ii == len
+            break; % We assign the last point differently out of the loop
+        end
+        
+        % Found new peak that was lager than temp mag and selectivity larger
+        %   than the minimum to its left.
+        if x(ii) > tempMag && x(ii) > leftMin + sel
+            tempLoc = ii;
+            tempMag = x(ii);
+        end
+        
+        ii = ii+1; % Move onto the valley
+        % Come down at least sel from peak
+        if ~foundPeak && tempMag > sel + x(ii)
+            foundPeak = true; % We have found a peak
+            leftMin = x(ii);
+            peakLoc(cInd) = tempLoc; % Add peak to index
+            peakMag(cInd) = tempMag;
+            cInd = cInd+1;
+        elseif x(ii) < leftMin % New left minima
+            leftMin = x(ii);
+        end
+    end
+    
+    % Check end point
+    if x(end) > tempMag && x(end) > leftMin + sel
+        peakLoc(cInd) = len;
+        peakMag(cInd) = x(end);
+        cInd = cInd + 1;
+    elseif ~foundPeak && tempMag > minMag % Check if we still need to add the last point
+        peakLoc(cInd) = tempLoc;
+        peakMag(cInd) = tempMag;
+        cInd = cInd + 1;
+    end
+    
+    % Create output
+    peakInds = ind(peakLoc(1:cInd-1));
+    peakMags = peakMag(1:cInd-1);
+else % This is a monotone function where an endpoint is the only peak
+    [peakMags,xInd] = max(x);
+    if peakMags > minMag + sel
+        peakInds = ind(xInd);
+    else
+        peakMags = [];
+        peakInds = [];
+    end
+end
+
+% Apply threshold value.  Since always finding maxima it will always be
+%   larger than the thresh.
+if ~isempty(thresh)
+    m = peakMags>thresh;
+    peakInds = peakInds(m);
+    peakMags = peakMags(m);
+end
+
+
+
+% Rotate data if needed
+if flipData
+    peakMags = peakMags.';
+    peakInds = peakInds.';
+end
+
+
+
+% Change sign of data if was finding minima
+if extrema < 0
+    peakMags = -peakMags;
+    x0 = -x0;
+end
+% Plot if no output desired
+if nargout == 0
+    if isempty(peakInds)
+        disp('No significant peaks found')
+    else
+        figure;
+        plot(1:len0,x0,'b',peakInds,peakMags,'ro','linewidth',2);
+    end
+else
+    varargout = {peakInds,peakMags};
+end
 
 end
