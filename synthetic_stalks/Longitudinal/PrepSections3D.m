@@ -4,6 +4,16 @@ function PrepSections3D(stalknums, npoints, DataTable, SaveName)
 % DATE: 1/9/2020
 %
 % PURPOSE: 
+%   This is the parallel to PrepSections_V2.m for the transverse model
+%   process. This function takes in the table prepared by Jared that has
+%   exterior and interior stalk cross-section boundaries and shifts each
+%   stalk so the node cross-section is centered and rotated. Cross-sections
+%   below the node will have the notch on the left, and sections above the
+%   node will have the notch on the right. The data is downsampled to
+%   include 360 points (HAVEN'T CHECKED ALIGNMENT OF THOSE POINTS YET).
+%   THE TABLE WILL ALSO REMOVE ANY DATA POINTS THAT ARE FOUND TO CAUSE A
+%   PROCESSING ERROR, AS CAUGHT BY THE TRY CATCH BLOCK. THIS IS TO PREVENT
+%   PROBLEMS DOWN THE LINE WITH PROCESSING.
 % 
 % INPUTS: 
 %       stalknums - A 2x1 vector defining the starting and ending stalk
@@ -82,7 +92,7 @@ end
 nslices = endslice - startslice + 1;
 
 
-error_indices = [];
+error_indices = []; % Global indices where errors occur
 theta_rot = zeros(nslices,1);
 A = zeros(nslices,1);
 B = zeros(nslices,1);
@@ -236,69 +246,92 @@ for n = stalknums(1):stalknums(2)
     
     % Rotate all exteriors and interiors by node_alpha, about 0,0
     for i = 1:size(tempTable,1)
-        ext_X = cell2mat(tempTable.Ext_X(i));
-        ext_Y = cell2mat(tempTable.Ext_Y(i));
-        int_X = cell2mat(tempTable.Int_X(i));
-        int_Y = cell2mat(tempTable.Int_Y(i));
-        [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2_interior(ext_X, ext_Y, node_alpha, 0, 0);
-        [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_X, int_Y, node_alpha, 0, 0);
+        try
         
-        % Save rotation angles of each cross-section relative to the x-axis.
-        prev_alpha = 0;
-%         ext_X = cell2mat(tempTable.Ext_X(i));
-%         ext_Y = cell2mat(tempTable.Ext_Y(i));        
-        [theta_rot(indices(i)),A(indices(i)),B(indices(i))] = getrotation(ext_xi, ext_yi, prev_alpha);
+            ext_X = cell2mat(tempTable.Ext_X(i));
+            ext_Y = cell2mat(tempTable.Ext_Y(i));
+            int_X = cell2mat(tempTable.Int_X(i));
+            int_Y = cell2mat(tempTable.Int_Y(i));
+            [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2_interior(ext_X, ext_Y, node_alpha, 0, 0);
+            [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_X, int_Y, node_alpha, 0, 0);
+
+            % Save rotation angles of each cross-section relative to the x-axis.
+            prev_alpha = 0;
+    %         ext_X = cell2mat(tempTable.Ext_X(i));
+    %         ext_Y = cell2mat(tempTable.Ext_Y(i));        
+            [theta_rot(i),A(i),B(i)] = getrotation(ext_xi, ext_yi, prev_alpha);
+
+            % Downsample cross-sections
+            idx =  1:length(ext_xi);                            % Index
+            idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
+            ext_xi = interp1(idx, ext_xi, idxq, 'pchip');       % Downsampled Vector
+
+            idy = 1:length(ext_yi);                             % Index
+            idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
+            ext_yi = interp1(idy, ext_yi, idyq, 'pchip');       % Downsampled Vector
+
+            idx =  1:length(int_xi);                            % Index
+            idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
+            int_xi = interp1(idx, int_xi, idxq, 'pchip');       % Downsampled Vector
+
+            idy = 1:length(int_yi);                             % Index
+            idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
+            int_yi = interp1(idy, int_yi, idyq, 'pchip');       % Downsampled Vector
+
+            % Temporarily shift boundary data to be centered at the
+            % centroid of the exterior data so conversion to polar and
+            % interpolation goes better.
+            xshift = tempTable.xbar(i);
+            yshift = tempTable.ybar(i);
+            ext_xi = ext_xi - xshift;
+            ext_yi = ext_yi - yshift;
+            int_xi = int_xi - xshift;
+            int_yi = int_yi - yshift;
+
+            % Get interior and exterior data in polar coordinates
+            [~, ~, ~, ~, ~, ~, ~, ~, ext_rho, ext_t] = reorder_V2_interior(ext_xi, ext_yi, 0, 0, 0);
+            [~, ~, ~, ~, ~, ~, ~, ~, int_rho, int_t] = reorder_V2_interior(int_xi, int_yi, 0, 0, 0);
+
+            % Interpolate in polar to get first point exactly on the x-axis
+            % when converted back to Cartesian
+            theta = linspace(0,2*pi,npoints+1); % npoints points from 0 to 2*pi inclusive (puts the theta values right on degrees if npoints = 359)
+            theta = transpose(theta(1:end-1)); % Remove the last point so there are npoints points in the end
+
+            [ext_t, index] = unique(ext_t); 
+            ext_rho_interp = interp1(ext_t,ext_rho(index),theta,'pchip','extrap');
+            [int_t, index] = unique(int_t);
+            int_rho_interp = interp1(int_t,int_rho(index),theta,'pchip','extrap');  
+            ext_t = theta;
+            int_t = theta;
+            ext_rho = ext_rho_interp;
+            int_rho = int_rho_interp;
+
+            % Convert the resampled polar points back to Cartesian before
+            % output
+            ext_xi = ext_rho.*cos(ext_t);
+            ext_yi = ext_rho.*sin(ext_t);
+            int_xi = int_rho.*cos(int_t);
+            int_yi = int_rho.*sin(int_t);
+
+            % Shift the boundaries back by their shift values
+            ext_xi = ext_xi + xshift;
+            ext_yi = ext_yi + yshift;
+            int_xi = int_xi + xshift;
+            int_yi = int_yi + yshift;
+
+            % Insert rotated and downsampled data back into tempTable
+            tempTable.Ext_X(i) = {ext_xi};
+            tempTable.Ext_Y(i) = {ext_yi};
+            tempTable.Int_X(i) = {int_xi};
+            tempTable.Int_Y(i) = {int_yi};
         
-        % Downsample cross-sections
-        idx =  1:length(ext_xi);                            % Index
-        idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
-        ext_xi = interp1(idx, ext_xi, idxq, 'pchip');       % Downsampled Vector
-
-        idy = 1:length(ext_yi);                             % Index
-        idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
-        ext_yi = interp1(idy, ext_yi, idyq, 'pchip');       % Downsampled Vector
-
-        idx =  1:length(int_xi);                            % Index
-        idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
-        int_xi = interp1(idx, int_xi, idxq, 'pchip');       % Downsampled Vector
-
-        idy = 1:length(int_yi);                             % Index
-        idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
-        int_yi = interp1(idy, int_yi, idyq, 'pchip');       % Downsampled Vector
-
-%         % Get interior and exterior data in polar coordinates
-%         [~, ~, ~, ~, ~, ~, ~, ~, ext_rho, ext_t] = reorder_V2_interior(ext_xi, ext_yi, 0, 0, 0);
-%         [~, ~, ~, ~, ~, ~, ~, ~, int_rho, int_t] = reorder_V2_interior(int_xi, int_yi, 0, 0, 0);
-% 
-%         % Interpolate in polar to get first point exactly on the x-axis
-%         % when converted back to Cartesian
-%         theta = linspace(0,2*pi,npoints+1); % npoints points from 0 to 2*pi inclusive (puts the theta values right on degrees if npoints = 359)
-%         theta = transpose(theta(1:end-1)); % Remove the last point so there are npoints points in the end
-% 
-%         ext_rho_interp = interp1(ext_t,ext_rho,theta,'pchip','extrap');
-%         int_rho_interp = interp1(int_t,int_rho,theta,'pchip','extrap');  
-%         ext_t = theta;
-%         int_t = theta;
-%         ext_rho = ext_rho_interp;
-%         int_rho = int_rho_interp;
-% 
-%         % Convert the resampled polar points back to Cartesian before
-%         % output
-%         ext_xi = ext_rho.*cos(ext_t);
-%         ext_yi = ext_rho.*sin(ext_t);
-%         int_xi = int_rho.*cos(int_t);
-%         int_yi = int_rho.*sin(int_t);
-%         
-        
-        % Insert rotated and downsampled data back into tempTable
-        tempTable.Ext_X(i) = {ext_xi};
-        tempTable.Ext_Y(i) = {ext_yi};
-        tempTable.Int_X(i) = {int_xi};
-        tempTable.Int_Y(i) = {int_yi};
+        % Catch error cases from try block
+        catch
+            global_index = idx_first + i - 1;
+            error_indices = [error_indices, global_index];
+        end
         
     end
-        
-    % Catch error cases from try block
     
     % Insert tempTable into copy of DataTable
     Stalk_TablePCA(idx_first:idx_last,:) = tempTable;
@@ -316,6 +349,10 @@ Stalk_TablePCA = addvars(Stalk_TablePCA,theta_rot);
 
 
 % Remove error cases from the table
+
+
+
+
 
 
 % Output all variables into mat file
