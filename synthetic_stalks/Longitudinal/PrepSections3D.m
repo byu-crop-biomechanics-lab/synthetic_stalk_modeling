@@ -10,7 +10,7 @@ function PrepSections3D(stalknums, npoints, DataTable, SaveName)
 %   stalk so the node cross-section is centered and rotated. Cross-sections
 %   below the node will have the notch on the left, and sections above the
 %   node will have the notch on the right. The data is downsampled to
-%   include 360 points (HAVEN'T CHECKED ALIGNMENT OF THOSE POINTS YET).
+%   include 360 points.
 %   THE TABLE WILL ALSO REMOVE ANY DATA POINTS THAT ARE FOUND TO CAUSE A
 %   PROCESSING ERROR, AS CAUGHT BY THE TRY CATCH BLOCK. THIS IS TO PREVENT
 %   PROBLEMS DOWN THE LINE WITH PROCESSING.
@@ -60,7 +60,9 @@ function PrepSections3D(stalknums, npoints, DataTable, SaveName)
 % V3 - 
 %
 % -------------------------------------------------------------------------
-
+hold off
+close all;
+set(0,'DefaultFigureWindowStyle','docked');
 
 % Initialize variables
 plotting = 0;       % a following function has a built-in plotting option, which we turn off
@@ -348,10 +350,12 @@ Stalk_TablePCA = addvars(Stalk_TablePCA,theta_rot);
 
 
 
-% Remove error cases from the table
-
-
-
+%% Remove error cases from the table
+% Sort error_indices in descending order
+error_indices = sort(error_indices,'descend');
+for i = 1:length(error_indices)
+    Stalk_TablePCA(error_indices(i),:) = [];
+end
 
 
 
