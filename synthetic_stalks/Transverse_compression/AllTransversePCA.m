@@ -1,4 +1,4 @@
-function AllTransversePCA(stalknums,slice_dists)
+function AllTransversePCA(slice_dists)
 % FILENAME: AllTransversePCA.m
 % AUTHOR: Ryan Larson
 % DATE: 1/17/2020
@@ -7,7 +7,10 @@ function AllTransversePCA(stalknums,slice_dists)
 % 
 % 
 % INPUTS:
-%       
+%       - slice_dists: A row vector of all the slice distances to take into
+%       acccount when running PCA (MAYBE MAKE IT POSSIBLE TO LATER CHOOSE
+%       WHICH SLICE DISTANCES ACTUALLY GET USED IN THE PCA GOING INTO
+%       TRANSVERSE_WRAPPER_V4.M)
 %       
 % OUTPUTS:
 %       
