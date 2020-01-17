@@ -212,7 +212,7 @@ for n = stalknums(1):stalknums(2)
     % notch at the left for these cross-sections. Then use this as a
     % correction if the notch is difficult to locate for the node. This
     % should avoid whole stalks being turned the wrong way.
-    nbottom = 4;
+    nbottom = 5;
     bottom_angles = zeros(nbottom,1);
     notch_indicator = zeros(nbottom,1);
     for i = 1:nbottom

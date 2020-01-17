@@ -1,4 +1,4 @@
-function full3Dmodel(DataTable,totstalks,nstalks)
+function full3Dmodel(stalknums,DataTable,totstalks,nstalks)
 
 % FILENAME: full3Dmodel.m
 % AUTHOR: Ryan Larson
@@ -10,12 +10,18 @@ function full3Dmodel(DataTable,totstalks,nstalks)
 % 
 % 
 % INPUTS:
+%       stalknums - A vector of unique integers from 1 to 980 that determines
+%       which stalks to sample from (use randperm(980,K) to choose K
+%       unique integers from 1 to 980). Sort this vector so stalk numbers
+%       are in ascending order
+% 
 %       DataTable - Table with A, B, T, and theta_rot values, as well as
 %       cross-section longitudinal position and stalk number (simplified
-%       from the original downsampled data table, like the DCR table was
+%       from the original downsampled data table, like the DCR table for
+%       transverse deformation
 %       
 %       totstalks - Total number of stalks used for PCA (should be close to
-%       980)
+%       980) MIGHT NOT NEED THIS INPUT
 %       
 %       nstalks - Number of stalks to create 
 %       
@@ -38,27 +44,6 @@ function full3Dmodel(DataTable,totstalks,nstalks)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%% PSEUDO-CODE %%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%% Read from table containing original data (This might need to be a separate prepping function)
-
-% Do stuff from table preparing function PrepSections_V2.m, except store
-% the rotations of the cross-sections for later (keep original detected
-% values, as well as relative values with respect to the rotation at the
-% node
-
-% Downsample each cross-section so there's less data to deal with? Maybe
-% this isn't necessary?
-
-% Rotate each cross-section in a given stalk so the rotation of the major
-% axis of the node cross-section is 0 degrees from the x-axis and the notch
-% is on the left for cross-sections below the node
-
-% Get rid of problem cases where ellipse fitting doesn't work
-
-% Make sure notches are all pointed the correct way (might need a
-% notch-direction checking function to do this)
-
 
 %% Select stalks
 
