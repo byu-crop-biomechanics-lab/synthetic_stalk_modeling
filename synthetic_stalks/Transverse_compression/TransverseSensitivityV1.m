@@ -1,4 +1,4 @@
-function TransverseSensitivityV1(slices,stalknums,AllSlicesPCA,percent_change)
+function TransverseSensitivityV1(slices,stalknums,AllSlicesPCA,percent_change,numNEPCs)
 % FILENAME: TransverseSensitivityV1.m
 % AUTHOR: Ryan Larson
 % DATE: 1/24/2020
@@ -35,10 +35,10 @@ function TransverseSensitivityV1(slices,stalknums,AllSlicesPCA,percent_change)
 % -------------------------------------------------------------------------
 
 %% Initial variables
-
+set(0,'DefaultFigureWindowStyle','normal');
 load(AllSlicesPCA);
 group = 1;
-numNEPCs = 5;
+% numNEPCs = 5;
 
 
 % percent_change = 0.05;
@@ -47,58 +47,81 @@ minus_change = 1 - percent_change;
 
 write_Python_template3;  % Create Template cell array that can be copied and used to make individualized Python scripts
 
-Rind = zeros(length(A),11);
-Pith = zeros(size(Rind));
 
 %% Create all geometry cases for a given cross section
-    % Step through the cross sections
-    for i = 1:length(A)
+% Iterate through slices (determine group number here)
+for slice = slices
+    
+    sliceidx = find(slice_dists == slice);
+    startidx = slice_startstop(sliceidx,2);
+    
+    % For each slice position, iterate through stalknums
+    for stalk = stalknums
+        % Get the actual index of the chosen data and create a Python script for
+        % that case, numbering by group
+        indices = cell2mat(adj_indices(sliceidx,1));
+        stalkidx = find(indices == stalk);
+        
+        if isempty(stalkidx)
+            problem_slice_stalk = [problem_slice_stalk; slice, stalk];
+            continue
+        end
+        
+        adj_ind = startidx + stalkidx - 1;
+        
+        %% Create case from ellipse and PCA data (using "ALL" variables)
+        
         GROUP = sprintf('%d',group); % Group number
-        ID = sprintf('%d',stalknums(i)); % Cross-section number
+        ID = sprintf('%d',stalk); % Cross-section number
+        
+        write_Python_template3;
         
         % Get material properties
+        material_method = 'random';
         [Erind,Epith] = get_materials('random');
         
         % Make profile that includes NEPCs 1-5
         NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
 
-        for k = 1:5
+        for k = 1:numNEPCs
             % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
-            NEPC_ext = NEPC_ext + ext_rhocoeffs(newgoodstalknums(i),k)*ext_rhoPCAs(:,k)';
+            NEPC_ext = NEPC_ext + ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
         end
         
-        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-        Rnew_int = Rnew_ext - AVG_RIND_T(i);
-
+        R_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
+        R_int = normintV2(R_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
         
         %% Base case (case 0)
         case_num = 0;
         Script = Template; % Reset the script template
-        make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith)
-        Rind(i,1) = Erind;
-        Pith(i,1) = Epith;
-
+        make_case(case_num,adj_ind,ID,GROUP,R_ext,R_int,ALL_ELLIPSE_T,Script,Erind,Epith)
         
         %% Change A (case 1)
         % Adjust exterior points in polar
-        Tnew = ELLIPSE_T(i,:);
-        Aplus_ellipse = rpts(360,ELLIPSE_T(i,:),(plus_change*A(i)),B(i));
+        Tnew = ALL_ELLIPSE_T(adj_ind,:);
+        Aplus_ellipse = rpts(360,ALL_ELLIPSE_T(adj_ind,:),(plus_change*ALL_A(adj_ind)),ALL_B(adj_ind));
         Aplus_ext = Aplus_ellipse - NEPC_ext;
 
         % Calculate the interior points
-        Aplus_int = Aplus_ext - AVG_RIND_T(i);
+        Aplus_int = normintV2(Aplus_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
 
         % Check shape
         if plotting == 1
             polarplot(Tnew,Aplus_ext);
             hold on
             polarplot(Tnew,Aplus_int);
-            polarplot(Tnew,Rnew_ext);
-            polarplot(Tnew,Rnew_int);
+            polarplot(Tnew,R_ext);
+            polarplot(Tnew,R_int);
             pause();
             close;
         end
-
+        
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % UPDATED TO THIS POINT!!!!!!!!!!!!!!!!!!
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
@@ -121,8 +144,8 @@ Pith = zeros(size(Rind));
             polarplot(Tnew,Bplus_ext);
             hold on
             polarplot(Tnew,Bplus_int);
-            polarplot(Tnew,Rnew_ext);
-            polarplot(Tnew,Rnew_int);
+            polarplot(Tnew,R_ext);
+            polarplot(Tnew,R_int);
             pause();
             close;
         end
@@ -137,7 +160,7 @@ Pith = zeros(size(Rind));
         
         %% Change T (case 3)
         Tnew = ELLIPSE_T(i,:);
-        base_ext = Rnew_ext;
+        base_ext = R_ext;
 
         % Calculate the interior points
         Tplus_int      = base_ext - plus_change*AVG_RIND_T(i);
@@ -147,8 +170,8 @@ Pith = zeros(size(Rind));
             polarplot(Tnew,base_ext);
             hold on
             polarplot(Tnew,Tplus_int);
-            polarplot(Tnew,Rnew_ext);
-            polarplot(Tnew,Rnew_int);
+            polarplot(Tnew,R_ext);
+            polarplot(Tnew,R_int);
             pause();
             close;
         end
@@ -170,7 +193,7 @@ Pith = zeros(size(Rind));
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,Tnew,Script,Erind_plus,Epith);
+        make_case(case_num,i,ID,GROUP,R_ext,R_int,Tnew,Script,Erind_plus,Epith);
         Rind(i,5) = Erind_plus;
         Pith(i,5) = Epith;
         
@@ -184,7 +207,7 @@ Pith = zeros(size(Rind));
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,Tnew,Script,Erind,Epith_plus);
+        make_case(case_num,i,ID,GROUP,R_ext,R_int,Tnew,Script,Erind,Epith_plus);
         Rind(i,6) = Erind;
         Pith(i,6) = Epith_plus;
         
@@ -203,13 +226,13 @@ Pith = zeros(size(Rind));
             end
         end
         
-        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-        Rnew_int = Rnew_ext - AVG_RIND_T(i);
+        R_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+        R_int = R_ext - AVG_RIND_T(i);
         
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,Tnew,Script,Erind,Epith);
+        make_case(case_num,i,ID,GROUP,R_ext,R_int,Tnew,Script,Erind,Epith);
         Rind(i,7) = Erind;
         Pith(i,7) = Epith;
         
@@ -228,13 +251,13 @@ Pith = zeros(size(Rind));
             end
         end
         
-        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-        Rnew_int = Rnew_ext - AVG_RIND_T(i);
+        R_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+        R_int = R_ext - AVG_RIND_T(i);
         
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,Tnew,Script,Erind,Epith);
+        make_case(case_num,i,ID,GROUP,R_ext,R_int,Tnew,Script,Erind,Epith);
         Rind(i,8) = Erind;
         Pith(i,8) = Epith;
         
@@ -253,13 +276,13 @@ Pith = zeros(size(Rind));
             end
         end
         
-        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-        Rnew_int = Rnew_ext - AVG_RIND_T(i);
+        R_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+        R_int = R_ext - AVG_RIND_T(i);
         
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,Tnew,Script,Erind,Epith);
+        make_case(case_num,i,ID,GROUP,R_ext,R_int,Tnew,Script,Erind,Epith);
         Rind(i,9) = Erind;
         Pith(i,9) = Epith;
         
@@ -278,13 +301,13 @@ Pith = zeros(size(Rind));
             end
         end
         
-        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-        Rnew_int = Rnew_ext - AVG_RIND_T(i);
+        R_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+        R_int = R_ext - AVG_RIND_T(i);
         
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,Tnew,Script,Erind,Epith);
+        make_case(case_num,i,ID,GROUP,R_ext,R_int,Tnew,Script,Erind,Epith);
         Rind(i,10) = Erind;
         Pith(i,10) = Epith;
         
@@ -303,23 +326,33 @@ Pith = zeros(size(Rind));
             end
         end
         
-        Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-        Rnew_int = Rnew_ext - AVG_RIND_T(i);
+        R_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
+        R_int = R_ext - AVG_RIND_T(i);
         
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,Tnew,Script,Erind,Epith);
+        make_case(case_num,i,ID,GROUP,R_ext,R_int,Tnew,Script,Erind,Epith);
         Rind(i,11) = Erind;
         Pith(i,11) = Epith;
         
         
     end
 
-    FolderName = pwd;
-    Materials = 'MaterialsUsed.mat';
-    SaveFile = fullfile(FolderName, Materials);
-    save(SaveFile,'Rind','Pith');
+    group = group + 1;
+end
+
+
+
+FolderName = pwd;
+Materials = 'MaterialsUsed.mat';
+SaveFile = fullfile(FolderName, Materials);
+save(SaveFile,'Rind','Pith');
+
+
+
+
+
 
 end
 

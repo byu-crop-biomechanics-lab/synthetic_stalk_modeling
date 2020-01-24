@@ -74,11 +74,11 @@ for slice = slices
         write_Python_template3;
         
         material_method = 'random';
+        [Erind,Epith] = get_materials(material_method);
 
         % Real cross section (case 0)
         case_num = 0; % increment this for each case within each cross section
         Script = Template;
-        [Erind,Epith] = get_materials(material_method);
         make_case(case_num,adj_ind,ID,GROUP,ALL_R_ext,ALL_R_int,ALL_ELLIPSE_T,Script,Erind,Epith);
 
         % Pure ellipse fit (case 1)
@@ -113,7 +113,7 @@ for slice = slices
 %             polarplot(ALL_ELLIPSE_T(adj_ind,:),Rnew_int,'b');
 %             hold off
 %             pause();
-            make_case(case_num,adj_ind,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
+            make_case(case_num,adj_ind,ID,GROUP,Rnew_ext,Rnew_int,ALL_ELLIPSE_T,Script,Erind,Epith);
 
         end
 
@@ -130,7 +130,7 @@ for slice = slices
             Rnew_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
 %             Rnew_int = ALL_ELLIPSE_R_int(adj_ind,:) - NEPC_ext;
             Rnew_int = normintV2(Rnew_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
-            make_case(case_num,adj_ind,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
+            make_case(case_num,adj_ind,ID,GROUP,Rnew_ext,Rnew_int,ALL_ELLIPSE_T,Script,Erind,Epith);
 
         end
         
