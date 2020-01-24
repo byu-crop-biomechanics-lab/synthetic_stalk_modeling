@@ -45,6 +45,8 @@ load(AllSlicesPCA);
 
 problem_slice_stalk = [];
 
+set(0,'DefaultFigureWindowStyle','docked');
+
 %% Process
 % Iterate through slices (determine group number here)
 for slice = slices
