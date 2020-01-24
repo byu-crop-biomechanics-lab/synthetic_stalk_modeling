@@ -1,4 +1,4 @@
-function AllTransversePCA(slice_dists)
+function AllTransversePCA(slice_dists,SaveName)
 % FILENAME: AllTransversePCA.m
 % AUTHOR: Ryan Larson
 % DATE: 1/17/2020
@@ -26,19 +26,24 @@ function AllTransversePCA(slice_dists)
 % V3 - 
 %
 % -------------------------------------------------------------------------
-load StalksDCR_360pts.mat
+load StalksDCR_360pts_V2.mat
 hold off
 close all;
 set(0,'DefaultFigureWindowStyle','docked');
 
 ALL_PROBLEM_INDICES = {};
+ALL_R_ext           = [];
+ALL_R_int           = [];
+ALL_A               = [];
+ALL_B               = [];
 ALL_DIFF_R_ext      = [];
 ALL_DIFF_R_int      = [];
 ALL_ELLIPSE_T       = [];
+ALL_AVG_RIND_T      = [];
 ALL_ELLIPSE_R_ext   = [];
 ALL_ELLIPSE_R_int   = [];
 
-adj_indices         = [];
+adj_indices         = {};
 
 slice_startstop = zeros(length(slice_dists),3);
 slice_startstop(:,1) = slice_dists';
@@ -48,6 +53,7 @@ slice_startstop(:,1) = slice_dists';
 
 for slice = slice_dists
     slice
+    close all;
     % For each slice distance, iterate through the 980 stalks and get the
     % data to feed into the large PCA array
     
@@ -87,13 +93,13 @@ for slice = slice_dists
     % Get file name to look for
     searchslice = sprintf('%d',abs(slice));
     if slice > 0
-        FlippedOutputName = strcat('Above_',searchslice,'_FLIPPED.mat');
+        FlippedOutputName = strcat('*Above_',searchslice,'_FLIPPED.mat');
         fstruct = dir(FlippedOutputName);
     elseif slice < 0
-        FlippedOutputName = strcat('Below_',searchslice,'_FLIPPED.mat');
+        FlippedOutputName = strcat('*Below_',searchslice,'_FLIPPED.mat');
         fstruct = dir(FlippedOutputName);
     else
-        FlippedOutputName = strcat('At_Node','_FLIPPED.mat');
+        FlippedOutputName = strcat('*At_Node','_FLIPPED.mat');
         fstruct = dir(FlippedOutputName);        
     end
 
@@ -150,24 +156,24 @@ for slice = slice_dists
     % Get file name to look for
     searchslice = sprintf('%d',slice);
     if slice > 0
-        searchname = strcat('Above_',searchslice,'_AllGoodEllipses.mat');
+        searchname = strcat('*Above_',searchslice,'_AllGoodEllipses.mat');
         fstruct = dir(searchname);
         if isempty(fstruct)
-            searchname = strcat('Above_',searchslice,'_AllEllipses.mat');
+            searchname = strcat('*Above_',searchslice,'_AllEllipses.mat');
         end
 
     elseif slice < 0
-        searchname = strcat('Below_',searchslice,'_AllGoodEllipses.mat');
+        searchname = strcat('*Below_',searchslice,'_AllGoodEllipses.mat');
         fstruct = dir(searchname);
         if isempty(fstruct)
-            searchname = strcat('Below_',searchslice,'_AllEllipses.mat');
+            searchname = strcat('*Below_',searchslice,'_AllEllipses.mat');
         end
 
     else
-        searchname = strcat('At_Node','_AllGoodEllipses.mat');
+        searchname = strcat('*At_Node','_AllGoodEllipses.mat');
         fstruct = dir(searchname);
         if isempty(fstruct)
-            searchname = strcat('At_Node','_AllEllipses.mat');
+            searchname = strcat('*At_Node','_AllEllipses.mat');
         end
 
     end
@@ -257,8 +263,13 @@ for slice = slice_dists
         disp('Ellipse data for the chosen slice distance has been found.');
         AllEllipseName = strcat(output_prefix,'_AllEllipses.mat');
 
-        ProblemEllipses = strcat(output_prefix,'_ProblemEllipses.mat');
-        load(ProblemEllipses,'problem_indices');
+        try
+            ProblemEllipses = strcat(output_prefix,'_ProblemEllipses.mat');
+            load(ProblemEllipses,'problem_indices');
+        catch
+            ProblemEllipses = strcat('Random_',output_prefix,'_ProblemEllipses.mat');
+            load(ProblemEllipses,'problem_indices');
+        end
 
 %         % Calculate the ellipse fits for the chosen set of cross-sections
 %         ChosenEllipseName = strcat(output_prefix,'_ChosenEllipses.mat');
@@ -272,14 +283,25 @@ for slice = slice_dists
     % ending indices corresponding to each slice distance so data can be
     % correctly reconstructed later. Also save the error_indices that
     % correspond.
-    
-    load(AllEllipseName,'DIFF_R_ext','DIFF_R_int','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int');
-    load(ProblemEllipses,'problem_indices');
+    try
+        AllEllipseName = strcat(output_prefix,'_AllEllipses.mat');
+        load(AllEllipseName);
+        load(ProblemEllipses,'problem_indices');
+    catch
+        AllEllipseName = strcat('Random_',output_prefix,'_AllEllipses.mat');
+        load(AllEllipseName);
+        load(ProblemEllipses,'problem_indices');
+    end
     
 %     n_ALL_PROBLEM_INDICES = length(ALL_PROBLEM_INDICES);
     n_ALL_DIFF_R_ext      = size(ALL_DIFF_R_ext,1);
     n_ALL_DIFF_R_int      = size(ALL_DIFF_R_int,1);
+    n_ALL_R_ext           = size(ALL_R_ext,1);
+    n_ALL_R_int           = size(ALL_R_int,1);
+    n_ALL_A               = size(ALL_A,1);
+    n_ALL_B               = size(ALL_B,1);
     n_ALL_ELLIPSE_T       = size(ALL_ELLIPSE_T,1);
+    n_ALL_AVG_RIND_T      = size(ALL_AVG_RIND_T,1);
     n_ALL_ELLIPSE_R_ext   = size(ALL_ELLIPSE_R_ext);
     n_ALL_ELLIPSE_R_int   = size(ALL_ELLIPSE_R_int);
     
@@ -293,20 +315,31 @@ for slice = slice_dists
     
     % Remove error cases and adjust indices, starting at the bottom of the
     % array. Save adjusted indices.
-%     adj_indices(ind,:) = linspace(1,980,980);
-%     adj_indices(ind,problem_indices) = ; % to map between stalk number and index value, use the index and the value of adj_indices
+    adj_indices_temp = linspace(1,980,980);
+    adj_indices_temp(problem_indices) = []; % to map between stalk number and index value, use the index and the value of adj_indices
+    adj_indices{ind,1} = adj_indices_temp;
     
     % Remove problem_indices from data
     DIFF_R_ext(problem_indices,:) = [];
     DIFF_R_int(problem_indices,:) = [];
+    R_ext(problem_indices,:) = [];
+    R_int(problem_indices,:) = [];
+    A(problem_indices,:) = [];
+    B(problem_indices,:) = [];
     ELLIPSE_T(problem_indices,:) = [];
+    AVG_RIND_T(problem_indices,:) = [];
     ELLIPSE_R_ext(problem_indices,:) = [];
     ELLIPSE_R_int(problem_indices,:) = [];
     
     
     ALL_DIFF_R_ext      = [ALL_DIFF_R_ext; DIFF_R_ext];
     ALL_DIFF_R_int      = [ALL_DIFF_R_int; DIFF_R_int];
+    ALL_R_ext           = [ALL_R_ext; R_ext];
+    ALL_R_int           = [ALL_R_int; R_int];
+    ALL_A               = [ALL_A; A];
+    ALL_B               = [ALL_B; B];
     ALL_ELLIPSE_T       = [ALL_ELLIPSE_T; ELLIPSE_T];
+    ALL_AVG_RIND_T      = [ALL_AVG_RIND_T; AVG_RIND_T];
     ALL_ELLIPSE_R_ext   = [ALL_ELLIPSE_R_ext; ELLIPSE_R_ext];
     ALL_ELLIPSE_R_int   = [ALL_ELLIPSE_R_int; ELLIPSE_R_int];
     
@@ -369,7 +402,7 @@ for slice = slice_dists
     title('Interior Rho Principal Components');
     legend('PC1','PC2','PC3','PC4','PC5');
 
-    
+    pause();
     
     
     
@@ -391,13 +424,13 @@ end
 
 figure(1);
 plot(ext_rhoexplained_tot(1:50,1),'-*');
-title('Exterior Non-Ellipse PCs');
+title('ALL DATA Exterior Non-Ellipse PCs');
 xlabel('# of PCs');
 ylabel('% Variance Explained');
 
 figure(2);
 plot(int_rhoexplained_tot(1:50,1),'-*');
-title('Interior Non-Ellipse PCs');
+title('ALL DATA Interior Non-Ellipse PCs');
 xlabel('# of PCs');
 ylabel('% Variance Explained');
 
@@ -412,7 +445,7 @@ polarplot(theta,ext_rhoPCAs(:,2));
 polarplot(theta,ext_rhoPCAs(:,3));
 polarplot(theta,ext_rhoPCAs(:,4));
 polarplot(theta,ext_rhoPCAs(:,5));
-title('Exterior Rho Principal Components');
+title('ALL DATA Exterior Rho Principal Components');
 legend('PC1','PC2','PC3','PC4','PC5');
 
 figure(4);
@@ -422,24 +455,26 @@ polarplot(theta,int_rhoPCAs(:,2));
 polarplot(theta,int_rhoPCAs(:,3));
 polarplot(theta,int_rhoPCAs(:,4));
 polarplot(theta,int_rhoPCAs(:,5));
-title('Interior Rho Principal Components');
+title('ALL DATA Interior Rho Principal Components');
 legend('PC1','PC2','PC3','PC4','PC5');
 
 
 
 
 % Save the final data in a new mat file
+FolderName = pwd;
 SaveFile       = fullfile(FolderName, SaveName);
 save(SaveFile,'ELLIPSE_T','ELLIPSE_R_ext','ext_rhocoeffs',...
     'ext_rhoPCAs','ext_rhoexplained','ext_rhovarMeans','ELLIPSE_R_int',...
-    'int_rhocoeffs','int_rhoPCAs','int_rhoexplained','int_rhovarMeans');
+    'int_rhocoeffs','int_rhoPCAs','int_rhoexplained','int_rhovarMeans',...
+    'ALL_DIFF_R_ext','ALL_DIFF_R_int','ALL_ELLIPSE_T','ALL_ELLIPSE_R_ext',...
+    'ALL_ELLIPSE_R_int','slice_startstop','ALL_PROBLEM_INDICES',...
+    'adj_indices','slice_dists','ALL_A','ALL_B','ALL_R_ext','ALL_R_int',...
+    'ALL_AVG_RIND_T');
 
 % MAKE SURE TO ADDRESS AND CHECK THE INTERPOLATION ISSUE THAT MIGHT
 % HAVE BEEN CAUSING ALL THE ERROR_INDICES AND THE NEED TO SHIFT
 % EVERYTHING
-
-
-
 
 
 

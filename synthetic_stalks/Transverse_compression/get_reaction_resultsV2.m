@@ -11,7 +11,7 @@ load(AllGoodReactionData,'ResultsCell');
 % CONVERT FROM MICROMETER SCALE TO MILLIMETER SCALE FOR LOOKING AT ACTUAL
 % VALUES
 
-rows = 50;
+rows = 70;
 cols = 11;
 
 ylimits = 0;

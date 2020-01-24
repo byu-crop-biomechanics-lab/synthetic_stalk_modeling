@@ -1,4 +1,4 @@
-function transverse_wrapper_V4(stalknums,slicedist,material_method,group)
+function [problem_slice_stalk] = transverse_wrapper_V4(slices,stalknums,AllSlicesPCA)
 % FILENAME: transverse_wrapper.m
 % AUTHOR: Ryan Larson
 % DATE: 1/17/2020
@@ -8,12 +8,12 @@ function transverse_wrapper_V4(stalknums,slicedist,material_method,group)
 % 
 % 
 % INPUTS:
+%       slices - A subset of the input that went into AllTransversePCA.m (as of
+%       1/22/2020, this was [-40 -30 -20 -15 -10 -5 0 5 10 15 20 30 40])
 %       stalknums - A vector of unique integers from 1 to 980 that determines
 %       which stalks to sample from (use randperm(980,K) to choose K
 %       unique integers from 1 to 980)
-%       slicedist - A number value (can be integer or decimal) that
-%       signifies the distance in millimeters from the nearest node on the
-%       stalk at the chosen slice.
+%       AllSlicesPCA - AllSlicesPCA.mat
 %       
 % OUTPUTS:
 %       - Several .mat files with variables saved from the steps in the
@@ -24,16 +24,7 @@ function transverse_wrapper_V4(stalknums,slicedist,material_method,group)
 %
 %
 % NOTES: 
-%       - The closest slice to slicedist for a given stalk will be chosen,
-%       so when verifying results make sure to look at the distribution of
-%       chosen slice positions when choosing extremely large magnitude
-%       numbers.
-%       - Don't go above a magnitude of 90 at all, since there are
-%       very few stalks that have slices that far from the node. A value of
-%       0 for slicedist will give the closest slice to the node.
-%       - The PCA functions look at the first five NEPCs, so the range
-%       should always cover at least 5 stalks (realistically, the range
-%       should cover much more)
+%       - 
 % 
 % 
 % VERSION HISTORY:
@@ -45,317 +36,113 @@ function transverse_wrapper_V4(stalknums,slicedist,material_method,group)
 %
 % -------------------------------------------------------------------------
 
+%% Initial variables
+group = 1;
+numNEPCs = 5;
+% nslices = length(slices);
+% nstalks = length(stalknums);
+load(AllSlicesPCA);
+
+problem_slice_stalk = [];
+
 %% Process
-% Load in the 360-point DCR version of Jared's table
-load StalksDCR_360pts.mat
-hold off
-close all;
-set(0,'DefaultFigureWindowStyle','docked');
-
-dist_int = num2str(floor(abs(slicedist)));
-deci = abs(slicedist) - floor(abs(slicedist));
-dist_deci = num2str(deci);
-dist_deci = erase(dist_deci,'0.');
-
-if slicedist > 0
-    if strcmp(dist_deci,'0')
-        slicepos = strcat('Random_Above_',dist_int);
-    else
-        slicepos = strcat('Random_Above_',dist_int,'_',dist_deci);
-    end
-elseif slicedist < 0
-    if strcmp(dist_deci,'0')
-        slicepos = strcat('Random_Below_',dist_int);
-    else
-        slicepos = strcat('Random_Below_',dist_int,'_',dist_deci);
-    end
-else
-    slicepos = strcat('Random_At_Node');
-end
-
-output_prefix = strcat(slicepos);
-
-StalkNumsName = strcat(output_prefix,'_Stalks.mat');
-FolderName = pwd;
-SaveFile = fullfile(FolderName, StalkNumsName);
-save(SaveFile,'stalknums');
-
-
-% Gather all the cross-sections at the chosen slice distance
-AllSectionsName = strcat(output_prefix,'_All980.mat');
-ChooseSections('samedist',linspace(1,980,980),slicedist,Stalk_TableDCR,error_indices,npoints,AllSectionsName)
-load(AllSectionsName);
-
-
-%% Check to see if there is already a flip vector for the chosen distance
-% Get file name to look for
-searchslice = sprintf('%d',abs(slicedist));
-if slicedist > 0
-    FlippedOutputName = strcat('*Above_',searchslice,'_FLIPPED.mat');
-    fstruct = dir(FlippedOutputName);
-elseif slicedist < 0
-    FlippedOutputName = strcat('*Below_',searchslice,'_FLIPPED.mat');
-    fstruct = dir(FlippedOutputName);
-else
-    FlippedOutputName = strcat('*At_Node','_FLIPPED.mat');
-    fstruct = dir(FlippedOutputName);        
-end
-
-if isempty(fstruct)
-    FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
-else
-    FlippedOutputName = fstruct(1).name;
-end
-
-FlipName = strcat(output_prefix,'_flip_sections.mat');
-% FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
-if ~isfile(FlippedOutputName)
-    disp('No flip index vector exists in the current folder. Create one now.');
-    % Manually find the cross-sections that need to be flipped 180 degrees
-%     FlipName = strcat(output_prefix,'_flip_sections.mat');
-    find_flip_notches(AllSectionsName,FlipName)
-
-    while 1
-        fixes_needed = input('Does the flip vector need manual correction? Y/N ','s');
-        switch fixes_needed
-            case 'Y'
-                load(FlipName);
-                openvar('flip_sections');
-                disp('Giving control to keyboard for manual editing of flip variable.');
-                disp('Use dbcont command to exit keyboard editing mode.');
-                keyboard;
-                break
-            case 'N'
-                break
-
-            otherwise
-                disp('Not a recognized answer. Please try again.');
-        end
-    end
-
-
-    % Flip the cross-sections that need to be flipped, according to the vector
-    % of flip indicators
-    % load(FlipName);
-    FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
-    flip_notches(FlipName,AllSectionsName,FlippedOutputName);
+% Iterate through slices (determine group number here)
+for slice = slices
     
-else
-%     FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
-    disp('A flip index vector for the chosen data has been found.');
-end
-
-
-load(FlippedOutputName);
-
-% Make smaller chosen sections set
-ChooseSectionsName = strcat(output_prefix,'_Sampled.mat');
-ChooseSections('samedist',stalknums,slicedist,flippedTable,error_indices,npoints,ChooseSectionsName);
-
-%% Check to see if there is already an ellipse fit for the chosen distance
-% Get file name to look for
-searchslice = sprintf('%d',slicedist);
-if slicedist > 0
-    searchname = strcat('*Above_',searchslice,'_AllGoodEllipses.mat');
-    fstruct = dir(searchname);
-    if isempty(fstruct)
-        searchname = strcat('*Above_',searchslice,'_AllEllipses.mat');
-    end
+    sliceidx = find(slice_dists == slice);
+    startidx = slice_startstop(sliceidx,2);
+    
+    % For each slice position, iterate through stalknums
+    for stalk = stalknums
+        % Get the actual index of the chosen data and create a Python script for
+        % that case, numbering by group
+        indices = cell2mat(adj_indices(sliceidx,1));
+        stalkidx = find(indices == stalk);
         
-elseif slicedist < 0
-    searchname = strcat('*Below_',searchslice,'_AllGoodEllipses.mat');
-    fstruct = dir(searchname);
-    if isempty(fstruct)
-        searchname = strcat('*Below_',searchslice,'_AllEllipses.mat');
-    end
-    
-else
-    searchname = strcat('*At_Node','_AllGoodEllipses.mat');
-    fstruct = dir(searchname);
-    if isempty(fstruct)
-        searchname = strcat('*At_Node','_AllEllipses.mat');
-    end
-    
-end
-    
-fstruct = dir(searchname);
-if isempty(fstruct)
-    searchname = strcat(output_prefix,'_AllEllipses.mat');
-else
-    searchname = fstruct(1).name;
-end
-
-
-
-% If the ellipse data already exists, use the existing data instead of
-% going through the process of tagging any bad fits
-problem_indices = [];
-chosen_problem_indices = [];
-    
-if ~isfile(searchname)
-    disp('No ellipse data for this slice distance exists in the current folder. Create data now.');
-    
-    % Calculate the ellipse fits for all cross-sections at chosen distance
-    AllEllipseName = strcat(output_prefix,'_AllEllipses.mat');
-    ellipse_fitting_V2(FlippedOutputName,AllEllipseName);
-
-    % Calculate the ellipse fits for the chosen set of cross-sections
-    ChosenEllipseName = strcat(output_prefix,'_ChosenEllipses.mat');
-    ellipse_fitting_V2(ChooseSectionsName,ChosenEllipseName);
-
-    % Plot the ellipse fits and see if any of them have problems
-    load(AllEllipseName);
-    load(FlippedOutputName);
-
-    for i = 1:size(flippedTable,1)
-        i
-        polarplot(ELLIPSE_T(i,:),ELLIPSE_R_ext(i,:),'LineWidth',2);
-        hold on
-        polarplot(ELLIPSE_T(i,:),ELLIPSE_R_int(i,:),'LineWidth',2);
-        polarplot(ext_T(:,i),ext_Rho(:,i));
-        polarplot(int_T(:,i),int_Rho(:,i));
-        hold off
-        s = input('Enter 1 if the ellipse fit has a problem: ');
-        s
-        if s == 1
-            problem_indices = [problem_indices, i];
-%             if any(ismember(i,stalknums))
-%                 chosen_problem_indices = [chosen_problem_indices, i];
-%             end
-        else
+        if isempty(stalkidx)
+            problem_slice_stalk = [problem_slice_stalk; slice, stalk];
             continue
-        end    
-    end    
-    
-    while 1
-        fixes_needed = input('Does the ellipse problems vector need manual correction? Y/N ','s');
-        switch fixes_needed
-            case 'Y'
-%                 load(FlipName);
-                openvar('problem_indices');
-                disp('Giving control to keyboard for manual editing of flip variable.');
-                disp('Use dbcont command to exit keyboard editing mode.');
-                keyboard;
-                break
-            case 'N'
-                break
-
-            otherwise
-                disp('Not a recognized answer. Please try again.');
         end
+        
+        adj_ind = startidx + stalkidx - 1;
+        
+        %% Create case from ellipse and PCA data (using "ALL" variables)
+        
+        GROUP = sprintf('%d',group); % Group number
+        ID = sprintf('%d',stalk); % Cross-section number
+        
+        write_Python_template3;
+        
+        material_method = 'random';
+
+        % Real cross section (case 0)
+        case_num = 0; % increment this for each case within each cross section
+        Script = Template;
+        [Erind,Epith] = get_materials(material_method);
+        make_case(case_num,adj_ind,ID,GROUP,ALL_R_ext,ALL_R_int,ALL_ELLIPSE_T,Script,Erind,Epith);
+
+        % Pure ellipse fit (case 1)
+        case_num = case_num + 1;
+        Script = Template; % Reset the script template
+        make_case(case_num,adj_ind,ID,GROUP,ALL_ELLIPSE_R_ext,ALL_ELLIPSE_R_int,ALL_ELLIPSE_T,Script,Erind,Epith);
+
+        % Combined NEPC cases
+        for j = 1:numNEPCs
+            case_num = case_num + 1;
+            Script = Template; % Reset the script template
+
+            % Calculate the cases with NEPCs cumulatively added into the
+            % ellipse fit
+            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
+            for k = 1:j
+                % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
+                NEPC_ext = NEPC_ext + ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
+            end
+
+            Rnew_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
+%             Rnew_int = ALL_ELLIPSE_R_int(adj_ind,:) - NEPC_ext;
+            Rnew_int = normintV2(Rnew_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
+            
+%             % Verify that the addition of successive NEPCs causes
+%             geometric convergence for the exterior boundary (and close
+%             for the interior boundary)
+%             polarplot(ALL_ELLIPSE_T(adj_ind,:),ALL_R_ext(adj_ind,:),'r');
+%             hold on
+%             polarplot(ALL_ELLIPSE_T(adj_ind,:),ALL_R_int(adj_ind,:),'r');
+%             polarplot(ALL_ELLIPSE_T(adj_ind,:),Rnew_ext,'b');
+%             polarplot(ALL_ELLIPSE_T(adj_ind,:),Rnew_int,'b');
+%             hold off
+%             pause();
+            make_case(case_num,adj_ind,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
+
+        end
+
+
+        % Remaining individual NEPC cases
+        for j = 2:numNEPCs
+            case_num = case_num + 1;
+            Script = Template; % Reset the script template
+
+            % Add the current NEPC to the ellipse in polar coordinates
+            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
+            NEPC_ext = ext_rhocoeffs(adj_ind,j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
+            
+            Rnew_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
+%             Rnew_int = ALL_ELLIPSE_R_int(adj_ind,:) - NEPC_ext;
+            Rnew_int = normintV2(Rnew_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
+            make_case(case_num,adj_ind,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
+
+        end
+        
+        
+        
+        
+        
+        
     end
     
     
-
-    % Determine if any of the problem cases are in the selected stalks
-    problocs = ismember(problem_indices,stalknums);
-    chosen_problem_indices = problem_indices(problocs);
-    
-    % Save problem_indices for later use, after correcting the indices
-    ProblemEllipses = strcat(output_prefix,'_ProblemEllipses.mat');
-    save(ProblemEllipses,'problem_indices','problocs','chosen_problem_indices');
-    
-    problem_indices
-    chosen_problem_indices
-    
-    
-else
-    disp('Ellipse data for the chosen slice distance has been found.');
-    AllEllipseName = strcat(output_prefix,'_AllEllipses.mat');
-    
-    ProblemEllipses = strcat(output_prefix,'_ProblemEllipses.mat');
-    load(ProblemEllipses,'problem_indices','chosen_problem_indices');
-    
-    % Calculate the ellipse fits for the chosen set of cross-sections
-    ChosenEllipseName = strcat(output_prefix,'_ChosenEllipses.mat');
-    ellipse_fitting_V2(ChooseSectionsName,ChosenEllipseName);
-end
-
-
-
-NEPCName = strcat(output_prefix,'_PCA.mat');
-MaterialsName = strcat(output_prefix, '_Materials.mat');
-
-if isempty(problem_indices)
-    % Run PCA on all cases
-    PCA_ellipse_fits(AllEllipseName,NEPCName);
-    
-    % Create the Abaqus Python scripts
-    create_cases(NEPCName,ChosenEllipseName,ChooseSectionsName,5,material_method,group,MaterialsName);
-else
-    % Remove the problem ellipses and then run PCA
-    AllGoodEllipseFits = strcat(output_prefix,'_AllGoodEllipses.mat');
-    ChosenGoodEllipseFits = strcat(output_prefix,'_ChosenGoodEllipses.mat');
-    GoodStalkNumsName = strcat(output_prefix,'_GoodStalks.mat');
-
-    % Remove the problem indices from the complete set of ellipse fits
-    remove_problem_ellipses(AllEllipseName,stalknums,problem_indices,AllGoodEllipseFits,GoodStalkNumsName,'all')
-    
-    % Convert the chosen_problem_indices to values from 1 to 50 (or the
-    % number of chosen stalks) and remove the corresponding bad sections
-    % all at once
-    translated_prob_indices = [];
-    for i = 1:length(stalknums)
-        if any(ismember(stalknums(i),chosen_problem_indices))
-            translated_prob_indices = [translated_prob_indices,i];
-        end
-    end
-    translated_prob_indices
-    
-%     % Remove the problem indices that are within the chosen stalknums and
-%     % produce a new stalknums variable
-%     if ~isempty(translated_prob_indices)
-%         remove_problem_ellipses(ChosenEllipseName,stalknums,translated_prob_indices,ChosenGoodEllipseFits,GoodStalkNumsName,'chosen')
-%         
-%         % Adjust the indices in the new good stalknums variable
-%         load(GoodStalkNumsName,'stalknums');
-%         goodstalknums = stalknums;
-%         load(AllEllipseName,'A');
-%         Nstalks = length(A);
-%         [newgoodstalknums] = shift_indices(problem_indices,Nstalks,goodstalknums);
-%         
-%         NewGoodStalks = strcat(output_prefix,'_NewGoodStalks.mat');
-%         save(NewGoodStalks,'newgoodstalknums');
-%         
-%         % Run PCA
-%         PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
-% 
-%         % Create the Abaqus Python scripts
-%         create_cases_shifted(NEPCName,ChosenGoodEllipseFits,NewGoodStalks,5,material_method,group,MaterialsName);
-%         
-%     else
-%         % Run PCA
-%         PCA_ellipse_fits(AllGoodEllipseFits,NEPCName);
-% 
-%         % Create the Abaqus Python scripts
-%         create_cases(NEPCName,ChosenEllipseName,ChooseSectionsName,5,material_method,group,MaterialsName);
-%     end
-
-    % Remove the problem indices that are within the chosen stalknums and
-    % produce a new stalknums variable
-    remove_problem_ellipses(ChosenEllipseName,stalknums,translated_prob_indices,ChosenGoodEllipseFits,GoodStalkNumsName,'chosen')
-
-    % Adjust the indices in the new good stalknums variable
-    load(GoodStalkNumsName,'stalknums');
-    goodstalknums = stalknums;
-    load(AllEllipseName,'A');
-    Nstalks = length(A);
-    [newgoodstalknums] = shift_indices(problem_indices,Nstalks,goodstalknums);
-
-    NewGoodStalks = strcat(output_prefix,'_NewGoodStalks.mat');
-    save(NewGoodStalks,'newgoodstalknums');
-
-    % Run PCA
-
-    % NOTE: NOT ALL CHOSEN STALKNUMS ARE ENDING UP IN THE PCA. CHECK INPUTS
-    % AND OUTPUTS TO CONFIRM.
-    PCA_ellipse_fits(AllGoodEllipseFits,NEPCName); % At this point PCA is run on all good ellipse data
-
-
-    % Create the Abaqus Python scripts
-    create_cases_shifted(NEPCName,ChosenGoodEllipseFits,GoodStalkNumsName,NewGoodStalks,5,material_method,group,MaterialsName);
-
-    
+    group = group + 1;
 end
 
 set(0,'DefaultFigureWindowStyle','normal');
@@ -1211,7 +998,6 @@ function create_cases(NEPCdata,GoodEllipseData,ChosenSectionsData,numNEPCs,mater
             NEPC_ext = ext_rhocoeffs(stalknums(i),j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
 %             NEPC_int = int_rhocoeffs(i,j)*int_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
             Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-%             Rnew_int = Rnew_ext - AVG_RIND_T(i);
 
 %             [Erind,Epith] = get_materials(material_method);
             make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
@@ -1498,3 +1284,5 @@ function [R_int] = normint(R,theta,t)
     
 
 end
+
+
