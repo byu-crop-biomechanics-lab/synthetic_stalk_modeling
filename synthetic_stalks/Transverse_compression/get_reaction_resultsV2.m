@@ -1,4 +1,4 @@
-function [cumulative,cumulative_errbar,cumulative_err,individual,individual_errbar,individual_err,percents,percent_err] = get_reaction_resultsV2(AllGoodReactionData)
+function [cumulative,cumulative_errbar,cumulative_err,individual,individual_errbar,individual_err,percents,percent_err,Results_new] = get_reaction_resultsV2(AllGoodReactionData)
 % get_reaction_resultsV2.m: Take the text file structure of the NEPC
 % finite-element results and reorganize the data into an array, with the
 % rows being the cross-section number and the columns being the case
@@ -20,7 +20,7 @@ uplim = 102;
 
 Results_new = NaN(rows,cols);
 
-for j = 1:4
+for j = 1:5
     Results_temp = NaN(rows,cols);
     Results = cell2mat(ResultsCell(j));
 

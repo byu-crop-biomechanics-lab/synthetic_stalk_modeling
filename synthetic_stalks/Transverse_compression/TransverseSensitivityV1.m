@@ -40,14 +40,15 @@ load(AllSlicesPCA);
 group = 1;
 % numNEPCs = 5;
 
+plotting = 0;
 
 % percent_change = 0.05;
 plus_change = 1 + percent_change;
 minus_change = 1 - percent_change;
 
-ncases = length(slices)*length(stalknums)*; % The number of unique generated cases
-Rind = zeros(ncases,3);
-Pith = zeros(ncases,3);
+% ncases = length(slices)*length(stalknums)*; % The number of unique generated cases
+% Rind = zeros(ncases,3);
+% Pith = zeros(ncases,3);
 
 write_Python_template3;  % Create Template cell array that can be copied and used to make individualized Python scripts
 
@@ -129,7 +130,7 @@ for slice = slices
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,adj_num,ID,GROUP,Aplus_ext,Aplus_int,Tnew,Script,Erind,Epith);
+        make_case(case_num,adj_ind,ID,GROUP,Aplus_ext,Aplus_int,Tnew,Script,Erind,Epith);
         
 
         %% Change B (case 2)
