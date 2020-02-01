@@ -1,4 +1,4 @@
-function GeneratePCAStalkSTL(stalknum,npts)
+function GeneratePCAStalkSTL(stalknum,npts,nTPCs,nalphaPCs)
 % FILENAME: GeneratePCAStalkSTL.m
 % AUTHOR: Ryan Larson
 % DATE: 1/31/2020
@@ -39,7 +39,9 @@ function GeneratePCAStalkSTL(stalknum,npts)
 % number of PCs for each variable as inputs. Ideally it should
 % automatically name the STLs so it's clear which stalk it matches and how
 % many PCs of each variable are used.
-%
+% - Need a way to deal with NaN sections of original data. The principal
+% components go out past the length of some stalks, so the approximated
+% versions need to be cut off somehow to match the original data.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -52,8 +54,7 @@ load('LongPCAData.mat');
 % Set up polar data structures
 Theta = zeros(length(keepcols),npts); % Rows are slices, columns are points around each cross-section
 stalk_ext = zeros(length(keepcols),npts);
-stalk_int1 = zeros(length(keepcols),npts);
-stalk_int2 = zeros(length(keepcols),npts);
+stalk_int = zeros(length(keepcols),npts);
 
 % Verify that stalknum is part of keeprows. Throw an error if it's not a
 % keeper.
@@ -65,10 +66,10 @@ end
 stalkidx = find(keeprows == stalknum);
 
 % Run PCA
-[APCAs, Acoeffs, ~, ~, ~, ~] = pca(APCA,'Centered',false);
-[BPCAs, Bcoeffs, ~, ~, ~, ~] = pca(BPCA,'Centered',false);
-[TPCAs, Tcoeffs, ~, ~, ~, ~] = pca(TPCA,'Centered',false);
-[alphaPCAs, alphacoeffs, ~, ~, ~, ~] = pca(alphaPCA,'Centered',false);
+[APCs, Acoeffs, ~, ~, ~, ~] = pca(APCA,'Centered',false);
+[BPCs, Bcoeffs, ~, ~, ~, ~] = pca(BPCA,'Centered',false);
+[TPCs, Tcoeffs, ~, ~, ~, ~] = pca(TPCA,'Centered',false);
+[alphaPCs, alphacoeffs, ~, ~, ~, ~] = pca(alphaPCA,'Centered',false);
 
 %% Populate polar data structures
 % theta
@@ -76,14 +77,25 @@ for i = 1:size(Theta,1)
     Theta(i,:) = linspace(0,2*pi,npts);
 end
 
-a = Acoeffs(stalkidx,1)*APCAs(:,1)'; % Take the first PC for A
-b = Bcoeffs(stalkidx,1)*BPCAs(:,1)'; % Take the first PC for B
-t1 = Tcoeffs(stalkidx,1)*TPCAs(:,1)'; % First PC for T
-t2 = Tcoeffs(stalkidx,2)*TPCAs(:,2)'; % Second PC for T
-ang1 = alphacoeffs(stalkidx,1)*alphaPCAs(:,1)'; % First PC for alpha
-ang2 = alphacoeffs(stalkidx,2)*alphaPCAs(:,2)'; % Second PC for alpha
+a = Acoeffs(stalkidx,1)*APCs(:,1)'; % Take the first PC for A
+b = Bcoeffs(stalkidx,1)*BPCs(:,1)'; % Take the first PC for B
 
-% Exterior and interior
+% Make rind thickness vector based on the desired number of PCs included
+t = zeros(size(a));
+for k = 1:nTPCs
+    % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
+    t = t + Tcoeffs(stalkidx,k)*TPCs(:,k)';
+end
+
+% Make angle vector based on the desired number of PCs included
+ang = zeros(size(a));
+for k = 1:nalphaPCs
+    % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
+    ang = ang + alphacoeffs(stalkidx,k)*alphaPCs(:,k)';
+end
+
+
+% Define stalk exterior and interior in polar coordinates (no rotation yet)
 for i = 1:size(stalk_ext,1)
     
     theta = Theta(i,:);
@@ -92,36 +104,16 @@ for i = 1:size(stalk_ext,1)
     if all(isnan(r_ext))
         r_int = r_ext;
     else
-        r_int1 = normintV2(r_ext,theta,t1(i));
-        r_int2 = normintV2(r_ext,theta,t1(i)+t2(i));
+        r_int = normintV2(r_ext,theta,t(i));
     end
     
     stalk_ext(i,:) = r_ext;
-    stalk_int1(i,:) = r_int1;
-    stalk_int2(i,:) = r_int2;
+    stalk_int(i,:) = r_int;
 
 end
 
 
-% THIS BLOCK JUST TAKES THE FITTED A, B, AND T VALUES. IT DOESN'T USE THE
-% PRINCIPAL COMPONENTS TO DETERMINE THE VALUES
-% % Exterior and interior
-% for i = 1:size(stalk_ext,1)
-%     dmaj_ext = A(stalknum,i);
-%     dmin_ext = B(stalknum,i);
-%     rind_t = T(stalknum,i);
-%     theta = Theta(i,:);
-%     
-%     r_ext = rpts(npts,theta,dmaj_ext,dmin_ext);
-%     if all(isnan(r_ext))
-%         r_int = r_ext;
-%     else
-%         r_int = normintV2(r_ext,theta,rind_t);
-%     end
-%     
-%     stalk_ext(i,:) = r_ext;
-%     stalk_int(i,:) = r_int;
-% end
+
 
 %% Convert polar data to Cartesian
 
