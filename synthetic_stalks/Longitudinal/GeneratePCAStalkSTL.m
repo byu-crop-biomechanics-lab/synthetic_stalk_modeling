@@ -27,6 +27,26 @@ function GeneratePCAStalkSTL(stalknum,npts)
 %
 % -------------------------------------------------------------------------
 
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEV NOTES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 1/31/2020:
+% - There are a lot of different ways the STLs could be generated,
+% depending on how many principal components we want to use. The function
+% should be changed so it only generates one STL, but it takes the desired
+% number of PCs for each variable as inputs. Ideally it should
+% automatically name the STLs so it's clear which stalk it matches and how
+% many PCs of each variable are used.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
 load('LongPCAData.mat');
 
 % Set up polar data structures
