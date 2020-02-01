@@ -42,6 +42,7 @@ function GeneratePCAStalkSTL(stalknum,npts,nTPCs,nalphaPCs)
 % - Need a way to deal with NaN sections of original data. The principal
 % components go out past the length of some stalks, so the approximated
 % versions need to be cut off somehow to match the original data.
+% -STILL NEED TO IMPLEMENT ANGLE CHANGING ALONG THE STALK
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -113,9 +114,53 @@ for i = 1:size(stalk_ext,1)
 end
 
 
-
-
 %% Convert polar data to Cartesian
+X_ext = zeros(size(stalk_ext));
+Y_ext = zeros(size(stalk_ext));
+Z_ext = zeros(size(stalk_ext));
+X_int = zeros(size(stalk_int));
+Y_int = zeros(size(stalk_int));
+Z_int = zeros(size(stalk_int));
+
+slices = mapping(keepcols);
+
+for i = 1:size(stalk_ext,1)
+    for j = 1:size(stalk_ext,2)
+        X_ext(i,j) = stalk_ext(i,j)*cos(Theta(i,j));
+        Y_ext(i,j) = stalk_ext(i,j)*sin(Theta(i,j));
+        Z_ext(i,j) = slices(i);
+        X_int(i,j) = stalk_int(i,j)*cos(Theta(i,j));
+        Y_int(i,j) = stalk_int(i,j)*sin(Theta(i,j));
+        Z_int(i,j) = slices(i);
+    end
+end
+
+%% Rotate and reorder
+% Exterior
+for i = 1:size(X_ext,1)
+    x_ext = X_ext(i,:)';
+    y_ext = Y_ext(i,:)';
+    
+    [~, ~, ~, ~, ~, ~, xp_ext, yp_ext, ~, ~] = reorder_V2_interior(x_ext, y_ext, ang(i), 0, 0);
+    
+    X_ext(i,:) = xp_ext';
+    Y_ext(i,:) = yp_ext';
+    
+end
+
+% Interior
+for i = 1:size(X_int,1)
+    x_int = X_int(i,:)';
+    y_int = Y_int(i,:)';
+    
+    [~, ~, ~, ~, ~, ~, xp_int, yp_int, ~, ~] = reorder_V2_interior(x_int, y_int, ang(i), 0, 0);
+    
+    X_int(i,:) = xp_int';
+    Y_int(i,:) = yp_int';
+    
+end
 
 
+%% 
+    
 end
