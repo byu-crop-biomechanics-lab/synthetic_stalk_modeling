@@ -1,4 +1,4 @@
-function [problem_slice_stalk] = transverse_wrapper_V4(slices,stalknums,AllSlicesPCA)
+function [problem_slice_stalk] = transverse_wrapper_V4(slices,stalknums,material_method,AllSlicesPCA)
 % FILENAME: transverse_wrapper.m
 % AUTHOR: Ryan Larson
 % DATE: 1/17/2020
@@ -45,6 +45,8 @@ load(AllSlicesPCA);
 
 problem_slice_stalk = [];
 
+set(0,'DefaultFigureWindowStyle','docked');
+
 %% Process
 % Iterate through slices (determine group number here)
 for slice = slices
@@ -73,7 +75,7 @@ for slice = slices
         
         write_Python_template3;
         
-        material_method = 'random';
+%         material_method = 'random';
         [Erind,Epith] = get_materials(material_method);
 
         % Real cross section (case 0)
@@ -1147,7 +1149,7 @@ function [Erind,Epith] = get_materials(method)
 % Calculate the random material properties from a normal distribution.
     % Bound with 95% confidence interval, calculated from transverse
     % material properties used in another paper.
-    Erind_mean = 8.0747e-04;
+    Erind_mean = 8.0747e-04; % THESE VALUES IN N/micrometer^2
     Erind_stdev = 3.3517e-04;
     Erind_95 = [6.7414e-04 9.4081e-04];
     Epith_mean = 2.5976e-05;

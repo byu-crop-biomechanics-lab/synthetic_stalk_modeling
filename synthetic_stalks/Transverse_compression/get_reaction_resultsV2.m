@@ -6,6 +6,7 @@ function [cumulative,cumulative_errbar,cumulative_err,individual,individual_errb
 % clear; close;
 
 close;
+set(0,'DefaultFigureWindowStyle','docked');
 load(AllGoodReactionData,'ResultsCell');
 
 % CONVERT FROM MICROMETER SCALE TO MILLIMETER SCALE FOR LOOKING AT ACTUAL
@@ -68,11 +69,14 @@ percent_err = percents - 100;
 percent_labels = cell(size(percent_err));
 
 for i = 1:size(percent_err,1)
-    percent_labels(i,:) = {'Real','Ellipse','NEPC 1','NEPC 1-2','NEPC 1-3','NEPC 1-4','NEPC 1-5','NEPC 2','NEPC 3','NEPC 4','NEPC 5'};
+    percent_labels(i,:) = {'Real','Ellipse','Ellipse + PC 1','Ellipse + PCs 1-2',...
+        'Ellipse + PCs 1-3','Ellipse + PCs 1-4','Ellipse + PCs 1-5',...
+        'Ellipse + PC 2','Ellipse + PC 3','Ellipse + PC 4','Ellipse + PC 5'};
 end
 
 % Examine percentage results
 avg_err = nanmean(percent_err);
+med_err = nanmedian(percent_err);
 stdev_err = nanstd(percent_err);
 stderror_err = zeros(size(stdev_err));
 n_err = sum(~isnan(percent_err),1); % row vector of total non-NaN elements in each column
@@ -122,16 +126,18 @@ end
 %% Plots
 % Cumulative case bar chart ("99% of the way there" method)
 % BREAK HERE IF YOU WANT TO GET INTERMEDIATE PERCENT VALUES
-figure(1);
-caselabels_cumulative = {'Real'; 'Ellipse'; 'NEPC 1'; 'NEPC 1-2'; 'NEPC 1-3'; 'NEPC 1-4'; 'NEPC 1-5'};
-bar(avg(1:7),'FaceColor',[0.75,0.75,0.75]);
-set(gca,'xticklabel',caselabels_cumulative);
-if ylimits == 1
-    ylim([lowlim,uplim]);
-end
-title('NEPC Response Progression (Cumulative)');
-xlabel('Case');
-ylabel('Reaction Force (% of Real Response)');
+% figure(1);
+caselabels_cumulative = {'Real'; 'Ellipse'; 'Ellipse + PC 1'; 'Ellipse + PCs 1-2';...
+    'Ellipse + PCs 1-3'; 'Ellipse + PCs 1-4'; 'Ellipse + PCs 1-5'};
+% bar(avg(1:7),'FaceColor',[0.75,0.75,0.75]);
+% set(gca,'xticklabel',caselabels_cumulative,'XTickLabelRotation',90);
+% if ylimits == 1
+%     ylim([lowlim,uplim]);
+% end
+% title('Principal Component Response Progression (Cumulative)');
+% xlabel('Case');
+% ylabel('Reaction Force (% of Real Response)');
+% ytickformat(gca, 'percentage');
 
 cumulative = avg(1:7);
 cumulative_errbar = stderror(1:7);
@@ -150,17 +156,19 @@ er.LineWidth = 0.5;
 hold off
 
 % Individual NEPC bar chart ("99% of the way there" method)
-caselabels_individual = {'Real'; 'Ellipse'; 'NEPC 1'; 'NEPC 2'; 'NEPC 3'; 'NEPC 4'; 'NEPC 5'};
+caselabels_individual = {'Real'; 'Ellipse'; 'Ellipse + PC 1'; 'Ellipse + PC 2';...
+    'Ellipse + PC 3'; 'Ellipse + PC 4'; 'Ellipse + PC 5'};
 indices = [1 2 3 8 9 10 11];
-figure(2);
-bar(avg(indices),'FaceColor',[0.75,0.75,0.75]);
-set(gca,'xticklabel',caselabels_individual);
-if ylimits == 1
-    ylim([lowlim,uplim]);
-end
-title('NEPC Response Progression (Individual)');
-xlabel('Case');
-ylabel('Reaction Force (% of Real Response)');
+% figure(2);
+% bar(avg(indices),'FaceColor',[0.75,0.75,0.75]);
+% set(gca,'xticklabel',caselabels_individual,'XTickLabelRotation',90);
+% if ylimits == 1
+%     ylim([lowlim,uplim]);
+% end
+% title('Principal Component Response Progression (Individual)');
+% xlabel('Case');
+% ylabel('Reaction Force (% of Real Response)');
+% ytickformat(gca, 'percentage');
 
 individual = avg(indices);
 individual_errbar = stderror(indices);
@@ -183,16 +191,18 @@ hold off
 % ============================
 
 % Cumulative case bar chart (error method)
-figure(3);
-caselabels_cumulative = {'Real'; 'Ellipse'; 'NEPC 1'; 'NEPC 1-2'; 'NEPC 1-3'; 'NEPC 1-4'; 'NEPC 1-5'};
-bar(avg_err(1:7),'FaceColor',[0.75,0.75,0.75]);
-set(gca,'xticklabel',caselabels_cumulative);
-if ylimits == 1
-    ylim([lowlim,uplim]);
-end
-title('NEPC Response Progression (Cumulative)');
-xlabel('Case');
-ylabel('Reaction Force Error (% of Real Response)');
+% figure(3);
+caselabels_cumulative = {'Real'; 'Ellipse'; 'Ellipse + PC 1'; 'Ellipse + PCs 1-2';...
+    'Ellipse + PCs 1-3'; 'Ellipse + PCs 1-4'; 'Ellipse + PCs 1-5'};
+% bar(avg_err(1:7),'FaceColor',[0.75,0.75,0.75]);
+% set(gca,'xticklabel',caselabels_cumulative,'XTickLabelRotation',90);
+% if ylimits == 1
+%     ylim([lowlim,uplim]);
+% end
+% title('Reaction Error Distributions');
+% % xlabel('Case');
+% ylabel('Error');
+% ytickformat(gca, 'percentage');
 
 cumulative_err = avg_err(1:7);
 cumulative_errbar_err = stderror_err(1:7);
@@ -211,17 +221,19 @@ er.LineWidth = 0.5;
 hold off
 
 % Individual NEPC bar chart (error method)
-caselabels_individual = {'Real'; 'Ellipse'; 'NEPC 1'; 'NEPC 2'; 'NEPC 3'; 'NEPC 4'; 'NEPC 5'};
+caselabels_individual = {'Real'; 'Ellipse'; 'Ellipse + PC 1'; 'Ellipse + PC 2';...
+    'Ellipse + PC 3'; 'Ellipse + PC 4'; 'Ellipse + PC 5'};
 indices = [1 2 3 8 9 10 11];
-figure(4);
-bar(avg_err(indices),'FaceColor',[0.75,0.75,0.75]);
-set(gca,'xticklabel',caselabels_individual);
-if ylimits == 1
-    ylim([lowlim,uplim]);
-end
-title('NEPC Response Progression (Individual)');
-xlabel('Case');
-ylabel('Reaction Force Error (% of Real Response)');
+% figure(4);
+% bar(avg_err(indices),'FaceColor',[0.75,0.75,0.75]);
+% set(gca,'xticklabel',caselabels_individual,'XTickLabelRotation',90);
+% if ylimits == 1
+%     ylim([lowlim,uplim]);
+% end
+% title('Reaction Error Distributions');
+% xlabel('Case');
+% ylabel('Error');
+% ytickformat(gca, 'percentage');
 
 individual_err = avg_err(indices);
 individual_errbar_err = stderror_err(indices);
@@ -238,39 +250,41 @@ er.LineWidth = 0.5;
 % Percent error
 % Cumulative NEPC cases
 figure(5);
-boxplot(percent_box,percent_boxlabels,'Notch','on','symbol','');
-ylim([-4.5,2]);
-set(gca,'YTick',-4.5:0.5:2);
+% boxplot(percent_box,percent_boxlabels,'Notch','on','symbol','');
+boxplot(percent_box,percent_boxlabels,'BoxStyle','filled','symbol','','Colors','k');
+ylim([-4,2]);
+set(gca,'YTick',-4:0.5:2,'XTickLabelRotation',90);
 ytickformat('percentage');
 title('Reaction Error Distributions');
 ylabel('Error');
-hold on
-yline(0);
-hold off
+% hold on
+% yline(0);
+% hold off
 
 % Individual NEPC cases
 figure(6);
-boxplot(percent_box_ind,percent_boxlabels_ind,'Notch','on','symbol','');
-ylim([-8,3]);
-set(gca,'YTick',-8:0.5:3);
+% boxplot(percent_box_ind,percent_boxlabels_ind,'Notch','on','symbol','');
+boxplot(percent_box_ind,percent_boxlabels_ind,'BoxStyle','filled','symbol','','Colors','k');
+ylim([-6.5,2.5]);
+set(gca,'YTick',-6.5:0.5:2.5,'XTickLabelRotation',90);
 ytickformat('percentage');
 title('Reaction Error Distributions');
 ylabel('Error');
-hold on
-yline(0);
-hold off
+% hold on
+% yline(0);
+% hold off
 
-% Relative percent error
-figure(7);
-% boxplot(boxerrdiffs,boxerrlabels,'Notch','on');
-boxplot(boxerrdiffs,boxerrlabels,'Notch','on','symbol','');
-ylim([-4.5,3.5]);
-set(gca,'YTick',-4.5:0.5:3.5);
-ytickformat('percentage');
-title('Reaction Error Distributions (Relative)');
-ylabel('Relative Error');
-hold on
-yline(0);
-hold off
+% % Relative percent error
+% figure(7);
+% % boxplot(boxerrdiffs,boxerrlabels,'Notch','on');
+% boxplot(boxerrdiffs,boxerrlabels,'Notch','on','symbol','');
+% ylim([-4.5,3.5]);
+% set(gca,'YTick',-4.5:0.5:3.5);
+% ytickformat('percentage');
+% title('Reaction Error Distributions (Relative)');
+% ylabel('Relative Error');
+% hold on
+% yline(0);
+% hold off
 
 end
