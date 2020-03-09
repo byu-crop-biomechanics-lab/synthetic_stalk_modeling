@@ -1,4 +1,4 @@
-function GeneratePCAStalkSTL(stalknum,npts,nTPCs,nalphaPCs)
+function GeneratePCAStalkSTL(stalknum,npts,nTPCs,nalphaPCs,FileName)
 % FILENAME: GeneratePCAStalkSTL.m
 % AUTHOR: Ryan Larson
 % DATE: 1/31/2020
@@ -43,19 +43,20 @@ function GeneratePCAStalkSTL(stalknum,npts,nTPCs,nalphaPCs)
 % components go out past the length of some stalks, so the approximated
 % versions need to be cut off somehow to match the original data.
 % -STILL NEED TO IMPLEMENT ANGLE CHANGING ALONG THE STALK
+
+% 2/7/2020:
+% - Might need to generate rind and pith separately and name them, then
+% bring them into Abaqus later.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
 
 
 
 load('LongPCAData.mat');
 
 % Set up polar data structures
-Theta = zeros(length(keepcols),npts); % Rows are slices, columns are points around each cross-section
-stalk_ext = zeros(length(keepcols),npts);
-stalk_int = zeros(length(keepcols),npts);
+Theta = zeros(length(keepcols),npts-1); % Rows are slices, columns are points around each cross-section
+stalk_ext = zeros(length(keepcols),npts-1);
+stalk_int = zeros(length(keepcols),npts-1);
 
 % Verify that stalknum is part of keeprows. Throw an error if it's not a
 % keeper.
@@ -75,7 +76,8 @@ stalkidx = find(keeprows == stalknum);
 %% Populate polar data structures
 % theta
 for i = 1:size(Theta,1)
-    Theta(i,:) = linspace(0,2*pi,npts);
+    theta = linspace(0,2*pi,npts);
+    Theta(i,:) = theta(1:end-1);
 end
 
 a = Acoeffs(stalkidx,1)*APCs(:,1)'; % Take the first PC for A
@@ -95,17 +97,30 @@ for k = 1:nalphaPCs
     ang = ang + alphacoeffs(stalkidx,k)*alphaPCs(:,k)';
 end
 
+% Shift angle vector so node angle orients stalk with minor axis along X
+% angshift = mean([ang(18) ang(19)]) + pi/2;
+angshift = mean([ang(18) ang(19)]);
+for k = 1:length(ang)
+    ang(k) = ang(k) - angshift;
+end
+
 
 % Define stalk exterior and interior in polar coordinates (no rotation yet)
 for i = 1:size(stalk_ext,1)
     
     theta = Theta(i,:);
     
-    r_ext = rpts(npts,theta,a(i),b(i));
+    r_ext = rpts(npts-1,theta,a(i),b(i));
+    
     if all(isnan(r_ext))
         r_int = r_ext;
     else
         r_int = normintV2(r_ext,theta,t(i));
+        % Catch cases where the large rind thickness causes errors with the
+        % normal offset
+        if max(r_int-r_ext) > 0
+            r_int = rpts(npts-1,theta,a(i)-2*t(i),b(i)-2*t(i));
+        end
     end
     
     stalk_ext(i,:) = r_ext;
@@ -113,6 +128,15 @@ for i = 1:size(stalk_ext,1)
 
 end
 
+% %% Check cross-sections
+% figure(1);
+% for i = 1:size(stalk_ext,1)
+%     polarplot(Theta(i,:),stalk_ext(i,:),'r');
+%     hold on
+%     polarplot(Theta(i,:),stalk_int(i,:),'b');
+%     hold off
+%     pause(0.5);
+% end
 
 %% Convert polar data to Cartesian
 X_ext = zeros(size(stalk_ext));
@@ -161,6 +185,47 @@ for i = 1:size(X_int,1)
 end
 
 
-%% 
-    
+
+%% Combine data
+flipZ = flip(Z_int);
+Zrind = [Z_ext; flipZ];
+Zpith = Z_int;
+
+flipX = flip(X_int);
+Xrind = [X_ext; flipX];
+Xpith = X_int;
+
+flipY = flip(Y_int);
+Yrind = [Y_ext; flipY];
+Ypith = Y_int;
+
+% Close the rind longitudinally
+Xrind = [Xrind; Xrind(1,:)];
+Yrind = [Yrind; Yrind(1,:)];
+Zrind = [Zrind; Zrind(1,:)];
+
+% Close the rind on each cross-section
+Xrind = [Xrind,Xrind(:,1)];
+Yrind = [Yrind,Yrind(:,1)];
+Zrind = [Zrind,Zrind(:,1)];
+
+% Close the pith longitudinally
+Xpith = [zeros(size(Xpith(1,:))); Xpith];
+Xpith = [Xpith; Xpith(1,:)];
+Ypith = [zeros(size(Ypith(1,:))); Ypith];
+Ypith = [Ypith; Ypith(1,:)];
+Zpith = [Zpith(1,:); Zpith; Zpith(end,:)];
+
+% Close the pith on each cross-section
+Xpith = [Xpith,Xpith(:,1)];
+Ypith = [Ypith,Ypith(:,1)];
+Zpith = [Zpith,Zpith(:,1)];
+
+FileNameRind = strcat(FileName,'Rind.stl');
+FileNamePith = strcat(FileName,'Pith.stl');
+
+surf2stl_V1(FileNameRind,Xrind,Yrind,Zrind);
+surf2stl_V1(FileNamePith,Xpith,Ypith,Zpith);
+
+
 end
