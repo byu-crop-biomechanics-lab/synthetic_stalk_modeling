@@ -1,4 +1,47 @@
 function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
+% FILENAME: make_case.m
+% AUTHOR: Ryan Larson
+% DATE: 11/25/19
+%
+% PURPOSE: Make a customized Python script corresponding to a unique model
+% 
+% 
+% INPUTS:
+%       case_num: Case number (model approximation number)
+% 
+%       i: Adjusted index of the cross-section being worked with
+% 
+%       ID: String version of the stalk number
+% 
+%       GROUP: String version of the group number (corresponds to the index
+%       of the current slice location in the slice locations vector)
+% 
+%       R_ext: Exterior boundary vector
+% 
+%       R_int: Interior boundary vector
+% 
+%       T: Theta vector
+% 
+%       Script: Template script in cell array form
+% 
+%       Erind: Rind modulus of elasticity
+% 
+%       Epith: Pith modulus of elasticity
+%       
+% OUTPUTS:
+%        - Creates a customized Python script that can be directly run in
+%        Abaqus
+%
+% NOTES:
+%      
+% 
+% 
+% VERSION HISTORY:
+% V1 - 
+% V2 - 
+% V3 - 
+%
+% -------------------------------------------------------------------------
     CASE = sprintf('%d',case_num);
     jobname = strcat('''Group_',GROUP,'_','Section_',ID,'_',CASE,'''');
     scriptname = strcat('Group_',GROUP,'_','Section_',ID,'_',CASE,'.py');
@@ -16,7 +59,8 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
         Y_int = R_int(1,:).*sin(T(1,:));
     end
 
-     % Scale units to micrometers from millimeters
+    % Scale units to micrometers from millimeters (allows the mesh size to
+    % get small enough based on the mesh convergence study)
     X_ext = 1000*X_ext;
     Y_ext = 1000*Y_ext;
     X_int = 1000*X_int;
@@ -43,6 +87,7 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
     [~,ind90] = min(abs(diffs90));
     [~,ind270] = min(abs(diffs270));
     
+    % Convert the reference point values to strings
     RP1X = sprintf('%0.5g',X_ext(ind90));
     RP1Y = sprintf('%0.5g',Y_ext(ind90));
     RP2X = sprintf('%0.5g',X_ext(ind270));
@@ -53,32 +98,6 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
     len = S(1);
     outer_spline = writespline_V2(len,section_ext);
     inner_spline = writespline_V2(len,section_int);
-    
-%     % Calculate the random material properties from a normal distribution.
-%     % Bound with 95% confidence interval, calculated from transverse
-%     % material properties used in another paper.
-%     Erind_mean = 8.0747e-04;
-%     Erind_stdev = 3.3517e-04;
-%     Erind_95 = [6.7414e-04 9.4081e-04];
-%     Epith_mean = 2.5976e-05;
-%     Epith_stdev = 1.0303e-05;
-%     Epith_95 = [2.1878e-05 3.0075e-05];
-%     
-%     % Generate Erind from normal distribution
-%     while 1
-%         Erind = normrnd(Erind_mean,Erind_stdev);
-%         if Erind >= Erind_95(1) && Erind <= Erind_95(2)
-%             break
-%         end
-%     end
-%     
-%     % Generate Epith from normal distribution
-%     while 1
-%         Epith = normrnd(Epith_mean,Epith_stdev);
-%         if Epith >= Epith_95(1) && Epith <= Epith_95(2)
-%             break
-%         end
-%     end
     
     rindE = sprintf('%0.5g',Erind);
     pithE = sprintf('%0.5g',Epith);

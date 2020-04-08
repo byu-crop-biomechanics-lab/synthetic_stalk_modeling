@@ -101,13 +101,21 @@ for slice = slices
         GROUP = sprintf('%d',group); % Group number
         ID = sprintf('%d',stalk); % Cross-section number
         
+        % Create an instance of a blank Python script template in cell
+        % array form
         write_Python_template3;
         
+        % Select rind and pith properties from a distribution, using the
+        % chosen method
         [Erind,Epith] = get_materials(material_method);
 
         % Real cross section (case 0)
         case_num = 0; % increment this for each case within each cross section
+        % Make an instance of Template that will be modified for each
+        % unique Python script
         Script = Template;
+        % Make the unique Python script for the current case and
+        % cross-section
         make_case(case_num,adj_ind,ID,GROUP,ALL_R_ext,ALL_R_int,ALL_ELLIPSE_T,Script,Erind,Epith);
 
         % Pure ellipse fit (case 1)
@@ -115,33 +123,23 @@ for slice = slices
         Script = Template; % Reset the script template
         make_case(case_num,adj_ind,ID,GROUP,ALL_ELLIPSE_R_ext,ALL_ELLIPSE_R_int,ALL_ELLIPSE_T,Script,Erind,Epith);
 
-        % Combined NEPC cases
+        % Combined PC cases
         for j = 1:numNEPCs
             case_num = case_num + 1;
             Script = Template; % Reset the script template
 
-            % Calculate the cases with NEPCs cumulatively added into the
+            % Calculate the cases with PCs cumulatively added into the
             % ellipse fit
             NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
             for k = 1:j
                 % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
                 NEPC_ext = NEPC_ext + ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
             end
-
+            
+            % Construct the new exterior and interior boundaries
             Rnew_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
-%             Rnew_int = ALL_ELLIPSE_R_int(adj_ind,:) - NEPC_ext;
             Rnew_int = normintV2(Rnew_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
             
-%             % Verify that the addition of successive NEPCs causes
-%             geometric convergence for the exterior boundary (and close
-%             for the interior boundary)
-%             polarplot(ALL_ELLIPSE_T(adj_ind,:),ALL_R_ext(adj_ind,:),'r');
-%             hold on
-%             polarplot(ALL_ELLIPSE_T(adj_ind,:),ALL_R_int(adj_ind,:),'r');
-%             polarplot(ALL_ELLIPSE_T(adj_ind,:),Rnew_ext,'b');
-%             polarplot(ALL_ELLIPSE_T(adj_ind,:),Rnew_int,'b');
-%             hold off
-%             pause();
             make_case(case_num,adj_ind,ID,GROUP,Rnew_ext,Rnew_int,ALL_ELLIPSE_T,Script,Erind,Epith);
 
         end
@@ -157,7 +155,6 @@ for slice = slices
             NEPC_ext = ext_rhocoeffs(adj_ind,j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
             
             Rnew_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
-%             Rnew_int = ALL_ELLIPSE_R_int(adj_ind,:) - NEPC_ext;
             Rnew_int = normintV2(Rnew_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
             make_case(case_num,adj_ind,ID,GROUP,Rnew_ext,Rnew_int,ALL_ELLIPSE_T,Script,Erind,Epith);
 
@@ -170,7 +167,8 @@ for slice = slices
         
     end
     
-    
+    % Increase the group number when the slice location changes. This is to
+    % prevent multiple scripts with the same name overwriting each other.
     group = group + 1;
 end
 
@@ -190,20 +188,72 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function ChooseSections(method,stalknums,dist,Table,error_indices,npoints,SaveName)
-% ChooseSections.m: Determine the cross-sections to compile, which is
-% determined by a method
-
-% range: For Stalk_Table, this must be a row vector of two integer values
-% from 1 to 980.
+% FILENAME: ChooseSections.m
+% AUTHOR: Ryan Larson
+% DATE: 7/3/2019
+%
+% PURPOSE: The slice locations were created by the CT scan process, so they
+% aren't all at "nice" distances. This function selects the desired
+% cross-sections based on a method. 
+% 
+% 
+% INPUTS:
+%       method: String that determines how the cross-sections will be
+%       selected. There are two methods: 'samedist' and 'all'. However, the
+%       way later code was constructed means the only method that was used
+%       was 'samedist'.
+% 
+%       stalknums: A row vector of integers corresponding to the stalk
+%       numbers. These integers will be somewhere between 1 and 980.
+% 
+%       dist: A number (integer or float) that determines the desired slice
+%       location, relative to the node. It can be positive or negative, and
+%       is measured in mm. Maximum values should be approximately +/- 40mm.
+% 
+%       Table: A table containing the downsampled, centered, and rotated
+%       cross-section boundaries. This is the table that is output from
+%       Jared's script. Usually this will be Stalk_TableDCR, which loads as
+%       a variable in StalksDCR_360pts_V2.mat.
+% 
+%       error_indices: Indices that had problems in pre-processing and
+%       should be ignored. Also loads as a variable in
+%       StalksDCR_360pts_V2.mat.
+% 
+%       npoints: The number of sample points the cross-sections have been
+%       downsampled to. This was previously determined by Jared's
+%       preprocessing script, and is only here to carry over the proper
+%       indexing.
+% 
+%       SaveName: String name to save the data to as a .mat file. Must
+%       include .mat in the name.
+%       
+% OUTPUTS:
+%       N/A
+%
+%
+% NOTES: 
+%       Other outputs:
+%           - Named .mat file that contains all the ellipse fit and PCA
+%           data, which will be used when running transverse_wrapper_V4.m.
+%       
+% 
+% 
+% VERSION HISTORY:
+% V1 - 
+% V2 - 
+% V3 - 
+%
+% -------------------------------------------------------------------------
 
 allrows = size(Table,1);
 
 switch method
+    
     % Choose a number of cross-sections that are all at the same distance
     % from the node
     case 'samedist'
         indices = zeros(1,length(stalknums));
-%         dist = input('Choose approximate slice distance to use: ');
+
         
         % Step through stalks of interest (defined by range values)
         stalk = 1;
@@ -295,20 +345,13 @@ switch method
         FolderName = pwd;
         SaveFile = fullfile(FolderName, SaveName);
         save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_T','ext_Rho',...
-            'int_T','int_Rho','avg_rind_thick','indices','selectedTable','npoints');
+            'int_T','int_Rho','avg_rind_thick','indices','selectedTable',...
+            'npoints','deletesections');
+
         
-        
-        
-    case 'wholestalk'
-        % Choose a range of stalk numbers, and all the slices from each of
-        % the chosen stalks will be chosen
-        
-        
-        
-    case 'all'
-        % Chooses every slice and converts it into an array format for
-        % working with more easily.
-        
+    % Choose all cross-sections (not really useful in hindsight, but was
+    % written before full PCA process was defined)
+    case 'all'        
         % Save compiled slices in arrays for downstream use
         ext_X =     makearray(Table,'Ext_X',npoints);
         ext_Y =     makearray(Table,'Ext_Y',npoints);
@@ -335,9 +378,36 @@ end
 
 
 function [exported_array] = makearray(Table,Variable,npoints)
-    % Make an array of the chosen variable in the format required to work
-    % with the downstream process in ellipse_fittingV1.m and
-    % PCA_ellipse_fits.m
+% FILENAME: makearray.m
+% AUTHOR: Ryan Larson
+% DATE: 7/3/2019
+%
+% PURPOSE: Convenience function found in some higher-level functions.
+% Converts Table data for a given variable into an array, which is what
+% downstream functions expect.
+% 
+% 
+% INPUTS:
+%       Table: Original data table (variable name)
+% 
+%       Variable: Variable name (string)
+% 
+%       npoints: Number of sample points around the cross-section
+%       
+% OUTPUTS:
+%       exported_array: Array version of variable data in Table 
+%
+% NOTES:
+%       
+% 
+% 
+% VERSION HISTORY:
+% V1 - 
+% V2 - 
+% V3 - 
+%
+% -------------------------------------------------------------------------
+
     num_slices = size(Table,1);
     exported_array = NaN(npoints,num_slices);
     
@@ -427,24 +497,26 @@ function flip_notches(Flip_Indices,ChooseSectionsOutput,FlippedOutputName)
 % AUTHOR: Ryan Larson
 % DATE: 6/18/19
 %
-% PURPOSE: 
+% PURPOSE: Take the output of find_flip_notches.m and rotate cross-sections
+% that were manually tagged. This corrects errors in the automatic
+% preprocessing that aren't caught by Jared's script.
 % 
 % 
 % INPUTS:
-%       flip_sections - The vector of 1s and empties that identifies the
-%       cross-sections needing to be flipped 180 degrees
+%       Flip_Indices: The .mat file that contains flip_sections, which is a
+%       vector of 1s and 0s that identifies the cross-sections needing to
+%       be flipped. 
 %
 %       ChooseSectionsOutput - A .mat file produced by ChooseSections.m
 %
-%       SaveName - The name for the output .mat file. Make sure to end the
-%       name with FLIPPED for consistency.
+%       FlippedOutputName - The name for the output .mat file. Make sure to
+%       end the name with FLIPPED for consistency.
 %       
 % OUTPUTS:
-%       
+%       N/A
 %
 % NOTES:
-%       Make sure to name the output .mat file with a FLIPPED extension
-%       for consistency
+%       
 % 
 % 
 % VERSION HISTORY:
@@ -495,21 +567,16 @@ for i = 1:N
     end
 end
 
-% Transpose rho arrays so they are the same orientation as the other
-% variables
-% ext_rho = ext_rho';
-% int_rho = int_rho';
-
+% Copy the variable selectedTable as a basis for the new data
 flippedTable = selectedTable;
 
+% Apply orientation corrections to the appropriate rows in flippedTable
 for i = 1:N
     flippedTable.Ext_X{i} = ext_X(:,i);
     flippedTable.Ext_Y{i} = ext_Y(:,i);
-%     flippedTable.Ext_T{i} = ext_T(:,i);
     flippedTable.Ext_Rho{i} = ext_Rho(:,i);
     flippedTable.Int_X{i} = int_X(:,i);
     flippedTable.Int_Y{i} = int_Y(:,i);
-%     flippedTable.Int_T{i} = int_T(:,i);
     flippedTable.Int_Rho{i} = int_Rho(:,i);
     
 end
@@ -524,6 +591,38 @@ end
 
 
 function ellipse_fitting_V2(FileName,SaveName)
+% FILENAME: ellipse_fitting_V2.m
+% AUTHOR: Ryan Larson
+% DATE: 6/18/19
+%
+% PURPOSE: Take the output of find_flip_notches.m and rotate cross-sections
+% that were manually tagged. This corrects errors in the automatic
+% preprocessing that aren't caught by Jared's script.
+% 
+% 
+% INPUTS:
+%       FileName: The .mat file that contains the flipped cross-section
+%       data.
+%
+%       SaveName - The name for the output .mat file. Make sure to
+%       end the name with FLIPPED for consistency.
+%       
+% OUTPUTS:
+%       N/A
+%
+% NOTES:
+%       - Saves a .mat file with ellipse fit variables for later use
+% 
+% 
+% VERSION HISTORY:
+% V1 - Used fit_ellipse_R2 and assumed another ellipse would suffice for
+% the interior boundary
+% V2 - Uses fit_ellipse_R4 and normal offsets to determine the interior
+% boundary
+% V3 - 
+%
+% -------------------------------------------------------------------------
+
 % Load a mat file that has exterior XY data and avgrindthickness data.
 % Cycle through cross sections and select the angular range that
 % contains the notch so it's ignored during ellipse fitting. Then save the
@@ -568,15 +667,17 @@ R_int = zeros(N,npoints);
 AVG_RIND_T = zeros(N,1);
 
 
-
+% Determine the region to look for the notch (should always be in this
+% range since the data was pre-sorted by this point)
 min_angle = 135;
 min_angle = min_angle*(pi/180);     % Convert angle to radians
 max_angle = 225;
 max_angle = max_angle*(pi/180);
 
+% Cycle through the cross-sections
 for i = 1:N
     prev_alpha = 0;
-%     i
+
     % Define the notch range
     for j = 1:npoints
         if T(j) > min_angle
@@ -596,11 +697,15 @@ for i = 1:N
     window = [linspace(1,min_index,min_index),linspace(max_index,npoints,(npoints-max_index + 1))];
     xcut = X_ext(window,i);
     ycut = Y_ext(window,i);
-%     if i == 892
-%         xcut
-%         ycut
-%     end
-
+    
+    % Mark any cross-sections that are made up of zeros by setting them to
+    % something that will be obviously wrong when manually checking ellipse
+    % fits
+    if (all(xcut == 0) || all(ycut == 0))
+        xcut = 1000*[11.9371843338013;11.8635606765747;11.8245401382446;11.7747907638550;11.7636137008667;11.7513217926025;11.7293729782105;11.7618465423584;11.7397794723511;11.8146848678589;11.7211742401123;11.6160907745361;11.5834693908691;11.5488634109497;11.5280466079712;11.4122400283813;11.2877616882324;11.2347469329834;11.1380500793457;10.9807081222534;10.8686056137085;10.7776327133179;10.6507196426392;10.5666399002075;10.4331426620483;10.2808752059937;10.1859483718872;10.0852527618408;9.95389461517334;9.82945919036865;9.72529697418213;9.61997604370117;9.46991920471191;9.31812000274658;9.16870021820068;9.04158782958984;8.90647315979004;8.77705669403076;8.67132759094238;8.53238964080811;8.35374259948731;8.16121101379395;7.98431634902954;7.85418319702148;7.72590875625610;7.58815336227417;7.45849895477295;7.30975627899170;7.13432264328003;6.97212791442871;6.83072328567505;6.67568683624268;6.50259399414063;6.34706783294678;6.19373226165772;6.02386379241943;5.83662033081055;5.66628932952881;5.51614332199097;5.36890840530396;5.19331264495850;5.03751039505005;4.87642765045166;4.69888496398926;4.51799726486206;4.34112358093262;4.18711233139038;4.01929712295532;3.82844710350037;3.65820479393005;3.49178791046143;3.31141233444214;3.14243388175964;2.98499917984009;2.80316996574402;2.63344144821167;2.45546531677246;2.27513217926025;2.09673070907593;1.92558479309082;1.75083839893341;1.57933926582336;1.40231263637543;1.22391927242279;1.04622578620911;0.871519982814789;0.697965204715729;0.523268401622772;0.348291426897049;0.174448028206825;-4.37227299698861e-07;-0.174284666776657;-0.348030894994736;-0.520720541477203;-0.693446636199951;-0.865429878234863;-1.03545892238617;-1.20444118976593;-1.37653625011444;-1.54755997657776;-1.71807074546814;-1.89003670215607;-2.05707454681397;-2.21517491340637;-2.37523984909058;-2.55128669738770;-2.72201323509216;-2.89396500587463;-3.07621908187866;-3.24406313896179;-3.40437126159668;-3.55446076393127;-3.70386385917664;-3.85397577285767;-4.01397371292114;-4.18080663681030;-4.34828853607178;-4.50251483917236;-4.65524196624756;-4.84495019912720;-4.99901247024536;-5.14868736267090;-5.31385993957520;-5.45570230484009;-5.62545299530029;-5.78521919250488;-5.93097782135010;-6.07301187515259;-6.20860242843628;-6.35488939285278;-6.55632448196411;-6.72821474075317;-6.89345264434814;-7.08150720596314;-7.24557924270630;-7.35573911666870;-7.17333126068115;-6.94547891616821;-6.79845809936523;-6.61049652099609;-6.43506336212158;-6.27632665634155;-6.13361406326294;-5.94674444198608;-5.77380752563477;-5.62645292282105;-5.48189973831177;-5.29240417480469;-5.12724733352661;-4.99361371994019;-4.84064579010010;-4.64613723754883;-4.47754716873169;-4.31419754028320;-4.14768457412720;-3.97254443168640;-3.82159447669983;-3.66316986083984;-3.48787474632263;-3.30496263504028;-3.15222120285034;-2.99911570549011;-2.83224821090698;-2.66091227531433;-2.50481224060059;-2.34091997146606;-2.16448307037354;-1.99323868751526;-1.82688367366791;-1.65910267829895;-1.49770700931549;-1.33571767807007;-1.16655278205872;-1.00036275386810;-0.837868511676788;-0.669154405593872;-0.500231862068176;-0.333453625440598;-0.166822329163551;1.13528372480687e-07;0.166331484913826;0.334067136049271;0.501357376575470;0.666979789733887;0.832698047161102;0.998343646526337;1.16228866577148;1.32627189159393;1.49585855007172;1.65915548801422;1.82434475421906;1.99517750740051;2.16472029685974;2.33758425712585;2.50638127326965;2.68204832077026;2.85898113250732;3.02217745780945;3.18090009689331;3.34416341781616;3.51388120651245;3.69013237953186;3.85169339179993;4.00911951065064;4.20240354537964;4.36277866363525;4.52431869506836;4.68642330169678;4.84755754470825;5.03232288360596;5.20052623748779;5.37546968460083;5.56187343597412;5.72971630096436;5.87029695510864;6.03825664520264;6.18831110000610;6.33646345138550;6.51382923126221;6.69243431091309;6.84649372100830;7.01449489593506;7.16981601715088;7.31131458282471;7.47539043426514;7.63156509399414;7.85899925231934;8.01014423370361;8.19667720794678;8.35878944396973;8.47652244567871;8.60494613647461;8.75809860229492;8.94601535797119;9.08240222930908;9.20913982391357;9.40316677093506;9.52799606323242;9.63124275207520;9.80542659759522;9.93904399871826;10.0585393905640;10.1908664703369;10.3225965499878;10.4634752273560;10.5509290695190;10.6960325241089;10.7989549636841;10.8371763229370;10.9699687957764;11.0869083404541;11.2064266204834;11.3318710327148;11.3706150054932;11.4170074462891;11.5129404067993;11.5899295806885;11.6690845489502;11.7415847778320;11.7823114395142;11.7643365859985;11.8403053283691;11.8786678314209;11.9376668930054;11.9972867965698;11.9749670028687;12.0239715576172;11.9950208663940;11.9469957351685];
+        ycut = 100*[0;0.207079216837883;0.412922024726868;0.617090642452240;0.822591960430145;1.02810728549957;1.23280680179596;1.44417321681976;1.64991843700409;1.87126231193542;2.06675934791565;2.25793933868408;2.46214246749878;2.66626501083374;2.87426495552063;3.05790042877197;3.23671364784241;3.43480658531189;3.61897182464600;3.78096103668213;3.95584869384766;4.13714599609375;4.30317020416260;4.48527240753174;4.64513444900513;4.79405117034912;4.96801900863648;5.13869333267212;5.29258012771606;5.44855785369873;5.61490297317505;5.78026485443115;5.91746234893799;6.05125808715820;6.18436574935913;6.33098793029785;6.47093152999878;6.61398601531982;6.77478361129761;6.90939235687256;7.00962162017822;7.09443235397339;7.18911075592041;7.32414388656616;7.46082401275635;7.58815336227417;7.72350168228149;7.83875370025635;7.92346906661987;8.02051544189453;8.14053916931152;8.24378681182861;8.32293987274170;8.42284393310547;8.52494144439697;8.60296916961670;8.65314483642578;8.72532176971436;8.82767391204834;8.93536472320557;8.99508285522461;9.08791065216065;9.17122554779053;9.22208023071289;9.26326656341553;9.30957126617432;9.40440940856934;9.46887207031250;9.47573757171631;9.52994823455811;9.59360790252686;9.61703968048096;9.67141819000244;9.76349449157715;9.77581405639648;9.82813549041748;9.84833240509033;9.85468101501465;9.86434459686279;9.90627765655518;9.92949485778809;9.97155475616455;9.97797203063965;9.96802330017090;9.95417690277100;9.96151161193848;9.98136329650879;9.98455238342285;9.97376155853272;9.99413394927979;10.0025949478149;9.98479270935059;9.96631050109863;9.93594264984131;9.91674804687500;9.89190578460693;9.85172939300537;9.80939102172852;9.79456615447998;9.77091026306152;9.74366283416748;9.72339439392090;9.67777252197266;9.59497928619385;9.52656745910645;9.52153205871582;9.49278831481934;9.46573066711426;9.46762752532959;9.42144489288330;9.35343360900879;9.25968742370606;9.16738414764404;9.07939815521240;9.01553153991699;8.96576690673828;8.91531276702881;8.83668041229248;8.75523567199707;8.74052238464356;8.65854263305664;8.56885623931885;8.50395202636719;8.40104484558106;8.34007835388184;8.26214885711670;8.16329193115234;8.05915737152100;7.94664907455444;7.84763669967651;7.81352329254150;7.73992681503296;7.65595388412476;7.59398746490479;7.50301551818848;-7.61709213256836;-7.69245624542236;-7.71373748779297;-7.82073163986206;-7.87808513641357;-7.94664192199707;-8.03333091735840;-8.13957786560059;-8.18499565124512;-8.24585437774658;-8.34156036376953;-8.44138431549072;-8.46961498260498;-8.53317642211914;-8.64919471740723;-8.73275661468506;-8.73811149597168;-8.78767681121826;-8.84541988372803;-8.89474010467529;-8.92248153686523;-9.00310993194580;-9.06665802001953;-9.08623027801514;-9.08031272888184;-9.15471458435059;-9.23032569885254;-9.26385974884033;-9.27970981597900;-9.34808826446533;-9.38891601562500;-9.37540149688721;-9.37744045257568;-9.39850902557373;-9.40924167633057;-9.45614624023438;-9.50411415100098;-9.50082778930664;-9.51782798767090;-9.57688426971436;-9.56934356689453;-9.54496097564697;-9.54891967773438;-9.55730628967285;-9.52029418945313;-9.52917194366455;-9.56648254394531;-9.56643390655518;-9.53824234008789;-9.51778316497803;-9.49861526489258;-9.46609783172607;-9.43690299987793;-9.44447422027588;-9.40953922271729;-9.38544654846191;-9.38658237457275;-9.37642669677734;-9.37553691864014;-9.35394382476807;-9.35341930389404;-9.35131454467773;-9.30130100250244;-9.23800373077393;-9.18801498413086;-9.15397739410400;-9.13339233398438;-9.07401752471924;-9.00462818145752;-9.01208591461182;-8.94502544403076;-8.87947082519531;-8.81387805938721;-8.74522590637207;-8.71624088287354;-8.65513324737549;-8.60254573822022;-8.56453132629395;-8.49465370178223;-8.38365554809570;-8.31095123291016;-8.21216297149658;-8.11030197143555;-8.04391002655029;-7.97573423385620;-7.87599372863770;-7.79038429260254;-7.68868541717529;-7.57108879089356;-7.47539281845093;-7.36971330642700;-7.32863378524780;-7.21236515045166;-7.12526369094849;-7.01386022567749;-6.86414957046509;-6.72291898727417;-6.59969997406006;-6.49966144561768;-6.35956859588623;-6.21164035797119;-6.10648632049561;-5.95375299453735;-5.78703594207764;-5.66116809844971;-5.50929927825928;-5.34821939468384;-5.19250631332398;-5.03466796875000;-4.87920141220093;-4.69757413864136;-4.54019594192505;-4.36306142807007;-4.16000366210938;-3.99274492263794;-3.81752705574036;-3.64118814468384;-3.46450138092041;-3.26047325134277;-3.05917525291443;-2.87049674987793;-2.67574572563171;-2.48034143447876;-2.28233480453491;-2.07753682136536;-1.86328649520874;-1.66404628753662;-1.45851802825928;-1.25470173358917;-1.04962432384491;-0.837370157241821;-0.630149722099304;-0.418876588344574;-0.208537995815277];
+    end
+    
     % Fit an ellipse to the data with the notch removed
     [alpha, major, minor, xbar_e, ybar_e, X_ellipse, Y_ellipse] = fit_ellipse_R4( xcut, ycut, npoints, prev_alpha, gca );
     
@@ -649,9 +754,6 @@ for i = 1:N
     thetatemp_int = C;
     int_rho = int_rho(ia);
     
-    
-    
-    
     % Interpolate to get new rho and theta points that are regularly spaced
     ext_rho_ellipse_interp = interp1(thetatemp_ellipse,ext_rho_ellipse,theta,'pchip','extrap'); 
     ext_rho_ellipse = ext_rho_ellipse_interp;
@@ -659,20 +761,6 @@ for i = 1:N
     ext_rho = ext_rho_interp;
     int_rho_interp = interp1(thetatemp_int,int_rho,theta,'pchip','extrap'); 
     int_rho = int_rho_interp;
-    
-    % Get interior ellipse fit points, based on constant rind thickness
-    % assumption
-%     int_rho_ellipse = ext_rho_ellipse - avg_rind_thick(i);
-    
-%     % Plot in polar coordinates to check results
-%     polarplot(theta,ext_rho,'.','LineWidth',2);
-%     hold on
-%     polarplot(theta,int_rho,'.','LineWidth',2);
-% %     polarplot(theta,ext_rho_ellipse,'.','LineWidth',2)
-%     pause();
-%     close;
-    
-    
     
     A(i) = major;
     B(i) = minor;
@@ -684,24 +772,18 @@ for i = 1:N
     ELLIPSE_CENTERS(i,2) = mean(Y_ellipse);
     ELLIPSE_T(i,:) = theta;
     ELLIPSE_R_ext(i,:) = ext_rho_ellipse;
-%     ELLIPSE_R_int(i,:) = ext_rho_ellipse - avg_rind_thick(i); % This way
-%     gives varying rind thickness because the theta line isn't always
-%     normal to the ellipse
-%     ELLIPSE_R_int(i,:) = rpts(npoints,ELLIPSE_T(i,:),(A(i) - 2*avg_rind_thick(i)),(B(i) - 2*avg_rind_thick(i)));    % This way overestimates and underestimates periodically
+    
+    % Calculate the ellipse interior based on a normal offset
     ELLIPSE_R_int(i,:) = normintV2(ELLIPSE_R_ext(i,:),ELLIPSE_T(i,:),avg_rind_thick(i));
     R_ext(i,:) = ext_rho;
     R_int(i,:) = int_rho;
     
     % Get difference between the ellipse and the real data (if the ellipse
     % overestimates, then the value of DIFF will be positive)
-%     DIFF_R_ext(i,:) = ext_rho_ellipse - ext_rho;
-%     DIFF_R_int(i,:) = int_rho_ellipse - int_rho;
     DIFF_R_ext(i,:) = ELLIPSE_R_ext(i,:) - R_ext(i,:);
     DIFF_R_int(i,:) = ELLIPSE_R_int(i,:) - R_int(i,:);
     
     AVG_RIND_T(i) = avg_rind_thick(i);
-    
-    RIND_ELLIPSE_DIFF(i,:) = ELLIPSE_R_ext(i,:) - R_int(i,:);
     
 end
 
@@ -713,340 +795,50 @@ save(SaveFile,'A','B','ELLIPSE_XY','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int',.
 end
 
 
-function [r] = rpts(N,theta,dmaj,dmin)
-    r = zeros(1,N);
-    for i = 1:N
-        r(i) = (dmaj*dmin/4)/sqrt(((dmin/2)*cos(theta(i)))^2 ...
-            + ((dmaj/2)*sin(theta(i)))^2);
-    end
-end
-
-
-function PCA_ellipse_fits(FileName,SaveName)
-% USE THIS FUNCTION ON Ellipse_fits_bottom1.mat or Ellipse_fits_top1.mat
-% (uses the difference between the ellipse and the real data)
-
-FolderName = pwd;
-File       = fullfile(FolderName, FileName);
-load(File,'DIFF_R_ext','DIFF_R_int','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int');
-
-% Perform PCA. 'Centered' option must be false to allow for reverse
-% engineering of the original data
-[ext_rhoPCAs, ext_rhocoeffs, ext_rhoPCA_variances, ext_rhotstat, ext_rhoexplained, ext_rhovarMeans] = pca(DIFF_R_ext,'Centered',false);
-% [int_rhoPCAs, int_rhocoeffs, int_rhoPCA_variances, int_rhotstat, int_rhoexplained, int_rhovarMeans] = pca(DIFF_R_int,'Centered',false);
-
-ext_rhoexplained_tot = zeros(size(ext_rhoexplained));
-% int_rhoexplained_tot = zeros(size(ext_rhoexplained));
-for i = 1:length(ext_rhoexplained_tot)
-    ext_rhoexplained_tot(i) = sum(ext_rhoexplained(1:i));
-%     int_rhoexplained_tot(i) = sum(int_rhoexplained(1:i));
-end
-
-figure(1);
-plot(ext_rhoexplained_tot(1:50,1),'-*');
-title('Exterior Non-Ellipse PCs');
-xlabel('# of PCs');
-ylabel('% Variance Explained');
-
-% figure(2);
-% plot(int_rhoexplained_tot(:,1),'-*');
-% title('Interior Non-Ellipse PCs');
-% xlabel('# of PCs');
-% ylabel('% Variance Explained');
-
-ELLIPSE_T = ELLIPSE_T';
-theta = ELLIPSE_T(:,1);
-ELLIPSE_T = ELLIPSE_T';
-
-figure(3);
-polarplot(theta,ext_rhoPCAs(:,1));
-hold on
-polarplot(theta,ext_rhoPCAs(:,2));
-polarplot(theta,ext_rhoPCAs(:,3));
-polarplot(theta,ext_rhoPCAs(:,4));
-polarplot(theta,ext_rhoPCAs(:,5));
-title('Exterior Rho Principal Components');
-legend('PC1','PC2','PC3','PC4','PC5');
-
-% figure(4);
-% polarplot(theta,int_rhoPCAs(:,1));
-% hold on
-% polarplot(theta,int_rhoPCAs(:,2));
-% polarplot(theta,int_rhoPCAs(:,3));
-% polarplot(theta,int_rhoPCAs(:,4));
-% polarplot(theta,int_rhoPCAs(:,5));
-% title('Interior Rho Principal Components');
-% legend('PC1','PC2','PC3','PC4','PC5');
-
-
-
-
-% Save the final data in a new mat file
-SaveFile       = fullfile(FolderName, SaveName);
-save(SaveFile,'ELLIPSE_T','ELLIPSE_R_ext','ext_rhocoeffs',...
-    'ext_rhoPCAs','ext_rhoexplained','ext_rhovarMeans');
-
-
-end
-
-
-function remove_problem_ellipses(OriginalEllipseFits,stalknums,problem_indices,GoodEllipseFits,GoodStalks,All)
-load(OriginalEllipseFits);
-% load(Stalks,'stalknums');
-
-% Remove the problem ellipses from the ellipse fit data
-A(problem_indices) = [];
-AVG_RIND_T(problem_indices) = [];
-B(problem_indices) = [];
-DIFF_R_ext(problem_indices,:) = [];
-DIFF_R_int(problem_indices,:) = [];
-ELLIPSE_CENTERS(problem_indices,:) = [];
-ELLIPSE_R_ext(problem_indices,:) = [];
-ELLIPSE_R_int(problem_indices,:) = [];
-ELLIPSE_T(problem_indices,:) = [];
-ELLIPSE_XY(problem_indices,:,:) = [];
-R_ext(problem_indices,:) = [];
-R_int(problem_indices,:) = [];
-
-% If removing translated_problem_indices from the chosen set of stalks
-% only:
-if ~strcmp(All,'all')
-    if ~isempty(problem_indices)
-        stalknums(problem_indices) = []; % This line should only be executed if problem_indices is translated_problem_indices
-    end
-end
-
-% Save the final data in a new mat file
-FolderName = pwd;
-SaveFile       = fullfile(FolderName, GoodEllipseFits);
-save(SaveFile,'A','B','ELLIPSE_XY','ELLIPSE_T','ELLIPSE_R_ext','ELLIPSE_R_int',...
-    'ELLIPSE_CENTERS','DIFF_R_ext','DIFF_R_int','R_ext','R_int','AVG_RIND_T','problem_indices');
-SaveFile = fullfile(FolderName,GoodStalks);
-save(SaveFile,'stalknums');
-
-end
-
-function create_cases_shifted(NEPCdata,GoodEllipseData,GoodStalkNumsName,NewGoodStalks,numNEPCs,material_method,group,SaveName)
-    % create_cases.m: Calculate the necessary information to include in the
-    % Python scripts
-    
-    load(NEPCdata);
-    load(GoodEllipseData);
-    load(GoodStalkNumsName,'stalknums');
-    load(NewGoodStalks,'newgoodstalknums'); % Load in the shifted stalknums
-
-    N = size(ELLIPSE_T,1);
-    MaterialProps = zeros(N,(2 + 2*numNEPCs - 1),2);
-    
-%     if strcmp(cpu,'multi')
-%         write_Python_template_mult_processor;
-%     elseif license == 1
-%         write_Python_template;  % Create Template cell array that can be copied and used to make individualized Python scripts
-%     elseif license == 2
-%         write_Python_template2;
-%     else
-%         error('Choose a valid cpu/license combination');
-%     end
-
-    write_Python_template3;
-
-    %% Create all geometry cases for a given cross section
-    % Step through the cross sections
-%     stalknums = selectedTable.StkNum; % NEED A TRANSLATED stalks VARIABLE SO IT DOESN'T CHOOSE CROSS-SECTIONS OUTSIDE
-    
-%     % Remove the stalk numbers that had ellipse fit problems REDUNDANT
-%     if ~isempty(problem_indices)
-%         stalknums(stalknums==problem_indices) = [];
-%     end
-    
-    for i = 1:N
-        GROUP = sprintf('%d',group); % Group number
-        ID = sprintf('%d',stalknums(i)); % Cross-section number
-
-        %% Real cross section (case 0)
-        case_num = 0; % increment this for each case within each cross section
-        Script = Template;
-        [Erind,Epith] = get_materials(material_method);
-        make_case(case_num,i,ID,GROUP,R_ext,R_int,ELLIPSE_T,Script,Erind,Epith);
-        MaterialProps(i,case_num+1,1) = Erind;
-        MaterialProps(i,case_num+1,2) = Epith;
-
-        %% Pure ellipse fit (case 1)
-        case_num = case_num + 1;
-        Script = Template; % Reset the script template
-%         [Erind,Epith] = get_materials(material_method);
-        make_case(case_num,i,ID,GROUP,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script,Erind,Epith);
-        MaterialProps(i,case_num+1,1) = Erind;
-        MaterialProps(i,case_num+1,2) = Epith;
-
-        %% Combined NEPC cases
-        for j = 1:numNEPCs
-            case_num = case_num + 1;
-            Script = Template; % Reset the script template
-
-            % Calculate the cases with NEPCs cumulatively added into the
-            % ellipse fit
-            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-%             NEPC_int = zeros(1,size(int_rhoPCAs,1));
-            for k = 1:j
-                % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
-                NEPC_ext = NEPC_ext + ext_rhocoeffs(newgoodstalknums(i),k)*ext_rhoPCAs(:,k)';
-%                 NEPC_int = NEPC_int + int_rhocoeffs(i,k)*int_rhoPCAs(:,k)';
-            end
-
-            Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-            Rnew_int = Rnew_ext - AVG_RIND_T(i);
-            
-%             [Erind,Epith] = get_materials(material_method);
-            make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
-            MaterialProps(i,case_num+1,1) = Erind;
-            MaterialProps(i,case_num+1,2) = Epith;
-
-        end
-
-
-        %% Remaining individual NEPC cases
-        for j = 2:numNEPCs
-            case_num = case_num + 1;
-            Script = Template; % Reset the script template
-
-            % Add the current NEPC to the ellipse in polar coordinates
-            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-%             NEPC_int = zeros(1,size(int_rhoPCAs,1));
-            NEPC_ext = ext_rhocoeffs(newgoodstalknums(i),j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
-%             NEPC_int = int_rhocoeffs(i,j)*int_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
-            Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-%             Rnew_int = Rnew_ext - AVG_RIND_T(i);
-
-%             [Erind,Epith] = get_materials(material_method);
-            make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
-            MaterialProps(i,case_num+1,1) = Erind;
-            MaterialProps(i,case_num+1,2) = Epith;
-
-        end
-
-    end
-    
-    % Save the final data in a new mat file
-    FolderName = pwd;
-    SaveFile = fullfile(FolderName, SaveName);
-    save(SaveFile,'MaterialProps');
-    
-    
-
-end
-
-
-function create_cases(NEPCdata,GoodEllipseData,ChosenSectionsData,numNEPCs,material_method,group,SaveName)
-    % create_cases.m: Calculate the necessary information to include in the
-    % Python scripts
-    
-    load(NEPCdata);
-    load(GoodEllipseData);
-    load(ChosenSectionsData,'stalknums');
-%     load(NewGoodStalks,'newgoodstalknums'); % Load in the shifted stalknums
-
-    N = size(ELLIPSE_T,1);
-    MaterialProps = zeros(N,(2 + 2*numNEPCs - 1),2);
-    
-%     if strcmp(cpu,'multi')
-%         write_Python_template_mult_processor;
-%     elseif license == 1
-%         write_Python_template;  % Create Template cell array that can be copied and used to make individualized Python scripts
-%     elseif license == 2
-%         write_Python_template2;
-%     else
-%         error('Choose a valid cpu/license combination');
-%     end
-
-    write_Python_template3;
-
-    %% Create all geometry cases for a given cross section
-    % Step through the cross sections
-%     stalknums = selectedTable.StkNum; % NEED A TRANSLATED stalks VARIABLE SO IT DOESN'T CHOOSE CROSS-SECTIONS OUTSIDE
-    
-%     % Remove the stalk numbers that had ellipse fit problems REDUNDANT
-%     if ~isempty(problem_indices)
-%         stalknums(stalknums==problem_indices) = [];
-%     end
-    
-    for i = 1:N
-        GROUP = sprintf('%d',group); % Group number
-        ID = sprintf('%d',stalknums(i)); % Cross-section number
-
-        %% Real cross section (case 0)
-        case_num = 0; % increment this for each case within each cross section
-        Script = Template;
-        [Erind,Epith] = get_materials(material_method);
-        make_case(case_num,i,ID,GROUP,R_ext,R_int,ELLIPSE_T,Script,Erind,Epith);
-        MaterialProps(i,case_num+1,1) = Erind;
-        MaterialProps(i,case_num+1,2) = Epith;
-
-        %% Pure ellipse fit (case 1)
-        case_num = case_num + 1;
-        Script = Template; % Reset the script template
-%         [Erind,Epith] = get_materials(material_method);
-        make_case(case_num,i,ID,GROUP,ELLIPSE_R_ext,ELLIPSE_R_int,ELLIPSE_T,Script,Erind,Epith);
-        MaterialProps(i,case_num+1,1) = Erind;
-        MaterialProps(i,case_num+1,2) = Epith;
-
-        %% Combined NEPC cases
-        for j = 1:numNEPCs
-            case_num = case_num + 1;
-            Script = Template; % Reset the script template
-
-            % Calculate the cases with NEPCs cumulatively added into the
-            % ellipse fit
-            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-%             NEPC_int = zeros(1,size(int_rhoPCAs,1));
-            for k = 1:j
-                % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
-                NEPC_ext = NEPC_ext + ext_rhocoeffs(stalknums(i),k)*ext_rhoPCAs(:,k)';
-%                 NEPC_int = NEPC_int + int_rhocoeffs(i,k)*int_rhoPCAs(:,k)';
-            end
-
-            Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-            Rnew_int = Rnew_ext - AVG_RIND_T(i);
-            
-%             [Erind,Epith] = get_materials(material_method);
-            make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
-            MaterialProps(i,case_num+1,1) = Erind;
-            MaterialProps(i,case_num+1,2) = Epith;
-
-        end
-
-
-        %% Remaining individual NEPC cases
-        for j = 2:numNEPCs
-            case_num = case_num + 1;
-            Script = Template; % Reset the script template
-
-            % Add the current NEPC to the ellipse in polar coordinates
-            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-%             NEPC_int = zeros(1,size(int_rhoPCAs,1));
-            NEPC_ext = ext_rhocoeffs(stalknums(i),j)*ext_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
-%             NEPC_int = int_rhocoeffs(i,j)*int_rhoPCAs(:,j)'; % reconstruct full scale NEPC for the current cross section
-            Rnew_ext = ELLIPSE_R_ext(i,:) - NEPC_ext;
-
-%             [Erind,Epith] = get_materials(material_method);
-            make_case(case_num,i,ID,GROUP,Rnew_ext,Rnew_int,ELLIPSE_T,Script,Erind,Epith);
-            MaterialProps(i,case_num+1,1) = Erind;
-            MaterialProps(i,case_num+1,2) = Epith;
-
-        end
-
-    end
-    
-    % Save the final data in a new mat file
-    FolderName = pwd;
-    SaveFile = fullfile(FolderName, SaveName);
-    save(SaveFile,'MaterialProps');
-    
-    
-
-end
-
 function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
+% FILENAME: make_case.m
+% AUTHOR: Ryan Larson
+% DATE: 11/25/19
+%
+% PURPOSE: Make a customized Python script corresponding to a unique model
+% 
+% 
+% INPUTS:
+%       case_num: Case number (model approximation number)
+% 
+%       i: Adjusted index of the cross-section being worked with
+% 
+%       ID: String version of the stalk number
+% 
+%       GROUP: String version of the group number (corresponds to the index
+%       of the current slice location in the slice locations vector)
+% 
+%       R_ext: Exterior boundary vector
+% 
+%       R_int: Interior boundary vector
+% 
+%       T: Theta vector
+% 
+%       Script: Template script in cell array form
+% 
+%       Erind: Rind modulus of elasticity
+% 
+%       Epith: Pith modulus of elasticity
+%       
+% OUTPUTS:
+%        - Creates a customized Python script that can be directly run in
+%        Abaqus
+%
+% NOTES:
+%      
+% 
+% 
+% VERSION HISTORY:
+% V1 - 
+% V2 - 
+% V3 - 
+%
+% -------------------------------------------------------------------------
     CASE = sprintf('%d',case_num);
     jobname = strcat('''Group_',GROUP,'_','Section_',ID,'_',CASE,'''');
     scriptname = strcat('Group_',GROUP,'_','Section_',ID,'_',CASE,'.py');
@@ -1064,7 +856,8 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
         Y_int = R_int(1,:).*sin(T(1,:));
     end
 
-     % Scale units to micrometers from millimeters
+    % Scale units to micrometers from millimeters (allows the mesh size to
+    % get small enough based on the mesh convergence study)
     X_ext = 1000*X_ext;
     Y_ext = 1000*Y_ext;
     X_int = 1000*X_int;
@@ -1091,6 +884,7 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
     [~,ind90] = min(abs(diffs90));
     [~,ind270] = min(abs(diffs270));
     
+    % Convert the reference point values to strings
     RP1X = sprintf('%0.5g',X_ext(ind90));
     RP1Y = sprintf('%0.5g',Y_ext(ind90));
     RP2X = sprintf('%0.5g',X_ext(ind270));
@@ -1101,32 +895,6 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
     len = S(1);
     outer_spline = writespline_V2(len,section_ext);
     inner_spline = writespline_V2(len,section_int);
-    
-%     % Calculate the random material properties from a normal distribution.
-%     % Bound with 95% confidence interval, calculated from transverse
-%     % material properties used in another paper.
-%     Erind_mean = 8.0747e-04;
-%     Erind_stdev = 3.3517e-04;
-%     Erind_95 = [6.7414e-04 9.4081e-04];
-%     Epith_mean = 2.5976e-05;
-%     Epith_stdev = 1.0303e-05;
-%     Epith_95 = [2.1878e-05 3.0075e-05];
-%     
-%     % Generate Erind from normal distribution
-%     while 1
-%         Erind = normrnd(Erind_mean,Erind_stdev);
-%         if Erind >= Erind_95(1) && Erind <= Erind_95(2)
-%             break
-%         end
-%     end
-%     
-%     % Generate Epith from normal distribution
-%     while 1
-%         Epith = normrnd(Epith_mean,Epith_stdev);
-%         if Epith >= Epith_95(1) && Epith <= Epith_95(2)
-%             break
-%         end
-%     end
     
     rindE = sprintf('%0.5g',Erind);
     pithE = sprintf('%0.5g',Epith);
@@ -1153,7 +921,36 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
     
 end
 
+
 function [spline] = writespline_V2(len,data)
+% FILENAME: writespline_V2.m
+% AUTHOR: Ryan Larson
+% DATE: 5/29/19
+%
+% PURPOSE: Turn vector spline data into a string
+% 
+% 
+% INPUTS:
+%       len: Length of the data (a holdover from previous versions, and
+%       isn't fully necessary for good code)
+% 
+%       data: The original boundary vector
+%       
+% OUTPUTS:
+%       spline: A string version of data that can be inserted in a Python
+%       script
+%
+% NOTES:
+%      
+% 
+% 
+% VERSION HISTORY:
+% V1 - Writes spline to a text file which can then be copied manually into 
+% V2 - Made writespline a function that works with existing functions
+% instead of writing the spline to a text file
+% V3 - 
+%
+% -------------------------------------------------------------------------
     %define empty spline and number of x-y points
     spline = '';
 
@@ -1163,7 +960,34 @@ function [spline] = writespline_V2(len,data)
     end
 end
 
+
 function [xy_columns] = convert_to_xy(R,theta)
+% FILENAME: writespline_V2.m
+% AUTHOR: Ryan Larson
+% DATE: 5/29/19
+%
+% PURPOSE: Converts from polar to Cartesian
+% 
+% 
+% INPUTS:
+%       R: Radius data vector
+% 
+%       theta: Angle vector
+%       
+% OUTPUTS:
+%       xy_columns: A 2-column array of xy data describing the previously
+%       polar data
+%
+% NOTES:
+%      
+% 
+% 
+% VERSION HISTORY:
+% V1 - 
+% V2 - 
+% V3 - 
+%
+% -------------------------------------------------------------------------
     N = length(theta);
     xy_columns = zeros(N,2);
     for i = 1:N
@@ -1172,11 +996,46 @@ function [xy_columns] = convert_to_xy(R,theta)
     end
 end
 
+
 function [Erind,Epith] = get_materials(method)
+% FILENAME: writespline_V2.m
+% AUTHOR: Ryan Larson
+% DATE: 5/29/19
+%
+% PURPOSE: Converts from polar to Cartesian
+% 
+% 
+% INPUTS:
+%       method: A string to determine the material selection method.
+%       Options include: 
+%           'random':   Random material properties
+%           'min':      Minimum rind, minimum pith
+%           'max':      Maximum rind, maximum pith
+%           'minpith':  Random rind, minimum pith
+%           'maxpith':  Random rind, maximum pith
+%           'minrind':  Minimum rind, random pith
+%           'maxrind':  Maximum rind, random pith
+%           'avg':      Mean rind, mean pith
+% 
+% OUTPUTS:
+%       Erind: Rind modulus
+%       
+%       Epith: Pith modulus
+%
+% NOTES:
+%      
+% 
+% 
+% VERSION HISTORY:
+% V1 - 
+% V2 - 
+% V3 - 
+%
+% -------------------------------------------------------------------------
 % Calculate the random material properties from a normal distribution.
     % Bound with 95% confidence interval, calculated from transverse
     % material properties used in another paper.
-    Erind_mean = 8.0747e-04; % THESE VALUES IN N/micrometer^2
+    Erind_mean = 8.0747e-04; % THESE VALUES ARE IN N/micrometer^2
     Erind_stdev = 3.3517e-04;
     Erind_95 = [6.7414e-04 9.4081e-04];
     Epith_mean = 2.5976e-05;
@@ -1203,17 +1062,6 @@ function [Erind,Epith] = get_materials(method)
                     break
                 end 
             end
-            
-            
-    %     % Generate Epith from normal distribution of pith/rind ratios
-    %     while 1
-    %         ratio = normrnd(ratio_mean,ratio_stdev);
-    %         if ratio >= ratio_95(1) && ratio <= ratio_95(2)
-    %             break
-    %         end
-    %     end
-    %     Epith = ratio*Erind;
-
     
         case 'min'
             Erind = Erind_95(1);
@@ -1245,73 +1093,3 @@ function [Erind,Epith] = get_materials(method)
     end
     
 end
-
-
-function [R_int] = normint(R,theta,t)
-    % Calculates the new interior points based on local central difference
-    % derivative
-    
-    % Convert to Cartesian
-    [xy_columns] = convert_to_xy(R,theta);
-    x0 = xy_columns(:,1);
-    y0 = xy_columns(:,2);
-    
-    % Get vector of normal slopes
-    slopes = zeros(size(theta));
-    
-    for i = 1:length(slopes)
-        if i == 1
-            m = (y0(2)-y0(end))/(x0(2)-x0(end));
-        elseif i == length(slopes)
-            m = (y0(1)-y0(end-1))/(x0(1)-x0(end-1));            
-        else
-            m = (y0(i+1)-y0(i-1))/(x0(i+1)-x0(i-1));
-        end
-        
-        slopes(i) = -1/m;
-        
-    end
-    
-    % Compute normal slope angles
-    phi = zeros(size(slopes));
-    for i = 1:length(phi)
-        phi(i) = atan(slopes(i));
-    end
-    
-    % Compute locations of interior points along the normal vectors
-    x1 = zeros(size(x0));
-    y1 = zeros(size(y0));
-    rise = zeros(size(y0));
-    run = zeros(size(x0));
-    
-    for i = 1:length(slopes)
-        run(i) = t*cos(phi(i));
-        rise(i) = t*sin(phi(i));
-        xtemp1 = x0(i) - run(i);
-        xtemp2 = x0(i) + run(i);
-        ytemp1 = y0(i) - rise(i);
-        ytemp2 = y0(i) + rise(i);
-        if abs(xtemp1) < abs(xtemp2)
-            x1(i) = xtemp1;
-        else
-            x1(i) = xtemp2;
-        end
-        if abs(ytemp1) < abs(ytemp2)
-            y1(i) = ytemp1;
-        else
-            y1(i) = ytemp2;
-        end
-%         y1(i) = y0(i) - rise(i);
-    end
-    
-    % Convert back to polar coordinates
-    [thetatemp, Rtemp] = cart2pol(x1,y1);
-    thetatemp = wrapTo2Pi(thetatemp);   % Make all the negative pi values sit on a 0-2*pi system
-    
-    R_int_interp = interp1(thetatemp,Rtemp,theta,'pchip','extrap'); 
-    R_int = R_int_interp;
-    
-
-end
-
-
