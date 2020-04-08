@@ -3,24 +3,26 @@ function flip_notches(Flip_Indices,ChooseSectionsOutput,FlippedOutputName)
 % AUTHOR: Ryan Larson
 % DATE: 6/18/19
 %
-% PURPOSE: 
+% PURPOSE: Take the output of find_flip_notches.m and rotate cross-sections
+% that were manually tagged. This corrects errors in the automatic
+% preprocessing that aren't caught by Jared's script.
 % 
 % 
 % INPUTS:
-%       flip_sections - The vector of 1s and empties that identifies the
-%       cross-sections needing to be flipped 180 degrees
+%       Flip_Indices: The .mat file that contains flip_sections, which is a
+%       vector of 1s and 0s that identifies the cross-sections needing to
+%       be flipped. 
 %
 %       ChooseSectionsOutput - A .mat file produced by ChooseSections.m
 %
-%       SaveName - The name for the output .mat file. Make sure to end the
-%       name with FLIPPED for consistency.
+%       FlippedOutputName - The name for the output .mat file. Make sure to
+%       end the name with FLIPPED for consistency.
 %       
 % OUTPUTS:
-%       
+%       N/A
 %
 % NOTES:
-%       Make sure to name the output .mat file with a FLIPPED extension
-%       for consistency
+%       
 % 
 % 
 % VERSION HISTORY:
@@ -66,27 +68,22 @@ end
 size(T)
 for i = 1:N
     for j = 1:length(T)
-        ext_Rho(i,j) = sqrt(ext_X(j,i)^2 + ext_Y(j,i)^2);
-        int_Rho(i,j) = sqrt(int_X(j,i)^2 + int_Y(j,i)^2);
+        ext_Rho(j,i) = sqrt(ext_X(j,i)^2 + ext_Y(j,i)^2);
+        int_Rho(j,i) = sqrt(int_X(j,i)^2 + int_Y(j,i)^2);
     end
 end
 
-% Transpose rho arrays so they are the same orientation as the other
-% variables
-% ext_rho = ext_rho';
-% int_rho = int_rho';
-
+% Copy the variable selectedTable as a basis for the new data
 flippedTable = selectedTable;
 
-for i = flipped
-    flippedTable.Ext_X(i) = ext_X(:,i);
-    flippedTable.Ext_Y(i) = ext_Y(:,i);
-%     flippedTable.Ext_T(i) = ext_T(:,i);
-    flippedTable.Ext_Rho(i) = ext_Rho(:,i);
-    flippedTable.Int_X(i) = int_X(:,i);
-    flippedTable.Int_Y(i) = int_Y(:,i);
-%     flippedTable.Int_T(i) = int_T(:,i);
-    flippedTable.Int_Rho(i) = int_Rho(:,i);
+% Apply orientation corrections to the appropriate rows in flippedTable
+for i = 1:N
+    flippedTable.Ext_X{i} = ext_X(:,i);
+    flippedTable.Ext_Y{i} = ext_Y(:,i);
+    flippedTable.Ext_Rho{i} = ext_Rho(:,i);
+    flippedTable.Int_X{i} = int_X(:,i);
+    flippedTable.Int_Y{i} = int_Y(:,i);
+    flippedTable.Int_Rho{i} = int_Rho(:,i);
     
 end
 
