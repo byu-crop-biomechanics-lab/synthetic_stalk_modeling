@@ -1,30 +1,51 @@
 function [problem_slice_stalk] = transverse_wrapper_V4(slices,stalknums,material_method,AllSlicesPCA)
-% FILENAME: transverse_wrapper.m
+% FILENAME: transverse_wrapper_V4.m
 % AUTHOR: Ryan Larson
 % DATE: 1/17/2020
 %
-% PURPOSE: Wrap the majority of the data production process into a single
-% script
+% PURPOSE: Take a subset of the slice locations used in PCA and generate
+% all the desired approximations. Creates Python scripts that can be fed
+% into Abaqus directly or run as a batch using MasterScript3.py.
 % 
 % 
 % INPUTS:
-%       slices - A subset of the input that went into AllTransversePCA.m (as of
-%       1/22/2020, this was [-40 -30 -20 -15 -10 -5 0 5 10 15 20 30 40])
-%       stalknums - A vector of unique integers from 1 to 980 that determines
+%       slices: Row vector of slice locations, relative to the node. This 
+%       should be a subset of the input that went into AllTransversePCA.m
+%       (as of 1/22/2020, this was
+%       [-40 -30 -20 -15 -10 -5 0 5 10 15 20 30 40], so slices could be
+%       something like [-20 -10 0 30] if used with AllTransversePCA.m)
+%       
+%       stalknums: A vector of unique integers from 1 to 980 that determines
 %       which stalks to sample from (use randperm(980,K) to choose K
 %       unique integers from 1 to 980)
-%       AllSlicesPCA - AllSlicesPCA.mat
+%
+%       material_method: A string to call out what material selection
+%       method to use. Options include:
+%           'random' - Randomly sample rind and pith properties
+%           'min' - Minimum rind and minimum pith properties
+%           'max' - Maximum rind and minimum pith properties
+%           'minpith' - Minimum pith properties, random rind properties
+%           'maxpith' - Maximum pith properties, random rind properties
+%           'minrind' - Minimum rind properties, random pith properties
+%           'maxrind' - Maximum rind properties, random pith properties
+%           'avg' - Mean rind properties, mean pith properties
+% 
+%       AllSlicesPCA: AllSlicesPCA.mat
 %       
 % OUTPUTS:
-%       - Several .mat files with variables saved from the steps in the
-%       process. These are made available for troubleshooting purposes.
-%       - Lots of Python scripts, corresponding to the stalks used and the
-%       cases examined. The names do not contain the slice distance info.
-%       11 scripts are created per stalk.
+%       problem_slice_stalk: Indices of stalk slices that had issues during
+%       the process. Only useful for debugging.
+%       ___________________________________________________________________________________________
+
 %
 %
 % NOTES: 
-%       - 
+%       Other outputs:
+%           - Several .mat files with variables saved from the steps in the
+%           process. These are made available for troubleshooting purposes.
+%           - Lots of Python scripts, corresponding to the stalks used and 
+%           the cases examined. The names do not contain the slice distance
+%           info. 11 scripts are created per stalk.
 % 
 % 
 % VERSION HISTORY:
@@ -33,16 +54,19 @@ function [problem_slice_stalk] = transverse_wrapper_V4(slices,stalknums,material
 % to sample
 % V3 - Added group input to number the output scripts for putting in a
 % large folder of scripts for different purposes
+% V4 - Changed the type of data that gets fed into transverse_wrapper
 %
 % -------------------------------------------------------------------------
 
 %% Initial variables
+% Groups are numbered starting at 1, and are a convenient way to keep data
+% separate. Each slice location chosen for analysis initiates a new group.
 group = 1;
+% Number of principal components to use for analysis.
 numNEPCs = 5;
-% nslices = length(slices);
-% nstalks = length(stalknums);
 load(AllSlicesPCA);
 
+% Initialize holding variable for slice indices that cause problems
 problem_slice_stalk = [];
 
 set(0,'DefaultFigureWindowStyle','docked');
@@ -51,7 +75,11 @@ set(0,'DefaultFigureWindowStyle','docked');
 % Iterate through slices (determine group number here)
 for slice = slices
     
+    % Determine the index in the data where the current slice lives
     sliceidx = find(slice_dists == slice);
+    
+    % slice_startstop is a variable that loads from AllSlicesPCA.mat.
+    % startidx is the index 
     startidx = slice_startstop(sliceidx,2);
     
     % For each slice position, iterate through stalknums
@@ -75,7 +103,6 @@ for slice = slices
         
         write_Python_template3;
         
-%         material_method = 'random';
         [Erind,Epith] = get_materials(material_method);
 
         % Real cross section (case 0)

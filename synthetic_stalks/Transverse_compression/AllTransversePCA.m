@@ -7,16 +7,22 @@ function AllTransversePCA(slice_dists,SaveName)
 % 
 % 
 % INPUTS:
-%       - slice_dists: A row vector of all the slice distances to take into
+%       slice_dists: A row vector of all the slice distances to take into
 %       acccount when running PCA (MAYBE MAKE IT POSSIBLE TO LATER CHOOSE
 %       WHICH SLICE DISTANCES ACTUALLY GET USED IN THE PCA GOING INTO
 %       TRANSVERSE_WRAPPER_V4.M)
 %       
-% OUTPUTS:
+%       SaveName: String name to save the data to as a .mat file. Must
+%       include .mat in the name.
 %       
+% OUTPUTS:
+%       N/A
 %
 %
 % NOTES: 
+%       Other outputs:
+%           - Named .mat file that contains all the ellipse fit and PCA
+%           data, which will be used when running transverse_wrapper_V4.m.
 %       
 % 
 % 
@@ -48,12 +54,10 @@ adj_indices         = {};
 slice_startstop = zeros(length(slice_dists),3);
 slice_startstop(:,1) = slice_dists';
 
-% slice_startstop_adj = zeros(length(slice_dists),3);
-% slice_startstop_adj(:,1) = slice_dists';
-
 for slice = slice_dists
     slice
     close all;
+    
     % For each slice distance, iterate through the 980 stalks and get the
     % data to feed into the large PCA array
     
@@ -62,7 +66,8 @@ for slice = slice_dists
     deci = abs(slice) - floor(abs(slice));
     dist_deci = num2str(deci);
     dist_deci = erase(dist_deci,'0.');
-
+    
+    % Turn the slice position into a readable string
     if slice > 0
         if strcmp(dist_deci,'0')
             slicepos = strcat('Above_',dist_int);
@@ -78,7 +83,8 @@ for slice = slice_dists
     else
         slicepos = strcat('At_Node');
     end
-
+    
+    % Create the naming prefix for the current slice location
     output_prefix = strcat(slicepos);
     
     % Gather all data for stalks at this slice distance
@@ -89,9 +95,26 @@ for slice = slice_dists
     
     
     %% Flip cross-sections that need adjustment (only if there isn't flip data)
-    % Check to see if there is already a flip vector for the chosen distance
-    % Get file name to look for
+    % Explanation: Sometimes the downsample, center, and rotate processing
+    % doesn't work exactly as intended. For principal component analysis to
+    % work, all the notches need to be on the same side (the left side, in
+    % the case of this code). It's easiest to do these corrections
+    % manually, so this section of code allows quick visual tagging of
+    % cases where the notch didn't end up on the correct side. For tagged
+    % slices, it flips the cross-section by 180 degrees. There might also
+    % be cases where the ellipse is vertically-oriented or where the
+    % ellipse didn't do a good job of fitting. Those cases are addressed in
+    % a later section of the code.    
+    
+    
+    % Check to see if there is already flipping data for the current slice
+    % location
+    
+    % Get a string of the slice location
     searchslice = sprintf('%d',abs(slice));
+    
+    % Get the appropriate filename to search for, depending on the slice
+    % location
     if slice > 0
         FlippedOutputName = strcat('*Above_',searchslice,'_FLIPPED.mat');
         fstruct = dir(FlippedOutputName);
@@ -102,22 +125,41 @@ for slice = slice_dists
         FlippedOutputName = strcat('*At_Node','_FLIPPED.mat');
         fstruct = dir(FlippedOutputName);        
     end
-
+    
+    % If there isn't existing flip data for the chosen slice location, then
+    % create the file name.
     if isempty(fstruct)
         FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
     else
         FlippedOutputName = fstruct(1).name;
     end
-
+    
+    % FlipName will contain data about which cross-sections need to be
+    % flipped, while FlippedOutputName will contain the corrected, or
+    % flipped, data that will be used to perform later steps.
     FlipName = strcat(output_prefix,'_flip_sections.mat');
-    % FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
+    
+    % If there isn't existing flipped data, then create it.
     if ~isfile(FlippedOutputName)
         disp('No flip index vector exists in the current folder. Create one now.');
-        % Manually find the cross-sections that need to be flipped 180 degrees
-    %     FlipName = strcat(output_prefix,'_flip_sections.mat');
+        
+        % Manually find the cross-sections that need to be flipped 180
+        % degrees (more details are in the local function section)
         find_flip_notches(AllSectionsName,FlipName)
 
         while 1
+            % Sometimes you'll incorrectly tag a cross-section for
+            % flipping, when it was already oriented correctly. This code
+            % gives you a chance to make those corrections by directly
+            % editing the "flip vector," or the indicators for each
+            % cross-section. If you notice that you incorrectly tagged a
+            % certain cross-section, note the index, which will be
+            % displayed in the command window. Then the following code will
+            % open the flip_sections variable, where you can change the
+            % value for the incorrectly-tagged cross-section. If it should
+            % be flipped, change the value to 1. If it was incorrectly
+            % tagged, change the value back to 0. Follow the prompts in the
+            % command window to return to the execution of the main code.
             fixes_needed = input('Does the flip vector need manual correction? Y/N ','s');
             switch fixes_needed
                 case 'Y'
@@ -136,24 +178,24 @@ for slice = slice_dists
         end
 
 
-        % Flip the cross-sections that need to be flipped, according to the vector
-        % of flip indicators
-        % load(FlipName);
+        % Flip the cross-sections that need to be flipped, according to the
+        % flip_sections variable
         FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
         flip_notches(FlipName,AllSectionsName,FlippedOutputName);
 
     else
-    %     FlippedOutputName = strcat(output_prefix,'_FLIPPED.mat');
         disp('A flip index vector for the chosen data has been found.');
     end
-
+    
     load(FlippedOutputName);
     
     
 
     %% Get ellipse fits and difference data 
-    %% Check to see if there is already an ellipse fit for the chosen distance
-    % Get file name to look for
+    % Check to see if there is already an ellipse fit for the chosen distance
+    
+    % Get file name to look for (same basic code as before, but looking for
+    % existing ellipse fit data instead of flipping data)
     searchslice = sprintf('%d',slice);
     if slice > 0
         searchname = strcat('*Above_',searchslice,'_AllGoodEllipses.mat');
@@ -185,12 +227,9 @@ for slice = slice_dists
         searchname = fstruct(1).name;
     end
 
-
-
     % If the ellipse data already exists, use the existing data instead of
     % going through the process of tagging any bad fits
     problem_indices = [];
-%     chosen_problem_indices = [];
 
     if ~isfile(searchname)
         disp('No ellipse data for this slice distance exists in the current folder. Create data now.');
@@ -199,14 +238,11 @@ for slice = slice_dists
         AllEllipseName = strcat(output_prefix,'_AllEllipses.mat');
         ellipse_fitting_V2(FlippedOutputName,AllEllipseName);
 
-%         % Calculate the ellipse fits for the chosen set of cross-sections
-%         ChosenEllipseName = strcat(output_prefix,'_ChosenEllipses.mat');
-%         ellipse_fitting_V2(ChooseSectionsName,ChosenEllipseName);
-
-        % Plot the ellipse fits and see if any of them have problems
         load(AllEllipseName);
         load(FlippedOutputName);
 
+        % Plot the ellipse fits and see if any of them have problems. Tag
+        % the problem cross-sections with a 1, as with the flip data.
         for i = 1:size(flippedTable,1)
             i
             polarplot(ELLIPSE_T(i,:),ELLIPSE_R_ext(i,:),'LineWidth',2);
@@ -219,21 +255,21 @@ for slice = slice_dists
             s
             if s == 1
                 problem_indices = [problem_indices, i];
-    %             if any(ismember(i,stalknums))
-    %                 chosen_problem_indices = [chosen_problem_indices, i];
-    %             end
             else
                 continue
             end    
         end    
-
+        
+        % This section gives the user a chance to correct any issues with
+        % the ellipse fits. Sometimes the ellipse fitting will be very
+        % noisy or an ellipse won't be fit, showing a huge spiral. These
+        % cases MUST be rejected for PCA to work properly.
         while 1
             fixes_needed = input('Does the ellipse problems vector need manual correction? Y/N ','s');
             switch fixes_needed
                 case 'Y'
-    %                 load(FlipName);
                     openvar('problem_indices');
-                    disp('Giving control to keyboard for manual editing of flip variable.');
+                    disp('Giving control to keyboard for manual editing of ellipse data.');
                     disp('Use dbcont command to exit keyboard editing mode.');
                     keyboard;
                     break
@@ -245,20 +281,15 @@ for slice = slice_dists
             end
         end
 
-
-
-%         % Determine if any of the problem cases are in the selected stalks
-%         problocs = ismember(problem_indices,stalknums);
-%         chosen_problem_indices = problem_indices(problocs);
-
-        % Save problem_indices for later use, after correcting the indices
+        % Save problem_indices for later use
         ProblemEllipses = strcat(output_prefix,'_ProblemEllipses.mat');
         save(ProblemEllipses,'problem_indices');
 
         problem_indices
-%         chosen_problem_indices
 
-
+    % This code runs if there is existing ellipse data in the working
+    % folder. This prevents the user from having to do the tedious sorting
+    % tasks every time they want to run the data.
     else
         disp('Ellipse data for the chosen slice distance has been found.');
         AllEllipseName = strcat(output_prefix,'_AllEllipses.mat');
@@ -270,10 +301,6 @@ for slice = slice_dists
             ProblemEllipses = strcat('Random_',output_prefix,'_ProblemEllipses.mat');
             load(ProblemEllipses,'problem_indices');
         end
-
-%         % Calculate the ellipse fits for the chosen set of cross-sections
-%         ChosenEllipseName = strcat(output_prefix,'_ChosenEllipses.mat');
-%         ellipse_fitting_V2(ChooseSectionsName,ChosenEllipseName);
     end
     
     
@@ -293,7 +320,7 @@ for slice = slice_dists
         load(ProblemEllipses,'problem_indices');
     end
     
-%     n_ALL_PROBLEM_INDICES = length(ALL_PROBLEM_INDICES);
+    % Gathering some size parameters for later use
     n_ALL_DIFF_R_ext      = size(ALL_DIFF_R_ext,1);
     n_ALL_DIFF_R_int      = size(ALL_DIFF_R_int,1);
     n_ALL_R_ext           = size(ALL_R_ext,1);
@@ -305,21 +332,27 @@ for slice = slice_dists
     n_ALL_ELLIPSE_R_ext   = size(ALL_ELLIPSE_R_ext);
     n_ALL_ELLIPSE_R_int   = size(ALL_ELLIPSE_R_int);
     
+    % This index is to determine the row for arrays such as
+    % slice_startstop, ALL_PROBLEM_INDICES, etc.
     ind = find(slice_dists == slice);
     
     ALL_PROBLEM_INDICES(ind,:) = {problem_indices}; % EACH ROW IS A NEW SLICE DISTANCE
     
-    
-    
-    
-    
+        
     % Remove error cases and adjust indices, starting at the bottom of the
     % array. Save adjusted indices.
+    % There are normally 980 slices in the data set that I used. Initialize
+    % this variable with all the expected slice numbers.
     adj_indices_temp = linspace(1,980,980);
+    
+    % Get rid of any indices that had a problem.
     adj_indices_temp(problem_indices) = []; % to map between stalk number and index value, use the index and the value of adj_indices
+    
+    % Save this shifted collection of indices for reconstructing specific
+    % cross-sections later on (in transverse_wrapper_V4, for example)
     adj_indices{ind,1} = adj_indices_temp;
     
-    % Remove problem_indices from data
+    % Remove data at problem_indices for the current slice location
     DIFF_R_ext(problem_indices,:) = [];
     DIFF_R_int(problem_indices,:) = [];
     R_ext(problem_indices,:) = [];
@@ -331,7 +364,8 @@ for slice = slice_dists
     ELLIPSE_R_ext(problem_indices,:) = [];
     ELLIPSE_R_int(problem_indices,:) = [];
     
-    
+    % Add the data from the current slice to the "ALL" version of each data
+    % array for saving at the end of this script and sending to PCA.
     ALL_DIFF_R_ext      = [ALL_DIFF_R_ext; DIFF_R_ext];
     ALL_DIFF_R_int      = [ALL_DIFF_R_int; DIFF_R_int];
     ALL_R_ext           = [ALL_R_ext; R_ext];
@@ -343,11 +377,15 @@ for slice = slice_dists
     ALL_ELLIPSE_R_ext   = [ALL_ELLIPSE_R_ext; ELLIPSE_R_ext];
     ALL_ELLIPSE_R_int   = [ALL_ELLIPSE_R_int; ELLIPSE_R_int];
     
-    
+    % Since all the data is being lumped together from lots of different
+    % slice locations, we need a way to later determine which slice
+    % location a given cross-section comes from. slice_startstop gives the
+    % slice location and the starting and ending indices for that slice
+    % location in the "ALL" data variables. This will be useful later.
     if ind == 1
         slice_startstop(ind,2) = 1;
     else
-        slice_startstop(ind,2) = n_ALL_DIFF_R_ext;
+        slice_startstop(ind,2) = n_ALL_DIFF_R_ext + 1;
     end
     
     slice_startstop(ind,3) = size(ALL_DIFF_R_ext,1);
@@ -358,30 +396,36 @@ for slice = slice_dists
     % transverse_wrapper_V4.m
     [ext_rhoPCAs, ext_rhocoeffs, ext_rhoPCA_variances, ext_rhotstat, ext_rhoexplained, ext_rhovarMeans] = pca(ALL_DIFF_R_ext,'Centered',false);
     [int_rhoPCAs, int_rhocoeffs, int_rhoPCA_variances, int_rhotstat, int_rhoexplained, int_rhovarMeans] = pca(ALL_DIFF_R_int,'Centered',false);
-
+    
+    % Create arrays for "explained" data, which shows the successive
+    % contributions each principal component makes to the approximation.
+    % These data will be used to create the plots below.
     ext_rhoexplained_tot = zeros(size(ext_rhoexplained));
     int_rhoexplained_tot = zeros(size(ext_rhoexplained));
     for i = 1:length(ext_rhoexplained_tot)
         ext_rhoexplained_tot(i) = sum(ext_rhoexplained(1:i));
         int_rhoexplained_tot(i) = sum(int_rhoexplained(1:i));
     end
-
+    
+    % Plot the exterior explained data (current slice location only)
     figure(1);
     plot(ext_rhoexplained_tot(1:50,1),'-*');
     title('Exterior Non-Ellipse PCs');
     xlabel('# of PCs');
     ylabel('% Variance Explained');
-
+    
+    % Plot the interior explained data (current slice location only)
     figure(2);
     plot(int_rhoexplained_tot(1:50,1),'-*');
     title('Interior Non-Ellipse PCs');
     xlabel('# of PCs');
     ylabel('% Variance Explained');
-
+    
     ELLIPSE_T = ELLIPSE_T';
     theta = ELLIPSE_T(:,1);
     ELLIPSE_T = ELLIPSE_T';
-
+    
+    % Polar plot of the exterior principal components (current slice location only)
     figure(3);
     polarplot(theta,ext_rhoPCAs(:,1));
     hold on
@@ -391,7 +435,8 @@ for slice = slice_dists
     polarplot(theta,ext_rhoPCAs(:,5));
     title('Exterior Rho Principal Components');
     legend('PC1','PC2','PC3','PC4','PC5');
-
+    
+    % Polar plot of the interior principal components (current slice location only)
     figure(4);
     polarplot(theta,int_rhoPCAs(:,1));
     hold on
@@ -409,12 +454,13 @@ for slice = slice_dists
     
 end
 
-
+%% Run PCA on combined data set
 % Run PCA on the resulting large data set. Save this for access by
 % transverse_wrapper_V4.m
 [ext_rhoPCAs, ext_rhocoeffs, ext_rhoPCA_variances, ext_rhotstat, ext_rhoexplained, ext_rhovarMeans] = pca(ALL_DIFF_R_ext,'Centered',false);
 [int_rhoPCAs, int_rhocoeffs, int_rhoPCA_variances, int_rhotstat, int_rhoexplained, int_rhovarMeans] = pca(ALL_DIFF_R_int,'Centered',false);
 
+% Calculate the variance explained progression for plotting below
 ext_rhoexplained_tot = zeros(size(ext_rhoexplained));
 int_rhoexplained_tot = zeros(size(ext_rhoexplained));
 for i = 1:length(ext_rhoexplained_tot)
@@ -422,12 +468,14 @@ for i = 1:length(ext_rhoexplained_tot)
     int_rhoexplained_tot(i) = sum(int_rhoexplained(1:i));
 end
 
+% Plot the exterior explained data (all slice locations)
 figure(1);
 plot(ext_rhoexplained_tot(1:50,1),'-*');
 title('ALL DATA Exterior Non-Ellipse PCs');
 xlabel('# of PCs');
 ylabel('% Variance Explained');
 
+% Plot the interior explained data (all slice locations)
 figure(2);
 plot(int_rhoexplained_tot(1:50,1),'-*');
 title('ALL DATA Interior Non-Ellipse PCs');
@@ -438,6 +486,7 @@ ELLIPSE_T = ELLIPSE_T';
 theta = ELLIPSE_T(:,1);
 ELLIPSE_T = ELLIPSE_T';
 
+% Polar plot of the exterior principal components (all slice locations)
 figure(3);
 polarplot(theta,ext_rhoPCAs(:,1));
 hold on
@@ -448,6 +497,7 @@ polarplot(theta,ext_rhoPCAs(:,5));
 title('ALL DATA Exterior Rho Principal Components');
 legend('PC1','PC2','PC3','PC4','PC5');
 
+% Polar plot of the interior principal components (all slice locations)
 figure(4);
 polarplot(theta,int_rhoPCAs(:,1));
 hold on
@@ -461,9 +511,9 @@ legend('PC1','PC2','PC3','PC4','PC5');
 
 
 
-% Save the final data in a new mat file
+%% Save the final data in a new mat file
 FolderName = pwd;
-SaveFile       = fullfile(FolderName, SaveName);
+SaveFile = fullfile(FolderName, SaveName);
 save(SaveFile,'ELLIPSE_T','ELLIPSE_R_ext','ext_rhocoeffs',...
     'ext_rhoPCAs','ext_rhoexplained','ext_rhovarMeans','ELLIPSE_R_int',...
     'int_rhocoeffs','int_rhoPCAs','int_rhoexplained','int_rhovarMeans',...
@@ -472,33 +522,83 @@ save(SaveFile,'ELLIPSE_T','ELLIPSE_R_ext','ext_rhocoeffs',...
     'adj_indices','slice_dists','ALL_A','ALL_B','ALL_R_ext','ALL_R_int',...
     'ALL_AVG_RIND_T');
 
-% MAKE SURE TO ADDRESS AND CHECK THE INTERPOLATION ISSUE THAT MIGHT
-% HAVE BEEN CAUSING ALL THE ERROR_INDICES AND THE NEED TO SHIFT
-% EVERYTHING
-
-
 
 end
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%% END OF MAIN FUNCTION %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %% Localized functions
 function ChooseSections(method,stalknums,dist,Table,error_indices,npoints,SaveName)
-% ChooseSections.m: Determine the cross-sections to compile, which is
-% determined by a method
-
-% range: For Stalk_Table, this must be a row vector of two integer values
-% from 1 to 980.
+% FILENAME: ChooseSections.m
+% AUTHOR: Ryan Larson
+% DATE: 7/3/2019
+%
+% PURPOSE: The slice locations were created by the CT scan process, so they
+% aren't all at "nice" distances. This function selects the desired
+% cross-sections based on a method. 
+% 
+% 
+% INPUTS:
+%       method: String that determines how the cross-sections will be
+%       selected. There are two methods: 'samedist' and 'all'. However, the
+%       way later code was constructed means the only method that was used
+%       was 'samedist'.
+% 
+%       stalknums: A row vector of integers corresponding to the stalk
+%       numbers. These integers will be somewhere between 1 and 980.
+% 
+%       dist: A number (integer or float) that determines the desired slice
+%       location, relative to the node. It can be positive or negative, and
+%       is measured in mm. Maximum values should be approximately +/- 40mm.
+% 
+%       Table: A table containing the downsampled, centered, and rotated
+%       cross-section boundaries. This is the table that is output from
+%       Jared's script. Usually this will be Stalk_TableDCR, which loads as
+%       a variable in StalksDCR_360pts_V2.mat.
+% 
+%       error_indices: Indices that had problems in pre-processing and
+%       should be ignored. Also loads as a variable in
+%       StalksDCR_360pts_V2.mat.
+% 
+%       npoints: The number of sample points the cross-sections have been
+%       downsampled to. This was previously determined by Jared's
+%       preprocessing script, and is only here to carry over the proper
+%       indexing.
+% 
+%       SaveName: String name to save the data to as a .mat file. Must
+%       include .mat in the name.
+%       
+% OUTPUTS:
+%       N/A
+%
+%
+% NOTES: 
+%       Other outputs:
+%           - Named .mat file that contains all the ellipse fit and PCA
+%           data, which will be used when running transverse_wrapper_V4.m.
+%       
+% 
+% 
+% VERSION HISTORY:
+% V1 - 
+% V2 - 
+% V3 - 
+%
+% -------------------------------------------------------------------------
 
 allrows = size(Table,1);
 
 switch method
+    
     % Choose a number of cross-sections that are all at the same distance
     % from the node
     case 'samedist'
         indices = zeros(1,length(stalknums));
-%         dist = input('Choose approximate slice distance to use: ');
+
         
         % Step through stalks of interest (defined by range values)
         stalk = 1;
@@ -592,19 +692,11 @@ switch method
         save(SaveFile,'ext_X','ext_Y','int_X','int_Y','ext_T','ext_Rho',...
             'int_T','int_Rho','avg_rind_thick','indices','selectedTable',...
             'npoints','deletesections');
+
         
-        
-        
-    case 'wholestalk'
-        % Choose a range of stalk numbers, and all the slices from each of
-        % the chosen stalks will be chosen
-        
-        
-        
-    case 'all'
-        % Chooses every slice and converts it into an array format for
-        % working with more easily.
-        
+    % Choose all cross-sections (not really useful in hindsight, but was
+    % written before full PCA process was defined)
+    case 'all'        
         % Save compiled slices in arrays for downstream use
         ext_X =     makearray(Table,'Ext_X',npoints);
         ext_Y =     makearray(Table,'Ext_Y',npoints);

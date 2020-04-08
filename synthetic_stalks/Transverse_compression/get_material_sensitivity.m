@@ -95,7 +95,9 @@ B = minRmaxP;
 C = maxRmaxP;
 D = maxRminP;
 
-%% Paired t-tests
+nbins = 8;
+
+%% Paired t-tests and visual distribution plots
 % Comparison 1: AB
 diffAB = A-B;
 meansAB = mean(diffAB);
@@ -106,6 +108,34 @@ stdAB = std(diffAB);
 [H_AB3,P_AB3,CI_AB3,STATS_AB3] = ttest(A(:,4),B(:,4));
 [H_AB4,P_AB4,CI_AB4,STATS_AB4] = ttest(A(:,5),B(:,5));
 [H_AB5,P_AB5,CI_AB5,STATS_AB5] = ttest(A(:,6),B(:,6));
+
+figure(1);
+subplot(1,4,1);
+group = [ones(size(A(:,5))); 2*ones(size(B(:,5)))];
+boxplot([A(:,5);B(:,5)],group);
+title('Rind sensitivity');
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'A','B'});
+
+subplot(1,4,2);
+boxplot(diffAB(:,5));
+title({'A-B sensitivity','diffs (Rind)'});
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'A-B'});
+
+subplot(1,4,3);
+group = [ones(size(A(:,6))); 2*ones(size(B(:,6)))];
+boxplot([A(:,6);B(:,6)],group);
+title('Pith sensitivity');
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'A','B'});
+
+subplot(1,4,4);
+boxplot(diffAB(:,6));
+title({'A-B sensitivity','diffs (Pith)'});
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'A-B'});
+
 
 
 % Comparison 2: BC
@@ -119,6 +149,34 @@ stdBC = std(diffBC);
 [H_BC4,P_BC4,CI_BC4,STATS_BC4] = ttest(B(:,5),C(:,5));
 [H_BC5,P_BC5,CI_BC5,STATS_BC5] = ttest(B(:,6),C(:,6));
 
+figure(2);
+subplot(1,4,1);
+group = [ones(size(B(:,5))); 2*ones(size(C(:,5)))];
+boxplot([B(:,5);C(:,5)],group);
+title('Rind sensitivity');
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'B','C'});
+
+subplot(1,4,2);
+boxplot(diffBC(:,5));
+title({'B-C sensitivity','diffs (Rind)'});
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'B-C'});
+
+subplot(1,4,3);
+group = [ones(size(B(:,6))); 2*ones(size(C(:,6)))];
+boxplot([B(:,6);C(:,6)],group);
+title('Pith sensitivity');
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'B','C'});
+
+subplot(1,4,4);
+boxplot(diffBC(:,6));
+title({'B-C sensitivity','diffs (Pith)'});
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'B-C'});
+
+
 % Comparison 3: CD
 diffCD = C-D;
 meansCD = mean(diffCD);
@@ -129,6 +187,34 @@ stdCD = std(diffCD);
 [H_CD3,P_CD3,CI_CD3,STATS_CD3] = ttest(C(:,4),D(:,4));
 [H_CD4,P_CD4,CI_CD4,STATS_CD4] = ttest(C(:,5),D(:,5));
 [H_CD5,P_CD5,CI_CD5,STATS_CD5] = ttest(C(:,6),D(:,6));
+
+figure(3);
+subplot(1,4,1);
+group = [ones(size(C(:,5))); 2*ones(size(D(:,5)))];
+boxplot([C(:,5);D(:,5)],group);
+title('Rind sensitivity');
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'C','D'});
+
+subplot(1,4,2);
+boxplot(diffCD(:,5));
+title({'C-D sensitivity','diffs (Rind)'});
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'C-D'});
+
+subplot(1,4,3);
+group = [ones(size(C(:,6))); 2*ones(size(D(:,6)))];
+boxplot([C(:,6);D(:,6)],group);
+title('Pith sensitivity');
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'C','D'});
+
+subplot(1,4,4);
+boxplot(diffCD(:,6));
+title({'C-D sensitivity','diffs (Pith)'});
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'C-D'});
+
 
 % Comparison 4: DA
 diffDA = D-A;
@@ -141,6 +227,35 @@ stdDA = std(diffDA);
 [H_DA4,P_DA4,CI_DA4,STATS_DA4] = ttest(D(:,5),A(:,5));
 [H_DA5,P_DA5,CI_DA5,STATS_DA5] = ttest(D(:,6),A(:,6));
 
+figure(4);
+subplot(1,4,1);
+group = [ones(size(D(:,5))); 2*ones(size(A(:,5)))];
+boxplot([D(:,5);A(:,5)],group);
+title('Rind sensitivity');
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'D','A'});
+
+subplot(1,4,2);
+boxplot(diffDA(:,5));
+title({'D-A sensitivity','diffs (Rind)'});
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'D-A'});
+
+subplot(1,4,3);
+group = [ones(size(D(:,6))); 2*ones(size(A(:,6)))];
+boxplot([D(:,6);A(:,6)],group);
+title('Pith sensitivity');
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'D','A'});
+
+subplot(1,4,4);
+boxplot(diffDA(:,6));
+title({'D-A sensitivity','diffs (Pith)'});
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'D-A'});
+
+
+
 % Comparison 5: AC
 diffAC = A-C;
 meansAC = mean(diffAC);
@@ -152,6 +267,34 @@ stdAC = std(diffAC);
 [H_AC4,P_AC4,CI_AC4,STATS_AC4] = ttest(A(:,5),C(:,5));
 [H_AC5,P_AC5,CI_AC5,STATS_AC5] = ttest(A(:,6),C(:,6));
 
+figure(5);
+subplot(1,4,1);
+group = [ones(size(A(:,5))); 2*ones(size(C(:,5)))];
+boxplot([A(:,5);C(:,5)],group);
+title('Rind sensitivity');
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'A','C'});
+
+subplot(1,4,2);
+boxplot(diffAC(:,5));
+title({'A-C sensitivity','diffs (Rind)'});
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'A-C'});
+
+subplot(1,4,3);
+group = [ones(size(A(:,6))); 2*ones(size(C(:,6)))];
+boxplot([A(:,6);C(:,6)],group);
+title('Pith sensitivity');
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'A','C'});
+
+subplot(1,4,4);
+boxplot(diffAC(:,6));
+title({'A-C sensitivity','diffs (Pith)'});
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'A-C'});
+
+
 % Comparison 6: BD
 diffBD = B-D;
 meansBD = mean(diffBD);
@@ -162,6 +305,33 @@ stdBD = std(diffBD);
 [H_BD3,P_BD3,CI_BD3,STATS_BD3] = ttest(B(:,4),D(:,4));
 [H_BD4,P_BD4,CI_BD4,STATS_BD4] = ttest(B(:,5),D(:,5));
 [H_BD5,P_BD5,CI_BD5,STATS_BD5] = ttest(B(:,6),D(:,6));
+
+figure(6);
+subplot(1,4,1);
+group = [ones(size(B(:,5))); 2*ones(size(D(:,5)))];
+boxplot([B(:,5);D(:,5)],group);
+title('Rind sensitivity');
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'B','D'});
+
+subplot(1,4,2);
+boxplot(diffBD(:,5));
+title({'B-D sensitivity','diffs (Rind)'});
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'B-D'});
+
+subplot(1,4,3);
+group = [ones(size(B(:,6))); 2*ones(size(D(:,6)))];
+boxplot([B(:,6);D(:,6)],group);
+title('Pith sensitivity');
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'B','D'});
+
+subplot(1,4,4);
+boxplot(diffBD(:,6));
+title({'B-D sensitivity','diffs (Pith)'});
+ylabel('Normalized sensitivity');
+set(gca,'XTickLabel',{'B-D'});
 
 
 %% Export data

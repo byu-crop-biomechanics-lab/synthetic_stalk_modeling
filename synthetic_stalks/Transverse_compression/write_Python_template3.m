@@ -53,7 +53,7 @@ Template = {
     '#y location of reference point 1';
     'RP2y = ';
     '#influence area of fake contact constraint';
-    'influence = 1000';
+    'influence = 0.004';
     '######################################################################################';
     '';
     '#Define additional parameters';

@@ -250,29 +250,29 @@ er.LineWidth = 0.5;
 % Percent error
 % Cumulative NEPC cases
 figure(5);
-% boxplot(percent_box,percent_boxlabels,'Notch','on','symbol','');
-boxplot(percent_box,percent_boxlabels,'BoxStyle','filled','symbol','','Colors','k');
+boxplot(percent_box,percent_boxlabels,'Notch','on','symbol','');
+% boxplot(percent_box,percent_boxlabels,'BoxStyle','filled','symbol','','Colors','k');
 ylim([-4,2]);
-set(gca,'YTick',-4:0.5:2,'XTickLabelRotation',90);
+set(gca,'YTick',-4:0.5:2,'XTickLabelRotation',-30);
 ytickformat('percentage');
-title('Reaction Error Distributions');
+% title('Reaction Error Distributions');
 ylabel('Error');
-% hold on
-% yline(0);
-% hold off
+hold on
+yline(0);
+hold off
 
 % Individual NEPC cases
 figure(6);
-% boxplot(percent_box_ind,percent_boxlabels_ind,'Notch','on','symbol','');
-boxplot(percent_box_ind,percent_boxlabels_ind,'BoxStyle','filled','symbol','','Colors','k');
+boxplot(percent_box_ind,percent_boxlabels_ind,'Notch','on','symbol','');
+% boxplot(percent_box_ind,percent_boxlabels_ind,'BoxStyle','filled','symbol','','Colors','k');
 ylim([-6.5,2.5]);
-set(gca,'YTick',-6.5:0.5:2.5,'XTickLabelRotation',90);
+set(gca,'YTick',-6.5:0.5:2.5,'XTickLabelRotation',-30);
 ytickformat('percentage');
-title('Reaction Error Distributions');
+% title('Reaction Error Distributions');
 ylabel('Error');
-% hold on
-% yline(0);
-% hold off
+hold on
+yline(0);
+hold off
 
 % % Relative percent error
 % figure(7);
