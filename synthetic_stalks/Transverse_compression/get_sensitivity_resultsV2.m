@@ -3,8 +3,7 @@ function [SensitivityTable] = get_sensitivity_resultsV2(Data,pct_change)
 % AUTHOR: Ryan Larson
 % DATE: 2/3/2020
 %
-% PURPOSE: Wrap the majority of the data production process into a single
-% script
+% PURPOSE: Calculate sensitivities and plot them for each variable
 % 
 % 
 % INPUTS:

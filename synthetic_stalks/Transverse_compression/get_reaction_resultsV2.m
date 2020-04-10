@@ -1,9 +1,47 @@
 function [cumulative,cumulative_errbar,cumulative_err,individual,individual_errbar,individual_err,percents,percent_err,Results_new] = get_reaction_resultsV2(AllGoodReactionData)
-% get_reaction_resultsV2.m: Take the text file structure of the NEPC
-% finite-element results and reorganize the data into an array, with the
-% rows being the cross-section number and the columns being the case
-% number. Cases 0-6 are used.
-% clear; close;
+% FILENAME: get_reaction_resultsV2.m
+% AUTHOR: Ryan Larson
+% DATE: 1/2020
+%
+% PURPOSE: Calculate the reaction results found in Results cell array (as
+% of 4/8/2020, this is found in Results_AllPCA.mat).
+% 
+% 
+% INPUTS:
+%       AllGoodReactionData: 
+%       
+% OUTPUTS:
+%       cumulative: 
+% 
+%       cumulative_errbar:
+% 
+%       cumulative_err:
+% 
+%       individual:
+% 
+%       individual_errbar:
+% 
+%       individual_err:
+% 
+%       percents: 
+% 
+%       percent_err:
+% 
+%       Results_new: 
+%
+%
+% NOTES: 
+%       
+%       
+% 
+% 
+% VERSION HISTORY:
+% V1 - Designed to work with data from single slice locations only.
+% V2 - Designed to work with ResultsCell format for combining results of
+% multiple slice locations at once.
+% V3 - 
+%
+% -------------------------------------------------------------------------
 
 close;
 set(0,'DefaultFigureWindowStyle','docked');

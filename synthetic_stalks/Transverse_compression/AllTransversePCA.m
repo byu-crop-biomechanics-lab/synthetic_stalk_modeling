@@ -37,6 +37,9 @@ hold off
 close all;
 set(0,'DefaultFigureWindowStyle','docked');
 
+% ADD COMMENTS TO ADDRESS THE PURPOSE OF THESE VARIABLES
+
+
 ALL_PROBLEM_INDICES = {};
 ALL_R_ext           = [];
 ALL_R_int           = [];
@@ -720,7 +723,6 @@ end
 
 
 end
-
 
 
 function find_flip_notches(ChooseSectionsOutput,SaveName)
