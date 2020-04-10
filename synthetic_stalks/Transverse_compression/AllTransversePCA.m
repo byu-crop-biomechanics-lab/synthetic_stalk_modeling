@@ -1,4 +1,4 @@
-function AllTransversePCA(slice_dists,SaveName)
+function AllTransversePCA(slice_dists,DataMat,SaveName)
 % FILENAME: AllTransversePCA.m
 % AUTHOR: Ryan Larson
 % DATE: 1/17/2020
@@ -11,6 +11,10 @@ function AllTransversePCA(slice_dists,SaveName)
 %       acccount when running PCA (MAYBE MAKE IT POSSIBLE TO LATER CHOOSE
 %       WHICH SLICE DISTANCES ACTUALLY GET USED IN THE PCA GOING INTO
 %       TRANSVERSE_WRAPPER_V4.M)
+% 
+%       DataMat: String name of the .mat file where the downsampled,
+%       centered, rotated data table is kept. For example,
+%       'StalksDCR_360pts_V2.mat'.
 %       
 %       SaveName: String name to save the data to as a .mat file. Must
 %       include .mat in the name.
@@ -32,7 +36,7 @@ function AllTransversePCA(slice_dists,SaveName)
 % V3 - 
 %
 % -------------------------------------------------------------------------
-load StalksDCR_360pts_V2.mat
+load(DataMat)
 hold off
 close all;
 set(0,'DefaultFigureWindowStyle','docked');
