@@ -1139,7 +1139,6 @@ function [r] = rpts(N,theta,dmaj,dmin)
 end
 
 
-
 function [exported_array] = makearray(Table,Variable,npoints)
 % FILENAME: makearray.m
 % AUTHOR: Ryan Larson

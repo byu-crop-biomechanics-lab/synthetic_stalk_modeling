@@ -3,18 +3,33 @@ function TransverseSensitivityV1(slices,stalknums,AllSlicesPCA,percent_change,nu
 % AUTHOR: Ryan Larson
 % DATE: 1/24/2020
 %
-% PURPOSE: Wrap the majority of the data production process into a single
-% script
+% PURPOSE: Create Python scripts to be fed into Abaqus for a sensitivity
+% study. This script can be used for any of the cross-sections in the PCA
+% data, depending on values chosen for slices and stalknums.
 % 
 % 
 % INPUTS:
-%       slices - A subset of the input that went into AllTransversePCA.m (as of
-%       1/22/2020, this was [-40 -30 -20 -15 -10 -5 0 5 10 15 20 30 40])
-%       stalknums - A vector of unique integers from 1 to 980 that determines
-%       which stalks to sample from (use randperm(980,K) to choose K
-%       unique integers from 1 to 980)
-%       AllSlicesPCA - AllSlicesPCA.mat
-%       s
+%       slices:  A subset of the input that went into AllTransversePCA.m
+%       (as of 1/22/2020, this was
+%       [-40 -30 -20 -15 -10 -5 0 5 10 15 20 30 40])
+% 
+%       stalknums: A vector of unique integers from 1 to 980 that
+%       determines which stalks to sample from (use randperm(980,K) to
+%       choose K unique integers from 1 to 980)
+% 
+%       AllSlicesPCA: PCA data output from AllTransversePCa.m. Enter this
+%       as a string ('AllSlicesPCA.mat').
+% 
+%       percent_change: The percentage to change each parameter value by
+%       for the sensitivity study. Enter as a decimal (i.e. 10% would be
+%       0.1)
+% 
+%       numNEPCs: Number of principal components to include in the base
+%       model (Ryan used 5)
+% 
+%       plotting: Enter 1 to plot, 0 to not plot. This is useful for
+%       checking outputs.
+%       
 % OUTPUTS:
 %       - Several .mat files with variables saved from the steps in the
 %       process. These are made available for troubleshooting purposes.
@@ -26,9 +41,112 @@ function TransverseSensitivityV1(slices,stalknums,AllSlicesPCA,percent_change,nu
 % NOTES: 
 %       - 
 % 
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%       make_case.m: Create a specimen-specific, model-specific Python
+%       script that runs the chosen model in transverse compression when
+%       fed to ABAQUS.
 % 
+%       writespline_V2.m: A subroutine of make_case.m. Convert boundary
+%       data from Matlab arrays to strings that can be used in the Python
+%       scripts.
+% 
+%       rpts.m: Create an ellipse from major and minor diameter values.
+% 
+%       get_materials.m: Generate rind and pith stiffnesses to use in a
+%       given model.
+% 
+% PSEUDO-CODE:
+%   Load PCA data.
+%   Determine factor for multiplying parameters by in sensitivity study.
+%   
+%   for each slice distance:
+%       Find the place in the PCA and ellipse data where the data for the
+%       current slice starts.
+%       
+%       for each stalk:
+%           Get the actual index for the chosen slice (adjusting for cases
+%           that were deleted due to bad ellipse fits or otherwise).
+% 
+%           Generate a base approximation profile (base case) using ellipse
+%           fit data the first five principal components.
+% 
+%           Generate rind and pith material properties to be used for each
+%           sensitivity case.
+% 
+%           Create a Python script for the base case (case 0).
+% 
+%           Calculate a new ellipse fit with the major diameter stretched
+%           by the sensitivity factor (all other parameters the same as the
+%           base case).
+%           Create a Python script for the major diameter sensitivity case
+%           (case 1).
+% 
+%           Calculate a new ellipse fit with the minor diameter stretched
+%           by the sensitivity factor (all other parameters the same as the
+%           base case).
+%           Create a Python script for the minor diameter sensitivity case
+%           (case 2).
+% 
+%           Use the base case exterior profile to calculate a new ellipse
+%           interior using the base rind thickness multiplied by the
+%           sensitivity factor (all other parameters the same as the base
+%           case).
+%           Create a Python script for the rind thickness sensitivity case
+%           (case 3).
+% 
+%           Use the base case geometry, and multiply the rind stiffness by
+%           the sensitivity factor (all other parameters the same as the
+%           base case).
+%           Create a Python script for the rind stiffness sensitivity case
+%           (case 4).
+% 
+%           Use the base case geometry, and multiply the pith stiffness by
+%           the sensitivity factor (all other parameters the same as the
+%           base case).
+%           Create a Python script for the pith stiffness sensitivity case
+%           (case 5).
+%   
+%           Use the base case ellipse parameters and add in the principal
+%           component features, with the 1st principal component scaling
+%           factor multiplied by the sensitivity factor (all other
+%           parameters the same as the base case).
+%           Create a Python script for the PC 1 sensitivity case (case 6).
+% 
+%           Use the base case ellipse parameters and add in the principal
+%           component features, with the 3nd principal component scaling
+%           factor multiplied by the sensitivity factor (all other
+%           parameters the same as the base case).
+%           Create a Python script for the PC 2 sensitivity case (case 7).
+% 
+%           Use the base case ellipse parameters and add in the principal
+%           component features, with the 3rd principal component scaling
+%           factor multiplied by the sensitivity factor (all other
+%           parameters the same as the base case).
+%           Create a Python script for the PC 3 sensitivity case (case 8).
+% 
+%           Use the base case ellipse parameters and add in the principal
+%           component features, with the 4th principal component scaling
+%           factor multiplied by the sensitivity factor (all other
+%           parameters the same as the base case).
+%           Create a Python script for the PC 4 sensitivity case (case 9).
+% 
+%           Use the base case ellipse parameters and add in the principal
+%           component features, with the 5th principal component scaling
+%           factor multiplied by the sensitivity factor (all other
+%           parameters the same as the base case).
+%           Create a Python script for the PC 5 sensitivity case (case 10).
+% 
+%       end
+% 
+%   end
+%           
+% 
+% 
+% -------------------------------------------------------------------------
 % VERSION HISTORY:
-% V1 - 
+% V1 - General sensitivity study, best applied to all data being examined
+% with transverse_wrapper_V4.m
 % V2 - 
 % V3 - 
 %
@@ -38,16 +156,10 @@ function TransverseSensitivityV1(slices,stalknums,AllSlicesPCA,percent_change,nu
 set(0,'DefaultFigureWindowStyle','docked');
 load(AllSlicesPCA);
 group = 1;
-% numNEPCs = 5;
 problem_slice_stalk = [];
 
-% percent_change = 0.05;
+% Get multiplier based on the desired percent change for each parameter
 plus_change = 1 + percent_change;
-minus_change = 1 - percent_change;
-
-% ncases = length(slices)*length(stalknums)*; % The number of unique generated cases
-% Rind = zeros(ncases,3);
-% Pith = zeros(ncases,3);
 
 write_Python_template3;  % Create Template cell array that can be copied and used to make individualized Python scripts
 
@@ -56,64 +168,73 @@ write_Python_template3;  % Create Template cell array that can be copied and use
 % Iterate through slices (determine group number here)
 for slice = slices
     
+    % Determine the row in the PCA data where the data for the current
+    % slice starts.
     sliceidx = find(slice_dists == slice);
     startidx = slice_startstop(sliceidx,2);
     
-    % For each slice position, iterate through stalknums
+    % For each slice position, iterate through the stalks
     for stalk = stalknums
         % Get the actual index of the chosen data and create a Python script for
         % that case, numbering by group
         indices = cell2mat(adj_indices(sliceidx,1));
         stalkidx = find(indices == stalk);
         
+        % If the chosen stalk had a bad ellipse fit, catch this so further
+        % cases can be generated if needed.
         if isempty(stalkidx)
             problem_slice_stalk = [problem_slice_stalk; slice, stalk];
             continue
         end
         
+        % Calculate the row index corresponding to the current specific
+        % cross-section, as found in the PCA data
         adj_ind = startidx + stalkidx - 1;
         
         %% Create case from ellipse and PCA data (using "ALL" variables)
-        
         GROUP = sprintf('%d',group); % Group number
         ID = sprintf('%d',stalk); % Cross-section number
         
         write_Python_template3;
         
-        % Get material properties
+        % Get random material properties
         material_method = 'random';
         [Erind,Epith] = get_materials('random');
         
-        % Make profile that includes NEPCs 1-5
+        % Make profile that includes the chosen number of principal
+        % components
         NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
 
         for k = 1:numNEPCs
-            % Add all NEPCs up to the current NEPC to the ellipse in polar coordinates
+            % Add all PCs (through the current PC) to the ellipse in polar coordinates
             NEPC_ext = NEPC_ext + ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
         end
         
+        % Calculate the base case exterior and interior profiles
         base_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
         base_int = normintV2(base_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
         
-%         Rnew_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
-% %       Rnew_int = ALL_ELLIPSE_R_int(adj_ind,:) - NEPC_ext;
-%         Rnew_int = normintV2(Rnew_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
-        
         %% Base case (case 0)
+        % Write the Python script for the base case
         case_num = 0;
         Script = Template; % Reset the script template
         make_case(case_num,adj_ind,ID,GROUP,base_ext,base_int,ALL_ELLIPSE_T,Script,Erind,Epith)
         
         %% Change A (case 1)
+        % Write the Python script for case 1
         % Adjust exterior points in polar
         Tnew = ALL_ELLIPSE_T(adj_ind,:);
+        
+        % Stretch the major diameter of the ellipse fit by percent_change
         Aplus_ellipse = rpts(360,ALL_ELLIPSE_T(adj_ind,:),(plus_change*ALL_A(adj_ind)),ALL_B(adj_ind));
+        
+        % Create the new profile using the new ellipse
         Aplus_ext = Aplus_ellipse - NEPC_ext;
 
         % Calculate the interior points
         Aplus_int = normintV2(Aplus_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
 
-        % Check shape
+        % Check shape 
         if plotting == 1
             polarplot(Tnew,Aplus_ext,'r');
             hold on
@@ -125,7 +246,6 @@ for slice = slices
             close;
         end
         
-        
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
@@ -133,13 +253,17 @@ for slice = slices
         
 
         %% Change B (case 2)
+        % Write the Python script for case 2
         % Adjust exterior points in polar
         Tnew = ALL_ELLIPSE_T(adj_ind,:);
+        
+        % Stretch the minor diameter of the ellipse fit by percent_change
         Bplus_ellipse = rpts(360,ALL_ELLIPSE_T(adj_ind,:),(ALL_A(adj_ind)),plus_change*ALL_B(adj_ind));
+        
+        % Create the new profile using the new ellipse
         Bplus_ext = Bplus_ellipse - NEPC_ext;
 
         % Calculate the interior points
-%         Bplus_int      = Bplus_ext - AVG_RIND_T(i);
         Bplus_int = normintV2(Bplus_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
 
         % Check shape
@@ -160,52 +284,50 @@ for slice = slices
         make_case(case_num,adj_ind,ID,GROUP,Bplus_ext,Bplus_int,Tnew,Script,Erind,Epith);
 
         
-%         %% Change T (case 3)
-%         Tnew = ALL_ELLIPSE_T(adj_ind,:);
-% %         base_ext = base_ext;
-% 
-%         % Calculate the interior points
-% %         Tplus_int = base_ext - plus_change*ALL_AVG_RIND_T(adj_ind);
-%         Tplus_int = normintV2(base_ext,ALL_ELLIPSE_T(adj_ind,:),plus_change*ALL_AVG_RIND_T(adj_ind));
-% 
-%         % Check shape
-%         if plotting == 1
-%             polarplot(Tnew,base_ext,'r');
-%             hold on
-%             polarplot(Tnew,Tplus_int,'r');
-%             polarplot(Tnew,base_ext,'b');
-%             polarplot(Tnew,base_int,'b');
-%             title('Changing T');
-%             pause();
-%             close;
-%         end
-% 
-%         % Create cases
-%         case_num = case_num + 1;
-%         Script = Template; % Reset the script template    
-%         make_case(case_num,adj_ind,ID,GROUP,base_ext,Tplus_int,Tnew,Script,Erind,Epith);        
-%         
-%         %% Change Erind (case 4)
-%         Tnew = ALL_ELLIPSE_T(adj_ind,:);
-%         
-%         % Calculate the new Erind
-%         Erind_plus = Erind*plus_change;
-% 
-%         % Create cases
-%         case_num = case_num + 1;
-%         Script = Template; % Reset the script template    
-%         make_case(case_num,adj_ind,ID,GROUP,base_ext,base_int,Tnew,Script,Erind_plus,Epith);        
-%         
-%         %% Change Epith (case 5)
-%         Tnew = ALL_ELLIPSE_T(adj_ind,:);
-%         
-%         % Calculate the new Erind
-%         Epith_plus = Epith*plus_change;
-% 
-%         % Create cases
-%         case_num = case_num + 1;
-%         Script = Template; % Reset the script template    
-%         make_case(case_num,adj_ind,ID,GROUP,base_ext,base_int,Tnew,Script,Erind,Epith_plus);        
+        %% Change T (case 3)
+        Tnew = ALL_ELLIPSE_T(adj_ind,:);
+
+        % Calculate the interior points
+        Tplus_int = normintV2(base_ext,ALL_ELLIPSE_T(adj_ind,:),plus_change*ALL_AVG_RIND_T(adj_ind));
+
+        % Check shape
+        if plotting == 1
+            polarplot(Tnew,base_ext,'r');
+            hold on
+            polarplot(Tnew,Tplus_int,'r');
+            polarplot(Tnew,base_ext,'b');
+            polarplot(Tnew,base_int,'b');
+            title('Changing T');
+            pause();
+            close;
+        end
+
+        % Create cases
+        case_num = case_num + 1;
+        Script = Template; % Reset the script template    
+        make_case(case_num,adj_ind,ID,GROUP,base_ext,Tplus_int,Tnew,Script,Erind,Epith);        
+        
+        %% Change Erind (case 4)
+        Tnew = ALL_ELLIPSE_T(adj_ind,:);
+        
+        % Calculate the new Erind
+        Erind_plus = Erind*plus_change;
+
+        % Create cases
+        case_num = case_num + 1;
+        Script = Template; % Reset the script template    
+        make_case(case_num,adj_ind,ID,GROUP,base_ext,base_int,Tnew,Script,Erind_plus,Epith);        
+        
+        %% Change Epith (case 5)
+        Tnew = ALL_ELLIPSE_T(adj_ind,:);
+        
+        % Calculate the new Erind
+        Epith_plus = Epith*plus_change;
+
+        % Create cases
+        case_num = case_num + 1;
+        Script = Template; % Reset the script template    
+        make_case(case_num,adj_ind,ID,GROUP,base_ext,base_int,Tnew,Script,Erind,Epith_plus);        
         
         %% Change NEPC 1 (case 6)
         if numNEPCs >= 1
@@ -224,7 +346,6 @@ for slice = slices
             end
 
             R_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
-    %         R_int = R_ext - ALL_AVG_RIND_T(adj_ind);
             R_int = normintV2(R_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
 
             % Check shape
@@ -263,7 +384,6 @@ for slice = slices
             end
 
             R_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
-    %         R_int = R_ext - ALL_AVG_RIND_T(adj_ind);
             R_int = normintV2(R_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
 
             % Check shape
@@ -302,7 +422,6 @@ for slice = slices
             end
 
             R_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
-    %         R_int = R_ext - ALL_AVG_RIND_T(adj_ind);
             R_int = normintV2(R_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
 
             % Check shape
@@ -341,7 +460,6 @@ for slice = slices
             end
 
             R_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
-    %         R_int = R_ext - ALL_AVG_RIND_T(adj_ind);
             R_int = normintV2(R_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
 
             % Check shape
@@ -380,7 +498,6 @@ for slice = slices
             end
 
             R_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
-    %         R_int = R_ext - ALL_AVG_RIND_T(adj_ind);
             R_int = normintV2(R_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
 
             % Check shape
@@ -407,14 +524,6 @@ for slice = slices
 end
 
 set(0,'DefaultFigureWindowStyle','normal');
-
-% FolderName = pwd;
-% Materials = 'MaterialsUsed.mat';
-% SaveFile = fullfile(FolderName, Materials);
-% save(SaveFile,'Rind','Pith');
-
-
-
 
 
 

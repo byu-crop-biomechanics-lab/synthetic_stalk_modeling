@@ -60,6 +60,9 @@ function PrepSections_V2(indices, npoints, Table, SaveName)
 %       number of downsampled cross-section points.
 %
 % SUBROUTINES:
+%       fit_ellipse_R2.m:
+% 
+% 
 %       
 %
 % NOTES: - Originally adapted from boundary_info_V4.m for PCA purposes
@@ -999,6 +1002,7 @@ Stalk_TableDCR = removevars(Stalk_TableDCR,{'Ext_X','Ext_Y','Int_X','Int_Y','xba
 
 N = size(Stalk_TableDCR,1);
 
+% Preparing variables to be put in cell arrays
 ext_xDCR = single(ext_xDCR);
 ext_yDCR = single(ext_yDCR);
 ext_tDCR = single(ext_tDCR);
@@ -1008,6 +1012,7 @@ int_yDCR = single(int_yDCR);
 int_tDCR = single(int_tDCR);
 int_rhoDCR = single(int_rhoDCR);
 
+% Create empty cells to house the data
 Ext_X = cell(N,1);
 Ext_Y = cell(N,1);
 Ext_T = cell(N,1);
