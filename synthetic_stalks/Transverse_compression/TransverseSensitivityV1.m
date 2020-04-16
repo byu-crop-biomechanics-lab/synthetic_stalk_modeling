@@ -589,32 +589,6 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
     outer_spline = writespline_V2(len,section_ext);
     inner_spline = writespline_V2(len,section_int);
     
-%     % Calculate the random material properties from a normal distribution.
-%     % Bound with 95% confidence interval, calculated from transverse
-%     % material properties used in another paper.
-%     Erind_mean = 8.0747e-04;
-%     Erind_stdev = 3.3517e-04;
-%     Erind_95 = [6.7414e-04 9.4081e-04];
-%     Epith_mean = 2.5976e-05;
-%     Epith_stdev = 1.0303e-05;
-%     Epith_95 = [2.1878e-05 3.0075e-05];
-%     
-%     % Generate Erind from normal distribution
-%     while 1
-%         Erind = normrnd(Erind_mean,Erind_stdev);
-%         if Erind >= Erind_95(1) && Erind <= Erind_95(2)
-%             break
-%         end
-%     end
-%     
-%     % Generate Epith from normal distribution
-%     while 1
-%         Epith = normrnd(Epith_mean,Epith_stdev);
-%         if Epith >= Epith_95(1) && Epith <= Epith_95(2)
-%             break
-%         end
-%     end
-    
     rindE = sprintf('%0.5g',Erind);
     pithE = sprintf('%0.5g',Epith);
 
