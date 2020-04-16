@@ -22,8 +22,19 @@ function [r] = rpts(N,theta,dmaj,dmin)
 %
 % NOTES:
 %       
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%   N/A
 % 
+% PSEUDO-CODE:
+%   Create an empty row vector of radius values with length N.
 % 
+%   for each element of the empty row vector:
+%       Calculate the radial value of the ellipse, given the major and
+%       minor diameters and the current angle.
+%   end
+% 
+% -------------------------------------------------------------------------
 % VERSION HISTORY:
 % V1 - 
 % V2 - 

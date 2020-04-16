@@ -178,7 +178,7 @@ for i = 1:nunique
         %% Base case (case 0)
         case_num = 0;
         Script = Template; % Reset the script template
-        make_case(case_num,adj_ind,ID,slice,GROUP,base_ext,base_int,ALL_ELLIPSE_T,Script,Erind,Epith)
+        make_caseV2(case_num,adj_ind,ID,slice,GROUP,base_ext,base_int,ALL_ELLIPSE_T,Script,Erind,Epith)
 
         %% Change A (case 1)
         % Adjust exterior points in polar
@@ -205,7 +205,7 @@ for i = 1:nunique
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,adj_ind,ID,slice,GROUP,Aplus_ext,Aplus_int,Tnew,Script,Erind,Epith);
+        make_caseV2(case_num,adj_ind,ID,slice,GROUP,Aplus_ext,Aplus_int,Tnew,Script,Erind,Epith);
 
 
         %% Change B (case 2)
@@ -233,7 +233,7 @@ for i = 1:nunique
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,adj_ind,ID,slice,GROUP,Bplus_ext,Bplus_int,Tnew,Script,Erind,Epith);
+        make_caseV2(case_num,adj_ind,ID,slice,GROUP,Bplus_ext,Bplus_int,Tnew,Script,Erind,Epith);
 
 
         %% Change T (case 3)
@@ -259,7 +259,7 @@ for i = 1:nunique
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,adj_ind,ID,slice,GROUP,base_ext,Tplus_int,Tnew,Script,Erind,Epith);        
+        make_caseV2(case_num,adj_ind,ID,slice,GROUP,base_ext,Tplus_int,Tnew,Script,Erind,Epith);        
 
         %% Change Erind (case 4)
         Tnew = ALL_ELLIPSE_T(adj_ind,:);
@@ -270,7 +270,7 @@ for i = 1:nunique
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,adj_ind,ID,slice,GROUP,base_ext,base_int,Tnew,Script,Erind_plus,Epith);        
+        make_caseV2(case_num,adj_ind,ID,slice,GROUP,base_ext,base_int,Tnew,Script,Erind_plus,Epith);        
 
         %% Change Epith (case 5)
         Tnew = ALL_ELLIPSE_T(adj_ind,:);
@@ -281,7 +281,7 @@ for i = 1:nunique
         % Create cases
         case_num = case_num + 1;
         Script = Template; % Reset the script template    
-        make_case(case_num,adj_ind,ID,slice,GROUP,base_ext,base_int,Tnew,Script,Erind,Epith_plus);        
+        make_caseV2(case_num,adj_ind,ID,slice,GROUP,base_ext,base_int,Tnew,Script,Erind,Epith_plus);        
         
         
         % ADD ADDITIONAL CASES HERE FOR PRINCIPAL COMPONENT
@@ -311,7 +311,7 @@ end
 
 
 %% Local functions %%
-function make_case(case_num,i,ID,slice,GROUP,R_ext,R_int,T,Script,Erind,Epith)
+function make_caseV2(case_num,i,ID,slice,GROUP,R_ext,R_int,T,Script,Erind,Epith)
     slicenum = sprintf('%d',slice); % Slice number
     if slice < 0
         slicenum = slicenum(2:end);

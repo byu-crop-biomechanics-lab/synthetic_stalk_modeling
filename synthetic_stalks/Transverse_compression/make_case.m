@@ -3,13 +3,19 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
 % AUTHOR: Ryan Larson
 % DATE: 11/25/19
 %
-% PURPOSE: Make a customized Python script corresponding to a unique model
+% PURPOSE: Make a customized Python script corresponding to a unique model.
+%       Takes a Python script template defined by a script like
+%       write_Python_template3.m or write_Python_template4.m and edits it
+%       according to the data for the input model (geometric profile
+%       information, material property information, names, etc.). The
+%       script template is a column vector of cell arrays that each contain
+%       a string, corresponding to a row of the resulting Python script. 
 % 
 % 
 % INPUTS:
 %       case_num: Case number (model approximation number)
 % 
-%       i: Adjusted index of the cross-section being worked with
+%       i: Adjusted index of the current cross-section
 % 
 %       ID: String version of the stalk number
 % 
@@ -36,12 +42,64 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
 %      
 % 
 % 
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%   writespline_V2.m: Take an array of XY data, where X is column 1 and Y
+%   is column 2, and turn those data points into a list of ordered pairs.
+%   This results in one very long string that can be inserted into the
+%   Python script; Abaqus uses this to define a spline profile when
+%   building a shape. 
+% 
+% 
+% PSEUDO-CODE:
+%   Make string versions of the case number, job name, and script name.
+% 
+%   Convert data from polar to Cartesian coordinates. The resulting Python
+%   script will be fed into Abaqus, which expects Cartesian coordinates.
+% 
+%   Multiply profile values by 1000 to scale to micrometers from
+%   millimeters (this is necessary for the transverse models as determined
+%   by a mesh convergence study).
+% 
+%   Transpose XY data to column vectors and combine. X is first column, Y
+%   is second column.
+% 
+%   Repeat the initial data point for exterior and interior to close the
+%   profile (all work before this has not repeated the initial point).
+% 
+%   Determine the data points that should be used for reference points.
+%   These should be at the top and bottom of the stalk cross-section when
+%   the major diameter of the cross-section is oriented along the X-axis. A
+%   simplification is made, where the points closest to theta = 90 degrees
+%   and theta = 270 degrees are chosen (this provides flexibility if data
+%   sampling is sparse or just doesn't line up exactly on integer degree
+%   values).
+% 
+%   Convert the reference point values to strings for insertion in the
+%   Python script.
+% 
+%   Write the exterior profile as a spline and save as a string.
+%   Write the interior profile as a spline and save as a string.
+% 
+%   Get string versions of rind and pith properties for inserting into the 
+%   Python script.
+% 
+%   Insert all the string variables that have been created into their
+%   appropriate positions in the Python script template (still a cell
+%   array).
+% 
+%   Turn the cell array into an actual Python script with a unique name and
+%   save. The file will be produced in the current working folder.
+% 
+% -------------------------------------------------------------------------
+% 
 % VERSION HISTORY:
 % V1 - 
 % V2 - 
 % V3 - 
 %
 % -------------------------------------------------------------------------
+    % Get string versions of case number, job name, and script name
     CASE = sprintf('%d',case_num);
     jobname = strcat('''Group_',GROUP,'_','Section_',ID,'_',CASE,'''');
     scriptname = strcat('Group_',GROUP,'_','Section_',ID,'_',CASE,'.py');
@@ -94,11 +152,11 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
     RP2Y = sprintf('%0.5g',Y_ext(ind270));
 
     % Write the spline points and save as a string
-    S = size(section_ext);
-    len = S(1);
-    outer_spline = writespline_V2(len,section_ext);
-    inner_spline = writespline_V2(len,section_int);
+    outer_spline = writespline_V2(section_ext);
+    inner_spline = writespline_V2(section_int);
     
+    % Get string versions of rind and pith properties for inserting into
+    % the Python script
     rindE = sprintf('%0.5g',Erind);
     pithE = sprintf('%0.5g',Epith);
 
@@ -122,4 +180,57 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
     fprintf(filePh,'%s\n',Script{:});
     fclose(filePh);
     
+end
+
+
+%% Localizing subfunctions
+function [spline] = writespline_V2(data)
+% FILENAME: writespline_V2.m
+% AUTHOR: Ryan Larson
+% DATE: 5/29/19
+%
+% PURPOSE: Turn vector spline data into a string
+% 
+% 
+% INPUTS:
+%       len: Length of the data (a holdover from previous versions, and
+%       isn't fully necessary for good code)
+% 
+%       data: The original boundary vector
+%       
+% OUTPUTS:
+%       spline: A string version of data that can be inserted in a Python
+%       script
+%
+% NOTES:
+%      
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%       N/A
+% 
+% PSEUDO-CODE:
+%   Read in data in XY column form (X is column 1, Y is column 2).
+% 
+%   Create an empty string for the spline data.
+% 
+%   for each row of data:
+%       Add an ordered pair (in string form) to the spline.
+%   end
+% 
+% 
+% VERSION HISTORY:
+% V1 - Writes spline to a text file which can then be copied manually into
+% a Python script (very old original process)
+% V2 - Made writespline a function that works with existing functions
+% instead of writing the spline to a text file
+% V3 - 
+%
+% -------------------------------------------------------------------------
+    %define empty spline and number of x-y points
+    spline = '';
+
+    %run through 1-column arrays of the x and y data points for the spline, and add to the end of the string with the correct formatting
+    for i = 1:size(data,1)
+        spline = strcat(spline,'(',num2str(data(i,1)),', ',num2str(data(i,2)),'), '); 
+    end
 end
