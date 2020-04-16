@@ -111,6 +111,9 @@ normalized_stderror = stderror/pct_change;
 
 % Local sensitivity bar chart
 
+% FIX: MAKE CASELABELS A FLEXIBLE-SIZE CELL ARRAY, BASED ON THE NUMBER OF
+% PRINCIPAL COMPONENTS INCLUDED IN THE SENSITIVITY
+% STUDY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 caselabels = {'Base'; 'Major Diameter'; 'Minor Diameter'; 'Rind Thickness';...
     'Rind Modulus'; 'Pith Modulus'; 'PC 1';'PC 2'; 'PC 3'; 'PC 4'; 'PC 5'};
 CaseLabels = categorical(caselabels);
