@@ -1,4 +1,4 @@
-function [SensitivityTable] = get_sensitivity_resultsV2(Data,pct_change)
+function [SensitivityTable] = get_sensitivity_resultsV2(Data,pct_change,stalknums,numNEPCs)
 % FILENAME: get_sensitivity_resultsV2.m
 % AUTHOR: Ryan Larson
 % DATE: 2/3/2020
@@ -7,10 +7,23 @@ function [SensitivityTable] = get_sensitivity_resultsV2(Data,pct_change)
 % 
 % 
 % INPUTS:
-%       
+%       Data:
+% 
+%       pct_change:
+% 
+%       slices: The same vector of slice locations that went into
+%       TransverseSensitivityV1.m.
+% 
+%       stalknums: The same vector of stalk numbers that went into
+%       TransverseSensitivityV1.m.
+% 
+%       numNEPCs: The number of principal components that was used in the
+%       sensitivity base case (the same value that was fed into
+%       TransverseSensitivityV1.m).
+% 
 %       
 % OUTPUTS:
-%       - 
+%       SensitivityTable: 
 %
 %
 % NOTES: 
@@ -30,8 +43,13 @@ load(Data,'ResultsCell');
 % CONVERT FROM MICROMETER SCALE TO MILLIMETER SCALE FOR LOOKING AT ACTUAL
 % VALUES
 
-rows = 70;
-cols = 11;
+% rows = 70;
+% cols = 11;
+
+% NOTE: TEST THE CODE WITH THE FOLLOWING TWO LINES BEFORE GOING FURTHER!!!!
+rows = length(stalknums);
+cols = 6 + numNEPCs;
+
 
 Results_new = NaN(rows,cols);
 
