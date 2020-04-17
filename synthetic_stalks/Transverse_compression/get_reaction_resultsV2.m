@@ -1,4 +1,4 @@
-function [cumulative,cumulative_errbar,cumulative_err,individual,individual_errbar,individual_err,percents,percent_err,Results_new] = get_reaction_resultsV2(AllGoodReactionData)
+function [cumulative,cumulative_errbar,cumulative_err,individual,individual_errbar,individual_err,percents,percent_err,Results_new] = get_reaction_resultsV2(AllGoodReactionData,stalknums,numNEPCs)
 % FILENAME: get_reaction_resultsV2.m
 % AUTHOR: Ryan Larson
 % DATE: 1/2020
@@ -50,8 +50,15 @@ load(AllGoodReactionData,'ResultsCell');
 % CONVERT FROM MICROMETER SCALE TO MILLIMETER SCALE FOR LOOKING AT ACTUAL
 % VALUES
 
-rows = 70;
-cols = 11;
+% ADJUST HERE TO TAKE IN THE NUMBER OF PRINCIPAL COMPONENTS AND STALKS USED
+% IN THE FEA ANALYSIS
+% rows = 70;
+% cols = 11;
+rows = length(stalknums);
+cols = 6 + numNEPCs;
+
+groups = length(ResultsCell);
+
 
 ylimits = 0;
 lowlim = 94;
@@ -59,7 +66,7 @@ uplim = 102;
 
 Results_new = NaN(rows,cols);
 
-for j = 1:5
+for j = 1:groups
     Results_temp = NaN(rows,cols);
     Results = cell2mat(ResultsCell(j));
 
@@ -180,18 +187,18 @@ caselabels_cumulative = {'Real'; 'Ellipse'; 'Ellipse + PC 1'; 'Ellipse + PCs 1-2
 cumulative = avg(1:7);
 cumulative_errbar = stderror(1:7);
 
-hold on
-
-er = errorbar(1:7,avg(1:7),stderror(1:7),stderror(1:7));
-er.Color = [0 0 0];
-er.LineStyle = 'none';
-er.LineWidth = 0.5;
+% hold on
+% 
+% er = errorbar(1:7,avg(1:7),stderror(1:7),stderror(1:7));
+% er.Color = [0 0 0];
+% er.LineStyle = 'none';
+% er.LineWidth = 0.5;
 
 % % Define noisy region as +/- 0.2% of the real cross-section response
 % yline(99.8,':k');
 % yline(100.2,':k');
 
-hold off
+% hold off
 
 % Individual NEPC bar chart ("99% of the way there" method)
 caselabels_individual = {'Real'; 'Ellipse'; 'Ellipse + PC 1'; 'Ellipse + PC 2';...
@@ -289,8 +296,7 @@ er.LineWidth = 0.5;
 % Cumulative NEPC cases
 figure(5);
 boxplot(percent_box,percent_boxlabels,'Notch','on','symbol','');
-% boxplot(percent_box,percent_boxlabels,'BoxStyle','filled','symbol','','Colors','k');
-ylim([-4,2]);
+% ylim([-4,2]);
 set(gca,'YTick',-4:0.5:2,'XTickLabelRotation',-30);
 ytickformat('percentage');
 % title('Reaction Error Distributions');
