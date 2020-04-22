@@ -1,4 +1,4 @@
-function [cumulative,cumulative_errbar,cumulative_err,individual,individual_errbar,individual_err,percents,percent_err,Results_new] = get_reaction_resultsV2(AllGoodReactionData)
+function [cumulative,cumulative_errbar,cumulative_err,individual,individual_errbar,individual_err,percents,percent_err,Results_new] = get_reaction_resultsV2(stalknums,numNEPCs,AllGoodReactionData)
 % FILENAME: get_reaction_resultsV2.m
 % AUTHOR: Ryan Larson
 % DATE: 1/2020
@@ -50,8 +50,8 @@ load(AllGoodReactionData,'ResultsCell');
 % CONVERT FROM MICROMETER SCALE TO MILLIMETER SCALE FOR LOOKING AT ACTUAL
 % VALUES
 
-rows = 70;
-cols = 11;
+rows = length(stalknums);
+cols = 1 + 2*numNEPCs;
 
 ylimits = 0;
 lowlim = 94;
@@ -106,10 +106,26 @@ end
 percent_err = percents - 100;
 percent_labels = cell(size(percent_err));
 
+% Create the labels according to the number of principal components used in
+% the study
+all_labels = {'Real','Ellipse','Ellipse + PC 1'};
+for i = 2:numNEPCs
+    addlabel = strcat('Ellipse + PCs 1-', num2str(i));
+    all_labels{1,(2+i)} = {addlabel};
+end
+
+PCcase = 1;
+for i = (3+numNEPCs):(1+2*numNEPCs)
+    PCcase = PCcase + 1;
+    addlabel = strcat('Ellipse + PC',' ',num2str(PCcase));
+    all_labels{1,(i)} = {addlabel};
+end
+
 for i = 1:size(percent_err,1)
-    percent_labels(i,:) = {'Real','Ellipse','Ellipse + PC 1','Ellipse + PCs 1-2',...
-        'Ellipse + PCs 1-3','Ellipse + PCs 1-4','Ellipse + PCs 1-5',...
-        'Ellipse + PC 2','Ellipse + PC 3','Ellipse + PC 4','Ellipse + PC 5'};
+    percent_labels(i,:) = all_labels;
+%     percent_labels(i,:) = {'Real','Ellipse','Ellipse + PC 1','Ellipse + PCs 1-2',...
+%         'Ellipse + PCs 1-3','Ellipse + PCs 1-4','Ellipse + PCs 1-5',...
+%         'Ellipse + PC 2','Ellipse + PC 3','Ellipse + PC 4','Ellipse + PC 5'};
 end
 
 % Examine percentage results
