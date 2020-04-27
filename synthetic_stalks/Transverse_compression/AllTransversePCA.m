@@ -802,7 +802,7 @@ for i = 1:N
     polarplot(T,R_ext(:,i));
     i
     s = input('Enter 1 if cross section needs to flip: ');
-    if s ~= 1
+    if isempty(s)
         s = 0;
     end
     flip_sections(i) = s;
