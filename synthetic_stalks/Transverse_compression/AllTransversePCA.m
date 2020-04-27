@@ -858,10 +858,6 @@ load(Flip_Indices);
 
 ext_rho = [];
 int_rho = [];
-% ext_X = ext_X;
-% ext_Y = ext_Y;
-% int_X = int_X;
-% int_Y = int_Y;
 T = ext_T(:,1)';
 N = size(ext_X,2);
 
@@ -872,10 +868,10 @@ for i = 1:N
         
         % Rotate and reorder external and internal points
         [~, ~, ~, ~, ~, ~, xp_ext, yp_ext, ~, ~] = reorder_V2(ext_X(:,i), ext_Y(:,i), pi);
-        [~, ~, ~, ~, ~, ~, xp_int, yp_int, ~, ~] = reorder_V2(int_X(:,i), int_Y(:,i), pi);
+        [~, ~, ~, ~, ~, ~, xp_int, yp_int, ~, ~] = reorder_V2_interior(int_X(:,i), int_Y(:,i), pi, 0, 0);
         
         [~, ~, x_ext, y_ext, ~, ~, ~, ~, ~, ~] = reorder_V2(xp_ext, yp_ext, 0);
-        [~, ~, x_int, y_int, ~, ~, ~, ~, ~, ~] = reorder_V2(xp_int, yp_int, 0);
+        [~, ~, x_int, y_int, ~, ~, ~, ~, ~, ~] = reorder_V2_interior(xp_int, yp_int, 0, 0, 0);
         
         % Redefine the appropriate row in the main XY data
         ext_X(:,i) = x_ext;
