@@ -246,11 +246,45 @@ end
 
 %% Localized functions
 function [roundval] = RoundToPoint5(input)
-% Round a number to a the closest 0.5
+% FILENAME: getBoxLims.m
+% AUTHOR: Ryan Larson
+% DATE: 4/22/2020
+%
+% PURPOSE: Round a number to a the closest 0.5
+% 
+% INPUTS:
+%       input: A single float value
+%       
+% OUTPUTS: 
+%       roundval: The output value, rounded to the nearest 0.5.
+%
+% NOTES: 
+% 
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%   N/A
+% 
+% PSEUDO-CODE:
+%   Calculate the remainder when dividing the input number by 0.5.
+%   If the remainder is greater than or equal to 0.25:
+%       Round up to the next 0.5
+%   else:
+%       Round down to the next 0.5
+%   end
+% 
+% -------------------------------------------------------------------------
+% VERSION HISTORY:
+% V1 - 
+% V2 - 
+% V3 - 
+%
+% -------------------------------------------------------------------------
 
-% Determine whether to round up or down, and then perform that operation
+% Calculate the remainder when dividing the input number by 0.5
 modval = mod(input,0.5);
 
+% If the remainder is greater than or equal to 0.25, round up to the next
+% 0.5. Otherwise, round down to the next 0.5.
 if modval >= 0.25
     roundval = ceil(input*2)/2;
 else
@@ -261,9 +295,43 @@ end
 
 
 function [uplim,lolim] = getBoxLims(datacol)
-% Take in a column vector of data going into a box plot and determine
-% reasonable upper and lower limits for the whiskers. These won't be
-% exactly what Matlab puts out, but it will be close.
+% FILENAME: getBoxLims.m
+% AUTHOR: Ryan Larson
+% DATE: 4/22/2020
+%
+% PURPOSE: Take in a column vector of data going into a box plot and 
+% determine reasonable upper and lower limits for the whiskers. These won't
+% be exactly what Matlab puts out, but it will be close.
+% 
+% 
+% INPUTS:
+%       datacol: A column vector with the data that will go into the box
+%       plot
+%       
+% OUTPUTS: 
+%       uplim: The expected upper limit for the box plot whiskers.
+% 
+%       lolim: The expected lower limit for the box plot whiskers.
+%
+% NOTES: 
+% 
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%   N/A
+% 
+% PSEUDO-CODE:
+%   Calculate the first and third quantiles.
+%   Calculate the interquartile range.
+%   Calculate the upper and lower whisker positions by adding or
+%   subtracting 1.5 times the interquartile range 
+% 
+% -------------------------------------------------------------------------
+% VERSION HISTORY:
+% V1 - Simple estimation of whisker locations in a box plot
+% V2 - 
+% V3 - 
+%
+% -------------------------------------------------------------------------
 
 Q1 = quantile(datacol,0.25);
 Q3 = quantile(datacol,0.75);
