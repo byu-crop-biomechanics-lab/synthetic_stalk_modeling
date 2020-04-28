@@ -98,7 +98,7 @@ for slice = slice_dists
     output_prefix = strcat(slicepos);
     
     % Gather all data for stalks at this slice distance
-    AllSectionsName = strcat(output_prefix,'_All980.mat');
+    AllSectionsName = strcat(output_prefix,'_AllSections.mat');
     ChooseSections('samedist',linspace(1,nstalks,nstalks),slice,Stalk_TableDCR,error_indices,npoints,AllSectionsName)
     load(AllSectionsName);
 
