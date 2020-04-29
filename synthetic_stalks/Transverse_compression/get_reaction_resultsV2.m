@@ -1,4 +1,4 @@
-function [cumulative_err,individual_err,percent_err,Stiffnesses] = get_reaction_resultsV2(stalknums,displacement,numNEPCs,AllGoodReactionData)
+function [cumulative_err,individual_err,percent_err,Stiffnesses] = get_reaction_resultsV2(stalknums,displacement,numNEPCs,ReactionData)
 % FILENAME: get_reaction_resultsV2.m
 % AUTHOR: Ryan Larson
 % DATE: 1/2020
@@ -17,9 +17,9 @@ function [cumulative_err,individual_err,percent_err,Stiffnesses] = get_reaction_
 %       numNEPCs: The number of principal components used in the model
 %       study.
 % 
-%       AllGoodReactionData: Input .mat file with the reaction results
-%       data, organized in a Results cell array (as of 4/8/2020, this is
-%       found in Results_AllPCA.mat).
+%       ReactionData: Input .mat file with the reaction results data,
+%       organized in a Results cell array (as of 4/8/2020, this is found in
+%       Results_AllPCA.mat).
 %       
 % OUTPUTS: 
 %       cumulative_err: The median percent errors for the cumulative cases.
@@ -60,7 +60,7 @@ function [cumulative_err,individual_err,percent_err,Stiffnesses] = get_reaction_
 
 close;
 set(0,'DefaultFigureWindowStyle','docked');
-load(AllGoodReactionData,'ResultsCell');
+load(ReactionData,'ResultsCell');
 
 % Define the size of the data arrays Results_new and Stiffnesses, which are
 % organized with cases in the columns and slices in the rows

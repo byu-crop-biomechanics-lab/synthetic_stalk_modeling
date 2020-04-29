@@ -8,7 +8,7 @@ ResultsCell = {};
 s = tdfread(ResultsTxtFile,'\t');
 
 Group = s.Group;
-ID = s.Group;
+ID = s.ID;
 Case = s.Case;
 RFx = s.RFx;
 RFy = s.RFy;
