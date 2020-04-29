@@ -1,4 +1,4 @@
-function AllTransversePCA(slice_dists,DataMat,SaveName)
+function AllTransversePCA(slice_dists,nstalks,DataMat,SaveName)
 % FILENAME: AllTransversePCA.m
 % AUTHOR: Ryan Larson
 % DATE: 1/17/2020
@@ -11,6 +11,9 @@ function AllTransversePCA(slice_dists,DataMat,SaveName)
 %       acccount when running PCA (MAYBE MAKE IT POSSIBLE TO LATER CHOOSE
 %       WHICH SLICE DISTANCES ACTUALLY GET USED IN THE PCA GOING INTO
 %       TRANSVERSE_WRAPPER_V4.M)
+% 
+%       nstalks: An integer number of stalks to be included in PCA, less
+%       than or equal to 980.
 % 
 %       DataMat: String name of the .mat file where the downsampled,
 %       centered, rotated data table is kept. For example,
@@ -95,8 +98,8 @@ for slice = slice_dists
     output_prefix = strcat(slicepos);
     
     % Gather all data for stalks at this slice distance
-    AllSectionsName = strcat(output_prefix,'_All980.mat');
-    ChooseSections('samedist',linspace(1,980,980),slice,Stalk_TableDCR,error_indices,npoints,AllSectionsName)
+    AllSectionsName = strcat(output_prefix,'_AllSections.mat');
+    ChooseSections('samedist',linspace(1,nstalks,nstalks),slice,Stalk_TableDCR,error_indices,npoints,AllSectionsName)
     load(AllSectionsName);
 
     
@@ -350,10 +353,12 @@ for slice = slice_dists
     % array. Save adjusted indices.
     % There are normally 980 slices in the data set that I used. Initialize
     % this variable with all the expected slice numbers.
-    adj_indices_temp = linspace(1,980,980);
+    adj_indices_temp = linspace(1,nstalks,nstalks);
     
     % Get rid of any indices that had a problem.
-    adj_indices_temp(problem_indices) = []; % to map between stalk number and index value, use the index and the value of adj_indices
+    someproblems = (problem_indices <= nstalks);
+    problem_indices_temp = problem_indices(someproblems);
+    adj_indices_temp(problem_indices_temp) = []; % to map between stalk number and index value, use the index and the value of adj_indices
     
     % Save this shifted collection of indices for reconstructing specific
     % cross-sections later on (in transverse_wrapper_V4, for example)
@@ -414,16 +419,26 @@ for slice = slice_dists
         int_rhoexplained_tot(i) = sum(int_rhoexplained(1:i));
     end
     
+    numPCs = size(ext_rhocoeffs,1);
+    
     % Plot the exterior explained data (current slice location only)
     figure(1);
-    plot(ext_rhoexplained_tot(1:50,1),'-*');
+    if numPCs > 50
+        plot(ext_rhoexplained_tot(1:50,1),'-*');
+    else
+        plot(ext_rhoexplained_tot(1:numPCs,1),'-*');
+    end
     title('Exterior Non-Ellipse PCs');
     xlabel('# of PCs');
     ylabel('% Variance Explained');
     
     % Plot the interior explained data (current slice location only)
     figure(2);
-    plot(int_rhoexplained_tot(1:50,1),'-*');
+    if numPCs > 50
+        plot(int_rhoexplained_tot(1:50,1),'-*');
+    else
+        plot(int_rhoexplained_tot(1:numPCs,1),'-*');
+    end
     title('Interior Non-Ellipse PCs');
     xlabel('# of PCs');
     ylabel('% Variance Explained');
@@ -474,17 +489,25 @@ for i = 1:length(ext_rhoexplained_tot)
     ext_rhoexplained_tot(i) = sum(ext_rhoexplained(1:i));
     int_rhoexplained_tot(i) = sum(int_rhoexplained(1:i));
 end
-
+    
 % Plot the exterior explained data (all slice locations)
 figure(1);
-plot(ext_rhoexplained_tot(1:50,1),'-*');
+if numPCs > 50
+    plot(ext_rhoexplained_tot(1:50,1),'-*');
+else
+    plot(ext_rhoexplained_tot(1:numPCs,1),'-*');
+end
 title('ALL DATA Exterior Non-Ellipse PCs');
 xlabel('# of PCs');
 ylabel('% Variance Explained');
 
 % Plot the interior explained data (all slice locations)
 figure(2);
-plot(int_rhoexplained_tot(1:50,1),'-*');
+if numPCs > 50
+    plot(int_rhoexplained_tot(1:50,1),'-*');
+else
+    plot(int_rhoexplained_tot(1:numPCs,1),'-*');
+end
 title('ALL DATA Interior Non-Ellipse PCs');
 xlabel('# of PCs');
 ylabel('% Variance Explained');
@@ -835,10 +858,6 @@ load(Flip_Indices);
 
 ext_rho = [];
 int_rho = [];
-% ext_X = ext_X;
-% ext_Y = ext_Y;
-% int_X = int_X;
-% int_Y = int_Y;
 T = ext_T(:,1)';
 N = size(ext_X,2);
 
@@ -849,10 +868,10 @@ for i = 1:N
         
         % Rotate and reorder external and internal points
         [~, ~, ~, ~, ~, ~, xp_ext, yp_ext, ~, ~] = reorder_V2(ext_X(:,i), ext_Y(:,i), pi);
-        [~, ~, ~, ~, ~, ~, xp_int, yp_int, ~, ~] = reorder_V2(int_X(:,i), int_Y(:,i), pi);
+        [~, ~, ~, ~, ~, ~, xp_int, yp_int, ~, ~] = reorder_V2_interior(int_X(:,i), int_Y(:,i), pi, 0, 0);
         
         [~, ~, x_ext, y_ext, ~, ~, ~, ~, ~, ~] = reorder_V2(xp_ext, yp_ext, 0);
-        [~, ~, x_int, y_int, ~, ~, ~, ~, ~, ~] = reorder_V2(xp_int, yp_int, 0);
+        [~, ~, x_int, y_int, ~, ~, ~, ~, ~, ~] = reorder_V2_interior(xp_int, yp_int, 0, 0, 0);
         
         % Redefine the appropriate row in the main XY data
         ext_X(:,i) = x_ext;

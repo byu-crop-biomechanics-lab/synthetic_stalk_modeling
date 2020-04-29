@@ -1,4 +1,4 @@
-function [problem_slice_stalk] = transverse_wrapper_V4(slices,stalknums,material_method,AllSlicesPCA)
+function [problem_slice_stalk] = transverse_wrapper_V4(slices,stalknums,material_method,numNEPCs,AllSlicesPCA)
 % FILENAME: transverse_wrapper_V4.m
 % AUTHOR: Ryan Larson
 % DATE: 1/17/2020
@@ -30,7 +30,7 @@ function [problem_slice_stalk] = transverse_wrapper_V4(slices,stalknums,material
 %           'maxrind' - Maximum rind properties, random pith properties
 %           'avg' - Mean rind properties, mean pith properties
 % 
-%       AllSlicesPCA: AllSlicesPCA.mat
+%       AllSlicesPCA: 'AllSlicesPCA.mat'
 %       
 % OUTPUTS:
 %       problem_slice_stalk: Indices of stalk slices that had issues during
@@ -118,14 +118,10 @@ function [problem_slice_stalk] = transverse_wrapper_V4(slices,stalknums,material
 % Groups are numbered starting at 1, and are a convenient way to keep data
 % separate. Each slice location chosen for analysis initiates a new group.
 group = 1;
-% Number of principal components to use for analysis.
-numNEPCs = 5;
 load(AllSlicesPCA);
 
 % Initialize holding variable for slice indices that cause problems
 problem_slice_stalk = [];
-
-set(0,'DefaultFigureWindowStyle','docked');
 
 %% Process
 % Iterate through slices (determine group number here)
@@ -150,6 +146,8 @@ for slice = slices
             continue
         end
         
+        % adj_ind is the row index where the specific cross-section is
+        % within the "ALL" arrays
         adj_ind = startidx + stalkidx - 1;
         
         %% Create case from ellipse and PCA data (using "ALL" variables)
@@ -217,18 +215,12 @@ for slice = slices
         end
         
         
-        
-        
-        
-        
     end
     
     % Increase the group number when the slice location changes. This is to
     % prevent multiple scripts with the same name overwriting each other.
     group = group + 1;
 end
-
-set(0,'DefaultFigureWindowStyle','normal');
 
 end
 
@@ -421,19 +413,17 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
 end
 
 
-function [spline] = writespline_V2(len,data)
+function [spline] = writespline_V2(data)
 % FILENAME: writespline_V2.m
 % AUTHOR: Ryan Larson
 % DATE: 5/29/19
 %
-% PURPOSE: Turn vector spline data into a string
+% PURPOSE: Turn spline data from a 2-column array into a string
 % 
 % 
 % INPUTS:
-%       len: Length of the data (a holdover from previous versions, and
-%       isn't fully necessary for good code)
-% 
-%       data: The original boundary vector
+%       data: The original boundary array (2 columns, where column 1 is x
+%       data and column 2 is y data)
 %       
 % OUTPUTS:
 %       spline: A string version of data that can be inserted in a Python
@@ -441,8 +431,20 @@ function [spline] = writespline_V2(len,data)
 %
 % NOTES:
 %      
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%   N/A
 % 
+% PSEUDO-CODE:
+%   Create an empty string to hold the spline data (or the ordered XY pairs
+%   that define the exterior or interior cross-section profile).
 % 
+%   For each row in the data (a 2-column array of XY data):
+%       Concatenate the current data point to the spline in the ordered
+%       pair form, like (x,y).
+%   end
+% 
+% -------------------------------------------------------------------------
 % VERSION HISTORY:
 % V1 - Writes spline to a text file which can then be copied manually into 
 % V2 - Made writespline a function that works with existing functions
@@ -452,9 +454,9 @@ function [spline] = writespline_V2(len,data)
 % -------------------------------------------------------------------------
     %define empty spline and number of x-y points
     spline = '';
-
+    
     %run through 1-column arrays of the x and y data points for the spline, and add to the end of the string with the correct formatting
-    for i = 1:len 
+    for i = 1:length(data)
         spline = strcat(spline,'(',num2str(data(i,1)),', ',num2str(data(i,2)),'), '); 
     end
 end
@@ -471,14 +473,16 @@ function [Erind,Epith] = get_materials(method)
 % INPUTS:
 %       method: A string to determine the material selection method.
 %       Options include: 
-%           'random':   Random material properties
-%           'min':      Minimum rind, minimum pith
-%           'max':      Maximum rind, maximum pith
-%           'minpith':  Random rind, minimum pith
-%           'maxpith':  Random rind, maximum pith
-%           'minrind':  Minimum rind, random pith
-%           'maxrind':  Maximum rind, random pith
-%           'avg':      Mean rind, mean pith
+%           'random':           Random material properties
+%           'min':              Minimum rind, minimum pith
+%           'max':              Maximum rind, maximum pith
+%           'minpith':          Mean rind, minimum pith
+%           'maxpith':          Mean rind, maximum pith
+%           'minrind':          Minimum rind, mean pith
+%           'maxrind':          Maximum rind, mean pith
+%           'minrind_maxpith':  Minimum rind, maximum pith
+%           'maxrind_minpith':  Maximum rind, minimum pith
+%           'avg':              Mean rind, mean pith
 % 
 % OUTPUTS:
 %       Erind: Rind modulus
@@ -498,7 +502,9 @@ function [Erind,Epith] = get_materials(method)
 %   Define mean and standard deviation values for pith stiffness (based on
 %   Stubbs 2019 values, in units of N/micrometer^2).
 % 
-%   
+%   Depending on the chosen method as defined in the function input,
+%   generate the rind and pith material properties. Method descriptions are
+%   above in the header.
 % 
 % -------------------------------------------------------------------------
 % VERSION HISTORY:

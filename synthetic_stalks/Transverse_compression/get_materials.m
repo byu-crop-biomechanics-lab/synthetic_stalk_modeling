@@ -9,14 +9,16 @@ function [Erind,Epith] = get_materials(method)
 % INPUTS:
 %       method: A string to determine the material selection method.
 %       Options include: 
-%           'random':   Random material properties
-%           'min':      Minimum rind, minimum pith
-%           'max':      Maximum rind, maximum pith
-%           'minpith':  Random rind, minimum pith
-%           'maxpith':  Random rind, maximum pith
-%           'minrind':  Minimum rind, random pith
-%           'maxrind':  Maximum rind, random pith
-%           'avg':      Mean rind, mean pith
+%           'random':           Random material properties
+%           'min':              Minimum rind, minimum pith
+%           'max':              Maximum rind, maximum pith
+%           'minpith':          Mean rind, minimum pith
+%           'maxpith':          Mean rind, maximum pith
+%           'minrind':          Minimum rind, mean pith
+%           'maxrind':          Maximum rind, mean pith
+%           'minrind_maxpith':  Minimum rind, maximum pith
+%           'maxrind_minpith':  Maximum rind, minimum pith
+%           'avg':              Mean rind, mean pith
 % 
 % OUTPUTS:
 %       Erind: Rind modulus
@@ -36,7 +38,9 @@ function [Erind,Epith] = get_materials(method)
 %   Define mean and standard deviation values for pith stiffness (based on
 %   Stubbs 2019 values, in units of N/micrometer^2).
 % 
-%   
+%   Depending on the chosen method as defined in the function input,
+%   generate the rind and pith material properties. Method descriptions are
+%   above in the header.
 % 
 % -------------------------------------------------------------------------
 % VERSION HISTORY:

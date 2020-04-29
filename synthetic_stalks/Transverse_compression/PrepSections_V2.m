@@ -247,7 +247,7 @@ for g = 1:nslices
         int_xDCR(:,:,g) = int_rhoDCR(:,:,g).*cos(int_tDCR(:,:,g));
         int_yDCR(:,:,g) = int_rhoDCR(:,:,g).*sin(int_tDCR(:,:,g));
 
-    catch
+    catch % HAVE THIS PRINT ANY ERROR MESSAGES FOR DEBUGGING PURPOSES
         error_indices = [error_indices, g];
     end
         
