@@ -51,8 +51,6 @@ cols = 1 + 2*numNEPCs;
 
 Results_new = NaN(rows,cols);
 
-
-
 nslices = length(ResultsCell);
 for j = 1:nslices
     Results_temp = NaN(rows,cols);

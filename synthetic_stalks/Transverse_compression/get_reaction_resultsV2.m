@@ -125,14 +125,6 @@ for i = 1:size(Results_new,1)
     end
 end
 
-% Examine percentage results
-stdev = nanstd(percents);
-stderror = zeros(size(stdev));
-n = sum(~isnan(percents),1); % row vector of total non-NaN elements in each column
-for i = 1:length(stdev)
-    stderror(i) = stdev(i)/sqrt(n(i));
-end
-
 %% Error method (what we're really interested in)
 % Create error population by shifting percentage values by 100%
 percent_err = percents - 100;
@@ -195,7 +187,7 @@ individual_err = med_err(individual_indices);
 % plots from extending beyond the plot bounds)
 uplimrow = zeros(1,1+numNEPCs);
 lolimrow = zeros(1,1+numNEPCs);
-% cumulative_indices = [2 linspace(3,2+numNEPCs,numNEPCs)];
+
 for i = 1:length(uplimrow)
     [uplimrow(i),lolimrow(i)] = getBoxLims(percent_err(:,cumulative_indices(i)));
 end
@@ -221,7 +213,7 @@ hold off
 % plots from extending beyond the plot bounds)
 uplimrow = zeros(1,1+numNEPCs);
 lolimrow = zeros(1,1+numNEPCs);
-% individual_indices = [2 3 linspace((3+numNEPCs),(1+2*numNEPCs),(numNEPCs-1))];
+
 for i = 1:length(uplimrow)
     [uplimrow(i),lolimrow(i)] = getBoxLims(percent_err(:,individual_indices(i)));
 end
@@ -234,7 +226,7 @@ lolim = RoundToPoint5(min(lolimrow) - 0.5);
 % Box plot for individual case models
 figure(2);
 boxplot(percent_box_ind,percent_boxlabels_ind,'Notch','on','symbol','');
-ylim([lolim,uplim]); % NEED TO SET YLIM ACCORDING TO WHERE OUTLIERS ARE (IGNORE THEM)
+ylim([lolim,uplim]);
 set(gca,'YTick',lolim:0.5:uplim,'XTickLabelRotation',-30);
 ytickformat('percentage');
 ylabel('Error');
