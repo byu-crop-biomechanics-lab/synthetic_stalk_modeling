@@ -43,18 +43,18 @@ function TransverseSensitivityV1(slices,stalknums,AllSlicesPCA,percent_change,nu
 % 
 % -------------------------------------------------------------------------
 % SUBROUTINES:
-%       make_case.m: Create a specimen-specific, model-specific Python
-%       script that runs the chosen model in transverse compression when
-%       fed to ABAQUS.
+%   make_case.m: Create a specimen-specific, model-specific Python
+%   script that runs the chosen model in transverse compression when
+%   fed to ABAQUS.
 % 
-%       writespline_V2.m: A subroutine of make_case.m. Convert boundary
-%       data from Matlab arrays to strings that can be used in the Python
-%       scripts.
+%   writespline_V2.m: A subroutine of make_case.m. Convert boundary
+%   data from Matlab arrays to strings that can be used in the Python
+%   scripts.
 % 
-%       rpts.m: Create an ellipse from major and minor diameter values.
+%   rpts.m: Create an ellipse from major and minor diameter values.
 % 
-%       get_materials.m: Generate rind and pith stiffnesses to use in a
-%       given model.
+%   get_materials.m: Generate rind and pith stiffnesses to use in a
+%   given model.
 % 
 % PSEUDO-CODE:
 %   Load PCA data.
@@ -534,9 +534,110 @@ end
 
 %% Local functions %%
 function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
+% FILENAME: make_case.m
+% AUTHOR: Ryan Larson
+% DATE: 11/25/19
+%
+% PURPOSE: Make a customized Python script corresponding to a unique model.
+%       Takes a Python script template defined by a script like
+%       write_Python_template3.m or write_Python_template4.m and edits it
+%       according to the data for the input model (geometric profile
+%       information, material property information, names, etc.). The
+%       script template is a column vector of cell arrays that each contain
+%       a string, corresponding to a row of the resulting Python script. 
+% 
+% 
+% INPUTS:
+%       case_num: Case number (model approximation number)
+% 
+%       i: Adjusted index of the current cross-section
+% 
+%       ID: String version of the stalk number
+% 
+%       GROUP: String version of the group number (corresponds to the index
+%       of the current slice location in the slice locations vector)
+% 
+%       R_ext: Exterior boundary vector
+% 
+%       R_int: Interior boundary vector
+% 
+%       T: Theta vector
+% 
+%       Script: Template script in cell array form
+% 
+%       Erind: Rind modulus of elasticity
+% 
+%       Epith: Pith modulus of elasticity
+%       
+% OUTPUTS:
+%        - Creates a customized Python script that can be directly run in
+%        Abaqus
+%
+% NOTES:
+%      
+% 
+% 
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%   writespline_V2.m: Take an array of XY data, where X is column 1 and Y
+%   is column 2, and turn those data points into a list of ordered pairs.
+%   This results in one very long string that can be inserted into the
+%   Python script; Abaqus uses this to define a spline profile when
+%   building a shape. 
+% 
+% 
+% PSEUDO-CODE:
+%   Make string versions of the case number, job name, and script name.
+% 
+%   Convert data from polar to Cartesian coordinates. The resulting Python
+%   script will be fed into Abaqus, which expects Cartesian coordinates.
+% 
+%   Multiply profile values by 1000 to scale to micrometers from
+%   millimeters (this is necessary for the transverse models as determined
+%   by a mesh convergence study).
+% 
+%   Transpose XY data to column vectors and combine. X is first column, Y
+%   is second column.
+% 
+%   Repeat the initial data point for exterior and interior to close the
+%   profile (all work before this has not repeated the initial point).
+% 
+%   Determine the data points that should be used for reference points.
+%   These should be at the top and bottom of the stalk cross-section when
+%   the major diameter of the cross-section is oriented along the X-axis. A
+%   simplification is made, where the points closest to theta = 90 degrees
+%   and theta = 270 degrees are chosen (this provides flexibility if data
+%   sampling is sparse or just doesn't line up exactly on integer degree
+%   values).
+% 
+%   Convert the reference point values to strings for insertion in the
+%   Python script.
+% 
+%   Write the exterior profile as a spline and save as a string.
+%   Write the interior profile as a spline and save as a string.
+% 
+%   Get string versions of rind and pith properties for inserting into the 
+%   Python script.
+% 
+%   Insert all the string variables that have been created into their
+%   appropriate positions in the Python script template (still a cell
+%   array).
+% 
+%   Turn the cell array into an actual Python script with a unique name and
+%   save. The file will be produced in the current working folder.
+% 
+% -------------------------------------------------------------------------
+% 
+% VERSION HISTORY:
+% V1 - 
+% V2 - 
+% V3 - 
+%
+% -------------------------------------------------------------------------
+    % Get string versions of case number, job name, and script name
     CASE = sprintf('%d',case_num);
-    jobname = strcat('''Group_',GROUP,'_','Sensitivity_',ID,'_',CASE,'''');
-    scriptname = strcat('Group_',GROUP,'_','Sensitivity_',ID,'_',CASE,'.py');
+    jobname = strcat('''Group_',GROUP,'_','Section_',ID,'_',CASE,'''');
+    scriptname = strcat('Group_',GROUP,'_','Section_',ID,'_',CASE,'.py');
     
     % Convert data to Cartesian coordinates (read in as row vectors)
     if size(R_ext,1) > 1
@@ -551,7 +652,8 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
         Y_int = R_int(1,:).*sin(T(1,:));
     end
 
-     % Scale units to micrometers from millimeters
+    % Scale units to micrometers from millimeters (allows the mesh size to
+    % get small enough based on the mesh convergence study)
     X_ext = 1000*X_ext;
     Y_ext = 1000*Y_ext;
     X_int = 1000*X_int;
@@ -578,17 +680,18 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
     [~,ind90] = min(abs(diffs90));
     [~,ind270] = min(abs(diffs270));
     
+    % Convert the reference point values to strings
     RP1X = sprintf('%0.5g',X_ext(ind90));
     RP1Y = sprintf('%0.5g',Y_ext(ind90));
     RP2X = sprintf('%0.5g',X_ext(ind270));
     RP2Y = sprintf('%0.5g',Y_ext(ind270));
 
     % Write the spline points and save as a string
-    S = size(section_ext);
-    len = S(1);
-    outer_spline = writespline_V2(len,section_ext);
-    inner_spline = writespline_V2(len,section_int);
+    outer_spline = writespline_V2(section_ext);
+    inner_spline = writespline_V2(section_int);
     
+    % Get string versions of rind and pith properties for inserting into
+    % the Python script
     rindE = sprintf('%0.5g',Erind);
     pithE = sprintf('%0.5g',Epith);
 
@@ -615,7 +718,36 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
 end
 
 
+
 function [spline] = writespline_V2(len,data)
+% FILENAME: writespline_V2.m
+% AUTHOR: Ryan Larson
+% DATE: 5/29/19
+%
+% PURPOSE: Turn vector spline data into a string
+% 
+% 
+% INPUTS:
+%       len: Length of the data (a holdover from previous versions, and
+%       isn't fully necessary for good code)
+% 
+%       data: The original boundary vector
+%       
+% OUTPUTS:
+%       spline: A string version of data that can be inserted in a Python
+%       script
+%
+% NOTES:
+%      
+% 
+% 
+% VERSION HISTORY:
+% V1 - Writes spline to a text file which can then be copied manually into 
+% V2 - Made writespline a function that works with existing functions
+% instead of writing the spline to a text file
+% V3 - 
+%
+% -------------------------------------------------------------------------
     %define empty spline and number of x-y points
     spline = '';
 
@@ -625,16 +757,50 @@ function [spline] = writespline_V2(len,data)
     end
 end
 
-function [xy_columns] = convert_to_xy(R,theta)
-    N = length(theta);
-    xy_columns = zeros(N,2);
-    for i = 1:N
-        xy_columns(i,1) = R(i)*cos(theta(i));
-        xy_columns(i,2) = R(i)*sin(theta(i));
-    end
-end
 
 function [r] = rpts(N,theta,dmaj,dmin)
+% FILENAME: rpts.m
+% AUTHOR: Ryan Larson
+% DATE: 12/4/19
+%
+% PURPOSE: Simple function to turn ellipse diameter parameters into polar
+% values, given a desired number of points.
+% 
+% 
+% INPUTS:
+%       N: The number of points in theta (redundant but haven't gone back
+%       to change this in everything downstream)
+% 
+%       theta: Linearly-spaced vector of theta values from 0 to 2*pi.
+% 
+%       dmaj: Major diameter of the ellipse.
+% 
+%       dmin: Minor diameter of the ellipse.
+%       
+% OUTPUTS:
+%       r: The radial value of the ellipse at each value of theta.
+%
+% NOTES:
+%       
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%   N/A
+% 
+% PSEUDO-CODE:
+%   Create an empty row vector of radius values with length N.
+% 
+%   for each element of the empty row vector:
+%       Calculate the radial value of the ellipse, given the major and
+%       minor diameters and the current angle.
+%   end
+% 
+% -------------------------------------------------------------------------
+% VERSION HISTORY:
+% V1 - 
+% V2 - 
+% V3 - 
+%
+% -------------------------------------------------------------------------
     r = zeros(1,N);
     for i = 1:N
         r(i) = (dmaj*dmin/4)/sqrt(((dmin/2)*cos(theta(i)))^2 ...
@@ -642,21 +808,70 @@ function [r] = rpts(N,theta,dmaj,dmin)
     end
 end
 
+
 function [Erind,Epith] = get_materials(method)
-% Calculate the random material properties from a normal distribution.
+% FILENAME: writespline_V2.m
+% AUTHOR: Ryan Larson
+% DATE: 5/29/19
+%
+% PURPOSE: Converts from polar to Cartesian
+% 
+% 
+% INPUTS:
+%       method: A string to determine the material selection method.
+%       Options include: 
+%           'random':   Random material properties
+%           'min':      Minimum rind, minimum pith
+%           'max':      Maximum rind, maximum pith
+%           'minpith':  Random rind, minimum pith
+%           'maxpith':  Random rind, maximum pith
+%           'minrind':  Minimum rind, random pith
+%           'maxrind':  Maximum rind, random pith
+%           'avg':      Mean rind, mean pith
+% 
+% OUTPUTS:
+%       Erind: Rind modulus
+%       
+%       Epith: Pith modulus
+%
+% NOTES:
+%      
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%   N/A
+% 
+% PSEUDO-CODE:
+%   Define mean and standard deviation values for rind stiffness (based on
+%   Stubbs 2019 values, in units of N/micrometer^2).
+% 
+%   Define mean and standard deviation values for pith stiffness (based on
+%   Stubbs 2019 values, in units of N/micrometer^2).
+% 
+%   
+% 
+% -------------------------------------------------------------------------
+% VERSION HISTORY:
+% V1 - 
+% V2 - 
+% V3 - 
+%
+% -------------------------------------------------------------------------
+    % Calculate the random material properties from a normal distribution.
     % Bound with 95% confidence interval, calculated from transverse
-    % material properties used in another paper.
-    Erind_mean = 8.0747e-04;
+    % material properties used in another paper (Stubbs 2019).
+    Erind_mean = 8.0747e-04; % THESE VALUES ARE IN N/micrometer^2
     Erind_stdev = 3.3517e-04;
     Erind_95 = [6.7414e-04 9.4081e-04];
     Epith_mean = 2.5976e-05;
     Epith_stdev = 1.0303e-05;
     Epith_95 = [2.1878e-05 3.0075e-05];
-    ratio_mean = 0.0372;
-    ratio_stdev = 0.0180;
-    ratio_95 = [0.0300 0.0444];
     
+    % Choose which method to use by the input string
     switch method
+        % Generate fully random material properties (both rind and pith
+        % random) using the mean and standard deviations for rind and pith.
+        % Make sure that the values generated are within the 95% confidence
+        % interval.
         case 'random'
             % Generate Erind from normal distribution
             while 1
@@ -673,42 +888,48 @@ function [Erind,Epith] = get_materials(method)
                     break
                 end 
             end
-            
-            
-    %     % Generate Epith from normal distribution of pith/rind ratios
-    %     while 1
-    %         ratio = normrnd(ratio_mean,ratio_stdev);
-    %         if ratio >= ratio_95(1) && ratio <= ratio_95(2)
-    %             break
-    %         end
-    %     end
-    %     Epith = ratio*Erind;
-
-    
+        
+        % Use lower bound values for both rind and pith
         case 'min'
             Erind = Erind_95(1);
             Epith = Epith_95(1);
             
+        % Use upper bound values for both rind and pith
         case 'max'
             Erind = Erind_95(2);
             Epith = Epith_95(2);
             
+        % Use lower bound value for rind and upper bound value for pith
+        case 'minrind_maxpith'
+            Erind = Erind_95(1);
+            Epith = Epith_95(2);
+            
+        % Use upper bound value for rind and lower bound value for pith
+        case 'maxrind_minpith'
+            Erind = Erind_95(2);
+            Epith = Epith_95(1);
+            
+        % Use lower bound value for pith and mean value for rind
         case 'minpith'
             Erind = Erind_mean;
             Epith = Epith_95(1);
-            
+        
+        % Use upper bound value for pith and mean value for rind
         case 'maxpith'
             Erind = Erind_mean;
             Epith = Epith_95(2);
-            
+        
+        % Use lower bound value for rind and mean value for pith
         case 'minrind'
             Erind = Erind_95(1);
             Epith = Epith_mean;
             
+        % Use upper bound value for rind and mean value for pith
         case 'maxrind'
             Erind = Erind_95(2);
             Epith = Epith_mean;
-    
+        
+        % Use mean value for rind and mean value for pith
         case 'avg'
             Erind = Erind_mean;
             Epith = Epith_mean;

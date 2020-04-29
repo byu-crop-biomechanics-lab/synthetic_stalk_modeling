@@ -7,10 +7,23 @@ function [SensitivityTable,Stiffnesses] = get_sensitivity_resultsV2(stalknums,di
 % 
 % 
 % INPUTS:
-%       
+%       Data:
+% 
+%       pct_change:
+% 
+%       slices: The same vector of slice locations that went into
+%       TransverseSensitivityV1.m.
+% 
+%       stalknums: The same vector of stalk numbers that went into
+%       TransverseSensitivityV1.m.
+% 
+%       numNEPCs: The number of principal components that was used in the
+%       sensitivity base case (the same value that was fed into
+%       TransverseSensitivityV1.m).
+% 
 %       
 % OUTPUTS:
-%       - 
+%       SensitivityTable: 
 %
 %
 % NOTES: 

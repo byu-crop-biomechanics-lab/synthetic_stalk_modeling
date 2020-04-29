@@ -28,7 +28,7 @@ function AllTransversePCA(slice_dists,nstalks,DataMat,SaveName)
 %
 % NOTES: 
 %       Other outputs:
-%           - Named .mat file that contains all the ellipse fit and PCA
+%           - Named .mat files that contain all the ellipse fit and PCA
 %           data, which will be used when running transverse_wrapper_V4.m.
 %       
 % 
@@ -104,17 +104,17 @@ for slice = slice_dists
 
     
     
-    %% Flip cross-sections that need adjustment (only if there isn't flip data)
+    %% Flip cross-sections that need adjustment (only if there isn't rotate data)
     % Explanation: Sometimes the downsample, center, and rotate processing
     % doesn't work exactly as intended. For principal component analysis to
     % work, all the notches need to be on the same side (the left side, in
     % the case of this code). It's easiest to do these corrections
     % manually, so this section of code allows quick visual tagging of
     % cases where the notch didn't end up on the correct side. For tagged
-    % slices, it flips the cross-section by 180 degrees. There might also
+    % slices, it rotates the cross-section by 180 degrees. There might also
     % be cases where the ellipse is vertically-oriented or where the
     % ellipse didn't do a good job of fitting. Those cases are addressed in
-    % a later section of the code.    
+    % a later section of the code.
     
     
     % Check to see if there is already flipping data for the current slice
