@@ -141,7 +141,7 @@ percent_labels = strings(size(percent_err));
 % Create labels according to the number of principal components used in
 % the study (cumulative cases followed by remaining individual cases)
 all_labels = strings(1,(1+2*numNEPCs));
-all_labels = ["Real","Ellipse","Ellipse + PC 1"];
+all_labels(1,1:3) = ["Real","Ellipse","Ellipse + PC 1"];
 for i = 2:numNEPCs
     addlabel = "Ellipse + PCs 1-" + num2str(i);
     all_labels(1,i+2) = addlabel;
