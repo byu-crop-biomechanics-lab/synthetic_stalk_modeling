@@ -47,7 +47,19 @@ function [cumulative_err,individual_err,percent_err,Stiffnesses] = get_reaction_
 %   box plot when the outliers are ignored.
 % 
 % PSEUDO-CODE:
-%   
+%   Load results data and create a blank array to reorganize data.
+%   Iterate through all data and populate the array with all data.
+%   With all data input, calculate stiffnesses for each cross section.
+%   Calculate percentage stiffness of original response, then convert to 
+%   percent error.
+%   Create box plots to represent data.
+%       Create labels for categorizing data based on number of principal
+%       components included.
+%       Examine percentage data for box plotting (find median errors, find
+%       upper and lower limits, and add a buffer from edge of whiskers to 
+%       edge of plot).
+%       Create the boxplot figures using populated labels.
+
 % 
 % -------------------------------------------------------------------------
 % VERSION HISTORY:
@@ -235,6 +247,8 @@ yline(0);
 hold off
 
 end
+
+
 
 %% Localized functions
 function [roundval] = RoundToPoint5(input)
