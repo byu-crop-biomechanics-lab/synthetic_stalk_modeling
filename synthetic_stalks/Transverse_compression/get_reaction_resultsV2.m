@@ -59,7 +59,7 @@ function [cumulative_err,individual_err,percent_err,Stiffnesses] = get_reaction_
 %       upper and lower limits, and add a buffer from edge of whiskers to 
 %       edge of plot).
 %       Create the boxplot figures using populated labels.
-
+% 
 % 
 % -------------------------------------------------------------------------
 % VERSION HISTORY:
@@ -172,6 +172,7 @@ for i = 1:length(stdev_err)
 end
 
 % Prepare data for boxplots
+% Cumulative cases
 percent_box = [];
 percent_boxlabels = [];
 for i = 2:(2+numNEPCs)
@@ -179,6 +180,7 @@ for i = 2:(2+numNEPCs)
     percent_boxlabels = [percent_boxlabels; percent_labels(:,i)];
 end
 
+% Individual cases
 percent_box_ind = [];
 percent_boxlabels_ind = [];
 individual = linspace((3+numNEPCs),(1+2*numNEPCs),(numNEPCs-1));
