@@ -1,4 +1,4 @@
-function ellipse_fitting_V2(FileName,SaveName)
+function ellipse_fitting_opt(FileName,SaveName)
 % Load a mat file that has exterior XY data and avgrindthickness data.
 % Cycle through cross sections and select the angular range that
 % contains the notch so it's ignored during ellipse fitting. Then save the
