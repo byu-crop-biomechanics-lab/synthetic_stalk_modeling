@@ -24,12 +24,40 @@ function flip_notches(Flip_Indices,ChooseSectionsOutput,FlippedOutputName)
 % NOTES:
 %       
 % 
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%   N/A
 % 
+% PSEUDO-CODE:
+%   Load in the data for the chosen sections.
+%   Load in the vector of ones and zeros indicating which cross-sections
+%   should be flipped 180 degrees to put the notch on the left side.
+% 
+%   Create empty arrays to hold boundary data.
+% 
+%   Iterate through the rows of the flip_sections vector:
+%       If the current row's value of flip_sections is 1:
+%           Rotate the cross-section by 180 degrees and reorder the points
+%           so the first point is back on the x-axis.
+%           
+%           Redefine the appropriate row in the main XY data
+%       end
+%   end
+% 
+%   Convert data from Cartesian coordinates to polar coordinates.
+% 
+%   Copy the table containing the selected cross-sections.
+%   Edit the exterior and interior profiles in Cartesian and polar
+%   coordinates in the table so they contain the new, "flipped" profile
+%   data.
+% 
+%   Save data in a new .mat file. 
+% 
+% -------------------------------------------------------------------------
 % VERSION HISTORY:
 % V1 - Made into a function that works with the updated process flow
 % V2 - 
 % V3 - 
-%
 % -------------------------------------------------------------------------
 
 load(ChooseSectionsOutput);
