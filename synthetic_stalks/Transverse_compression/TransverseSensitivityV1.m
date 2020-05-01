@@ -108,34 +108,11 @@ function TransverseSensitivityV1(slices,stalknums,AllSlicesPCA,percent_change,nu
 %           (case 5).
 %   
 %           Use the base case ellipse parameters and add in the principal
-%           component features, with the 1st principal component scaling
-%           factor multiplied by the sensitivity factor (all other
+%           component features, with the current principal component 
+%           scaling factor multiplied by the sensitivity factor (all other
 %           parameters the same as the base case).
-%           Create a Python script for the PC 1 sensitivity case (case 6).
-% 
-%           Use the base case ellipse parameters and add in the principal
-%           component features, with the 3nd principal component scaling
-%           factor multiplied by the sensitivity factor (all other
-%           parameters the same as the base case).
-%           Create a Python script for the PC 2 sensitivity case (case 7).
-% 
-%           Use the base case ellipse parameters and add in the principal
-%           component features, with the 3rd principal component scaling
-%           factor multiplied by the sensitivity factor (all other
-%           parameters the same as the base case).
-%           Create a Python script for the PC 3 sensitivity case (case 8).
-% 
-%           Use the base case ellipse parameters and add in the principal
-%           component features, with the 4th principal component scaling
-%           factor multiplied by the sensitivity factor (all other
-%           parameters the same as the base case).
-%           Create a Python script for the PC 4 sensitivity case (case 9).
-% 
-%           Use the base case ellipse parameters and add in the principal
-%           component features, with the 5th principal component scaling
-%           factor multiplied by the sensitivity factor (all other
-%           parameters the same as the base case).
-%           Create a Python script for the PC 5 sensitivity case (case 10).
+%           Create a Python script for the PC sensitivity case (cases 
+%           6-end).
 % 
 %       end
 % 
@@ -329,16 +306,18 @@ for slice = slices
         Script = Template; % Reset the script template    
         make_case(case_num,adj_ind,ID,GROUP,base_ext,base_int,Tnew,Script,Erind,Epith_plus);        
         
-        %% Change NEPC 1 (case 6)
-        if numNEPCs >= 1
+        
+        %% Change Principal Components (cases 6-end)
+        for i = 1:numNEPCs
         
             Tnew = ALL_ELLIPSE_T(adj_ind,:);
 
-            % Make profile that includes NEPCs 1-5
+            % Make profile that includes all principal components up
+            % through numNEPCs
             NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
 
             for k = 1:numNEPCs
-                if k == 1
+                if k == i
                     NEPC_ext = NEPC_ext + plus_change*ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
                 else
                     NEPC_ext = NEPC_ext + ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
@@ -355,169 +334,20 @@ for slice = slices
                 polarplot(Tnew,R_int,'r');
                 polarplot(Tnew,base_ext,'b');
                 polarplot(Tnew,base_int,'b');
-                title('Changing NEPC 1');
+                titlestring = strcat("Changing PC ",num2str(i));
+                title(titlestring);
                 pause();
                 close;
             end
 
             % Create cases
-            case_num = case_num + 1;
-            Script = Template; % Reset the script template    
-            make_case(case_num,adj_ind,ID,GROUP,base_ext,base_int,Tnew,Script,Erind,Epith);        
-            
-        end
-        
-        %% Change NEPC 2 (case 7)
-        if numNEPCs >= 2
-            
-            Tnew = ALL_ELLIPSE_T(adj_ind,:);
-
-            % Make profile that includes NEPCs 1-5
-            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-
-            for k = 1:numNEPCs
-                if k == 2
-                    NEPC_ext = NEPC_ext + plus_change*ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
-                else
-                    NEPC_ext = NEPC_ext + ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
-                end
-            end
-
-            R_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
-            R_int = normintV2(R_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
-
-            % Check shape
-            if plotting == 1
-                polarplot(Tnew,R_ext,'r');
-                hold on
-                polarplot(Tnew,R_int,'r');
-                polarplot(Tnew,base_ext,'b');
-                polarplot(Tnew,base_int,'b');
-                title('Changing NEPC 2');
-                pause();
-                close;
-            end
-
-            % Create cases
-            case_num = case_num + 1;
-            Script = Template; % Reset the script template    
-            make_case(case_num,adj_ind,ID,GROUP,base_ext,base_int,Tnew,Script,Erind,Epith);        
-        
-        end
-        
-        %% Change NEPC 3 (case 8)
-        if numNEPCs >= 3
-            
-            Tnew = ALL_ELLIPSE_T(adj_ind,:);
-
-            % Make profile that includes NEPCs 1-5
-            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-
-            for k = 1:numNEPCs
-                if k == 3
-                    NEPC_ext = NEPC_ext + plus_change*ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
-                else
-                    NEPC_ext = NEPC_ext + ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
-                end
-            end
-
-            R_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
-            R_int = normintV2(R_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
-
-            % Check shape
-            if plotting == 1
-                polarplot(Tnew,R_ext,'r');
-                hold on
-                polarplot(Tnew,R_int,'r');
-                polarplot(Tnew,base_ext,'b');
-                polarplot(Tnew,base_int,'b');
-                title('Changing NEPC 3');
-                pause();
-                close;
-            end
-
-            % Create cases
-            case_num = case_num + 1;
-            Script = Template; % Reset the script template    
-            make_case(case_num,adj_ind,ID,GROUP,base_ext,base_int,Tnew,Script,Erind,Epith);        
-        
-        end
-        
-        %% Change NEPC 4 (case 9)
-        if numNEPCs >= 4
-            
-            Tnew = ALL_ELLIPSE_T(adj_ind,:);
-
-            % Make profile that includes NEPCs 1-5
-            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-
-            for k = 1:numNEPCs
-                if k == 4
-                    NEPC_ext = NEPC_ext + plus_change*ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
-                else
-                    NEPC_ext = NEPC_ext + ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
-                end
-            end
-
-            R_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
-            R_int = normintV2(R_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
-
-            % Check shape
-            if plotting == 1
-                polarplot(Tnew,R_ext,'r');
-                hold on
-                polarplot(Tnew,R_int,'r');
-                polarplot(Tnew,base_ext,'b');
-                polarplot(Tnew,base_int,'b');
-                title('Changing NEPC 4');
-                pause();
-                close;
-            end
-
-            % Create cases
-            case_num = case_num + 1;
-            Script = Template; % Reset the script template    
-            make_case(case_num,adj_ind,ID,GROUP,base_ext,base_int,Tnew,Script,Erind,Epith);        
-        
-        end
-        
-        %% Change NEPC 5 (case 10)
-        if numNEPCs >= 5
-            
-            Tnew = ALL_ELLIPSE_T(adj_ind,:);
-
-            % Make profile that includes NEPCs 1-5
-            NEPC_ext = zeros(1,size(ext_rhoPCAs,1));
-
-            for k = 1:5
-                if k == 5
-                    NEPC_ext = NEPC_ext + plus_change*ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
-                else
-                    NEPC_ext = NEPC_ext + ext_rhocoeffs(adj_ind,k)*ext_rhoPCAs(:,k)';
-                end
-            end
-
-            R_ext = ALL_ELLIPSE_R_ext(adj_ind,:) - NEPC_ext;
-            R_int = normintV2(R_ext,ALL_ELLIPSE_T(adj_ind,:),ALL_AVG_RIND_T(adj_ind));
-
-            % Check shape
-            if plotting == 1
-                polarplot(Tnew,R_ext,'r');
-                hold on
-                polarplot(Tnew,R_int,'r');
-                polarplot(Tnew,base_ext,'b');
-                polarplot(Tnew,base_int,'b');
-                title('Changing NEPC 5');
-                pause();
-                close;
-            end
-
-            % Create cases
-            case_num = case_num + 1;
             Script = Template; % Reset the script template    
             make_case(case_num,adj_ind,ID,GROUP,base_ext,base_int,Tnew,Script,Erind,Epith);
-        
+            
+            case_num = case_num + 1;
+            
         end
+        
     end
 
     group = group + 1;
@@ -717,8 +547,6 @@ function make_case(case_num,i,ID,GROUP,R_ext,R_int,T,Script,Erind,Epith)
     
 end
 
-
-
 function [spline] = writespline_V2(data)
 % FILENAME: writespline_V2.m
 % AUTHOR: Ryan Larson
@@ -816,7 +644,6 @@ function [r] = rpts(N,theta,dmaj,dmin)
             + ((dmaj/2)*sin(theta(i)))^2);
     end
 end
-
 
 function [Erind,Epith] = get_materials(method)
 % FILENAME: writespline_V2.m
