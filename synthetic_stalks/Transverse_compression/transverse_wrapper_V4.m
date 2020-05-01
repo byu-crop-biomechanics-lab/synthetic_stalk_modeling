@@ -28,6 +28,8 @@ function [problem_slice_stalk] = transverse_wrapper_V4(slices,stalknums,material
 %           'maxpith' - Maximum pith properties, random rind properties
 %           'minrind' - Minimum rind properties, random pith properties
 %           'maxrind' - Maximum rind properties, random pith properties
+%           'minrind_maxpith' - Minimum rind, maximum pith
+%           'maxrind_minpith' - Maximum rind, minimum pith
 %           'avg' - Mean rind properties, mean pith properties
 % 
 %       AllSlicesPCA: 'AllSlicesPCA.mat'
