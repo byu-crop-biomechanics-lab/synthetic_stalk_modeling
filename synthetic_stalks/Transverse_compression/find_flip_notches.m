@@ -11,11 +11,14 @@ function find_flip_notches(ChooseSectionsOutput,SaveName)
 % 
 % 
 % INPUTS:
-%       ChooseSectionsOutput - A .mat file produced by ChooseSections.m
+%   ChooseSectionsOutput - A .mat file produced by ChooseSections.m
+% 
+%   SaveName: A string name (including .mat at the end) for the output file
 %       
 % OUTPUTS:
-%       flip_sections - A vector of 1s and empties (or non-1s) that must be
-%       fed into flip_notches.m.
+%   flip_sections - A vector of 1s and empties (or non-1s) that must be
+%   fed into flip_notches.m. This is part of the output .mat file named by
+%   SaveName.
 %
 %
 % NOTES: The reason find_flip_notches.m and flip_notches.m are not combined
@@ -26,12 +29,27 @@ function find_flip_notches(ChooseSectionsOutput,SaveName)
 % cross-sections, with no opportunity to make corrections during the
 % process.
 % 
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%   N/A
 % 
+% PSEUDO-CODE:
+%   Load exterior profile data.
+%   Create column vector of zeros, which will be used to save indicators of
+%   whether a cross-section should be flipped.
+%   Iterate through the cross-sections:
+%       Plot the cross-section
+%       Enter 1 if the cross-section needs to be flipped to put the notch
+%       on the left side.
+%       
+%   Save the data in a .mat file
+%   
+% 
+% -------------------------------------------------------------------------
 % VERSION HISTORY:
 % V1 - Made into a function that works with the updated process flow
 % V2 - 
 % V3 - 
-%
 % -------------------------------------------------------------------------
 
 load(ChooseSectionsOutput);
@@ -53,7 +71,6 @@ for i = 1:N
         s = 0;
     end
     flip_sections(i) = s;
-%     pause(); 
 end
 close;
 
