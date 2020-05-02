@@ -1,62 +1,13 @@
 function [Stalk_TableDCR] = CreateDCRTable(Table,range,ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR)
-% FILENAME: CreateDCRTable.m
-% AUTHOR: Ryan Larson
-% DATE: 6/17/2019
-%
-% PURPOSE: Take the variables created from PrepSections_V2.m and
+% CreateDCRTable.m: Take the variables created from PrepSections_V2.m and
 % make a new data table, copied from SMALL_CURVES_V2_3_1500.mat with some
 % deletions and additions
-% 
-% INPUTS: 
-%       Table: This should be the data table Stalk_Table from
-%       SMALL_CURVES_V2_3_1500.mat
 %
-%       range: A 1x2 vector that contains the indices that will be included
-%       in the new table. [1 nslices]
-% 
-%       ext_xDCR: Downsampled, centered, and rotated exterior x coordinates
-% 
-%       ext_yDCR: Downsampled, centered, and rotated exterior y coordinates
-% 
-%       ext_tDCR: Downsampled, centered, and rotated exterior theta
-%       coordinates
-% 
-%       ext_rhoDCR: Downsampled, centered, and rotated exterior R
-%       coordinates
-% 
-%       int_xDCR: Downsampled, centered, and rotated interior x coordinates
-% 
-%       int_yDCR: Downsampled, centered, and rotated interior y coordinates
-% 
-%       int_tDCR: Downsampled, centered, and rotated interior theta
-%       coordinates
-% 
-%       int_rhoDCR: Downsampled, centered, and rotated interior R
-%       coordinates
-%
-%
-% OUTPUTS:
-%       StalkTableDCR: A new version of Table that contains the
-%       downsampled, centered, and rotated versions of the original
-%       boundaries.
-%
-%
-% NOTES: 
-% 
-% 
-% VERSION HISTORY:
-% V1 - 
-% V2 - 
-% V3 - 
-%
-% -------------------------------------------------------------------------
+% Author: Ryan Larson
+% Date: 6/17/2019
 
-% Copy the original data table, through specified rows (Jared's data has
-% some misfit cases that don't have usable data at the end, so we only go
-% up to that point)
 Stalk_TableDCR = Table(range(1):range(2),:);
 
-% Remove variables that were sampled at the original sample rate
 Stalk_TableDCR = removevars(Stalk_TableDCR,{'Ext_X','Ext_Y','Int_X','Int_Y','xbar','ybar'});
 
 N = size(Stalk_TableDCR,1);
@@ -79,7 +30,6 @@ Int_Y = cell(N,1);
 Int_T = cell(N,1);
 Int_Rho = cell(N,1);
 
-% Recreate the original variable names, but with DCR data
 for i = 1:N
     Ext_X{i} = ext_xDCR(:,i);
     Ext_Y{i} = ext_yDCR(:,i);

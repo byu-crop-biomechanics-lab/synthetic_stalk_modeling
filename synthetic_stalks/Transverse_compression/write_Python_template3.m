@@ -1,4 +1,4 @@
-% write_Python_template3.m: Use Christopher's Python script for taking
+% write_Python_template.m: Use Christopher's Python script for taking
 % cross-section points and running an Abaqus case and make a string array
 % that can be used to
 
@@ -53,7 +53,7 @@ Template = {
     '#y location of reference point 1';
     'RP2y = ';
     '#influence area of fake contact constraint';
-    'influence = 100';
+    'influence = 1000';
     '######################################################################################';
     '';
     '#Define additional parameters';
