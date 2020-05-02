@@ -846,7 +846,7 @@ for i = 1:N
     
     % Get interior ellipse fit points, based on constant rind thickness
     % assumption
-%     int_rho_ellipse = ext_rho_ellipse - avg_rind_thick(i);
+    int_rho_ellipse = ext_rho_ellipse - avg_rind_thick(i);
     
 %     % Plot in polar coordinates to check results
 %     polarplot(theta,ext_rho,'.','LineWidth',2);
@@ -868,20 +868,15 @@ for i = 1:N
     ELLIPSE_CENTERS(i,2) = mean(Y_ellipse);
     ELLIPSE_T(i,:) = theta;
     ELLIPSE_R_ext(i,:) = ext_rho_ellipse;
-%     ELLIPSE_R_int(i,:) = ext_rho_ellipse - avg_rind_thick(i); % This way
-%     gives varying rind thickness because the theta line isn't always
-%     normal to the ellipse
-%     ELLIPSE_R_int(i,:) = rpts(npoints,ELLIPSE_T(i,:),(A(i) - 2*avg_rind_thick(i)),(B(i) - 2*avg_rind_thick(i)));    % This way overestimates and underestimates periodically
-    ELLIPSE_R_int(i,:) = normintV2(ELLIPSE_R_ext(i,:),ELLIPSE_T(i,:),avg_rind_thick(i));
+%     ELLIPSE_R_int(i,:) = ext_rho_ellipse - avg_rind_thick(i);
+    ELLIPSE_R_int(i,:) = rpts(npoints,ELLIPSE_T(i,:),(A(i) - 2*avg_rind_thick(i)),(B(i) - 2*avg_rind_thick(i)));
     R_ext(i,:) = ext_rho;
     R_int(i,:) = int_rho;
     
     % Get difference between the ellipse and the real data (if the ellipse
     % overestimates, then the value of DIFF will be positive)
-%     DIFF_R_ext(i,:) = ext_rho_ellipse - ext_rho;
-%     DIFF_R_int(i,:) = int_rho_ellipse - int_rho;
-    DIFF_R_ext(i,:) = ELLIPSE_R_ext(i,:) - R_ext(i,:);
-    DIFF_R_int(i,:) = ELLIPSE_R_int(i,:) - R_int(i,:);
+    DIFF_R_ext(i,:) = ext_rho_ellipse - ext_rho;
+    DIFF_R_int(i,:) = int_rho_ellipse - int_rho;
     
     AVG_RIND_T(i) = avg_rind_thick(i);
     
@@ -1429,72 +1424,4 @@ function [Erind,Epith] = get_materials(method)
             Epith = Epith_mean;
     end
     
-end
-
-
-function [R_int] = normint(R,theta,t)
-    % Calculates the new interior points based on local central difference
-    % derivative
-    
-    % Convert to Cartesian
-    [xy_columns] = convert_to_xy(R,theta);
-    x0 = xy_columns(:,1);
-    y0 = xy_columns(:,2);
-    
-    % Get vector of normal slopes
-    slopes = zeros(size(theta));
-    
-    for i = 1:length(slopes)
-        if i == 1
-            m = (y0(2)-y0(end))/(x0(2)-x0(end));
-        elseif i == length(slopes)
-            m = (y0(1)-y0(end-1))/(x0(1)-x0(end-1));            
-        else
-            m = (y0(i+1)-y0(i-1))/(x0(i+1)-x0(i-1));
-        end
-        
-        slopes(i) = -1/m;
-        
-    end
-    
-    % Compute normal slope angles
-    phi = zeros(size(slopes));
-    for i = 1:length(phi)
-        phi(i) = atan(slopes(i));
-    end
-    
-    % Compute locations of interior points along the normal vectors
-    x1 = zeros(size(x0));
-    y1 = zeros(size(y0));
-    rise = zeros(size(y0));
-    run = zeros(size(x0));
-    
-    for i = 1:length(slopes)
-        run(i) = t*cos(phi(i));
-        rise(i) = t*sin(phi(i));
-        xtemp1 = x0(i) - run(i);
-        xtemp2 = x0(i) + run(i);
-        ytemp1 = y0(i) - rise(i);
-        ytemp2 = y0(i) + rise(i);
-        if abs(xtemp1) < abs(xtemp2)
-            x1(i) = xtemp1;
-        else
-            x1(i) = xtemp2;
-        end
-        if abs(ytemp1) < abs(ytemp2)
-            y1(i) = ytemp1;
-        else
-            y1(i) = ytemp2;
-        end
-%         y1(i) = y0(i) - rise(i);
-    end
-    
-    % Convert back to polar coordinates
-    [thetatemp, Rtemp] = cart2pol(x1,y1);
-    thetatemp = wrapTo2Pi(thetatemp);   % Make all the negative pi values sit on a 0-2*pi system
-    
-    R_int_interp = interp1(thetatemp,Rtemp,theta,'pchip','extrap'); 
-    R_int = R_int_interp;
-    
-
 end
