@@ -1,41 +1,30 @@
-function PrepSections_V2(indices, npoints, Table, SaveName)
-% FILENAME: PrepSections_V2.m
+function PrepSections3D(stalknums, npoints, DataTable, SaveName)
+% FILENAME: PrepSections3D.m
 % AUTHOR: Ryan Larson
-% DATE: 6/11/19
+% DATE: 1/9/2020
 %
-% PURPOSE: This function is specifically a prep function for PCA analysis.
-% Its goal is to output an array of x and y coordinates, representing a
-% certain point across many stalks. These x and y coordinates will be
-% downsampled, centered, and rotated.
-% 
-% UPDATES!!!!!!!!!!!!!!!!!!!!!!!!!
-% This code is meant to work with Jared's SMALL_Curves_V2_2.mat data table.
-% It should output the exact same things as PrepSections.m, but instead of
-% working directly with images, it works with the extracted (and
-% non-rotated, non-centered) boundaries. PrepSections_V2.m takes in a
-% vector of indices that determines which slices are examined. Since the
-% data table has a row for each slice, but the stalks are all put together,
-% another script must be used to create the set.
-
-
-% VERIFY THAT THE CROSS-SECTION IS SHIFTED TO THE CENTER OF THE ELLIPSE (in
-% reorder?)
-
-
+% PURPOSE: 
+%   This is the parallel to PrepSections_V2.m for the transverse model
+%   process. This function takes in the table prepared by Jared that has
+%   exterior and interior stalk cross-section boundaries and shifts each
+%   stalk so the node cross-section is centered and rotated. Cross-sections
+%   below the node will have the notch on the left, and sections above the
+%   node will have the notch on the right. The data is downsampled to
+%   include 360 points.
+%   THE TABLE WILL ALSO REMOVE ANY DATA POINTS THAT ARE FOUND TO CAUSE A
+%   PROCESSING ERROR, AS CAUGHT BY THE TRY CATCH BLOCK. THIS IS TO PREVENT
+%   PROBLEMS DOWN THE LINE WITH PROCESSING.
 % 
 % INPUTS: 
-%       indices - A vector of consecutive indices that represents the rows
-%       from Stalk_Table (in SMALL_Curves_V2_3_1500.mat) that will be
-%       downsampled, centered, and rotated. To perform the conversion on
-%       all rows of the original data, use the following:
-%           indices = linspace(1,size(Stalk_Table,1),size(Stalk_Table,1));
+%       stalknums - A 2x1 vector defining the starting and ending stalk
+%       numbers to be included in the output data table
 %
 %       npoints - An integer value for the number of evenly-spaced points
 %       in polar coordinates to use. This does not include a repeat of the
 %       first point to close the shape, so if you want the points to be
 %       exactly on 1-degree intervals, set npoints = 359.
 %
-%       Table - This should be the data table Stalk_Table from
+%       DataTable - This should be the data table Stalk_Table from
 %       SMALL_CURVES_V2_3_1500.mat
 %
 %       SaveName - A string with an output file name, with .mat file
@@ -48,255 +37,339 @@ function PrepSections_V2(indices, npoints, Table, SaveName)
 %       input, except that Ext_X, Ext_Y, Int_X, and Int_Y are replaced with
 %       their downsampled, centered, and rotated versions. Added are Ext_T,
 %       Ext_Rho, Int_T, and Int_Rho, the polar coordinate versions of the 
-%       downsampled data. xbar and ybar from the original table are removed
-%       because they are no longer meaningful.
-%
+%       downsampled data.
+% 
 %       error_indices - A list of integers corresponding to rows in
 %       Stalk_Table that experienced errors during conversion, and should
 %       not be used for further analysis until the problems are fixed.
+%       ACTUALLY REMOVE THESE INDICES BEFORE SAVING THE TABLE BECAUSE
+%       THEY'RE A
+%       HEADACHE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %
 %       npoints - The same integer value from the input to this function,
 %       saved to ensure that all downstream functions assume the same
 %       number of downsampled cross-section points.
 %
-% SUBROUTINES:
-%       fit_ellipse_R2.m:
-% 
-% 
-%       
 %
-% NOTES: - Originally adapted from boundary_info_V4.m for PCA purposes
+% NOTES: - Originally adapted from PrepSections_V2.m
 % 
 % 
 % VERSION HISTORY:
-% V1 - Works directly with images, but a subset of the full data.
-% V2 - Converted to work with Jared's data table rather than Joe and
-% Aaron's subset of data that they selected
+% V1 - 
+% V2 - 
 % V3 - 
 %
 % -------------------------------------------------------------------------
+hold off
+close all;
+set(0,'DefaultFigureWindowStyle','docked');
 
+% Initialize variables
 plotting = 0;       % a following function has a built-in plotting option, which we turn off
 
 %%% Variable Initializations
 alpha = 0;
 prev_alpha = 0;
-nslices = length(indices);
 
-error_indices = [];
+nslices = 0; % Initialize the total number of slices in the chosen stalks
+startslice = 1;
+endslice = 1;
 
-for g = 1:nslices
-    pct_loop1 = (g/nslices)*100     % This function runs for a long time, so this line outputs the approximate percentage completed
-        
-    try
-        % Restart all the variables each loop
-        ext_X = [];
-        ext_Y = [];
-        ext_xi = [];
-        ext_yi = [];
-        ext_rhoi = [];
-        ti_ext = [];
-
-        % Convert cells to arrays for easier access
-        ext_X = cell2mat(Table.Ext_X(indices(g)));
-        ext_Y = cell2mat(Table.Ext_Y(indices(g)));
-        int_X = cell2mat(Table.Int_X(indices(g)));
-        int_Y = cell2mat(Table.Int_Y(indices(g)));
-        avgrindthickness = Table.rind_t(indices(g));
-
-        % Check with a plot if the plotting option is enabled
-        if plotting == 1
-            plot(ext_X,ext_Y);
-            hold on
-            plot(int_X,int_Y);
-            pause();
-            close;
-            hold off
+if stalknums(1) ~= 1
+    for i = 1:size(DataTable,1)-1
+        if DataTable.StkNum(i) == stalknums(1) && DataTable.StkNum(i-1) ~= DataTable.StkNum(i)
+            startslice = i;
         end
-
-        % Get the number of points in the originally-detected boundaries
-        npoints_slice_ext = length(ext_X);
-        npoints_slice_int = length(int_X);
-
-        
-        %%
-        % Uses a fit ellipse function to identify the angle of rotation along the long axis of the cross-section
-        % (only takes into account the exterior boundaries)
-        [alpha, ~, ~, ~, ~, ~, ~] = fit_ellipse_R2( ext_X, ext_Y, prev_alpha, gca );
-
-        % Reorders and rotates the stalk's exterior and interior
-        % Rotates an extra 90 degrees so the long axis is vertical
-        [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_X, ext_Y, alpha-pi/2);
-        
-        % reorder_V2_interior is almost identical to reorder_V2, except
-        % that it allows the data to be rotated about a point other than
-        % the current data's centroid. This is important, because the real
-        % data will have different centroids for the interior and exterior.
-        % This prevents odd shifts from happening due to this rotation.
-        [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_X, int_Y, alpha-pi/2, mean(ext_X), mean(ext_Y));
-
-        close(gcf)
-        ext_xi = ext_xi';
-        ext_yi = ext_yi';
-        int_xi = int_xi';
-        int_yi = int_yi';
-
-        % NEW POLAR COORDINATES
-        ti_ext = 0:2*pi/npoints_slice_ext:2*pi;                             % Creates a theta vector according to the inputted resolution
-        ti_ext = ti_ext(1:end-1);                                           % The last point is not necessary
-
-        for j = 1:length(ti_ext)                                        
-            ext_rhoi(:,j) = sqrt(ext_xi(:,j)^2 + ext_yi(:,j)^2);  % Creates an exterior rho vector using the Pythagorean theorem 
-        end
-
-        % LOCATES THE NOTCH -----------------------------------
-
-        % Creates the two cut-outs to look for the notch in
-        window1 = find(ti_ext >   pi/4 & ti_ext < 3*pi/4);
-        window2 = find(ti_ext > 5*pi/4 & ti_ext < 7*pi/4);
-
-        % The 2 windows on all the coordinates
-        w1_ti = ti_ext(window1);
-        w2_ti = ti_ext(window2);
-        w1_rhoi = ext_rhoi(window1);
-        w2_rhoi = ext_rhoi(window2);
-        w1_ext_xi = ext_xi(window1);
-        w2_ext_xi = ext_xi(window2);
-        w1_ext_yi = ext_yi(window1);
-        w2_ext_yi = ext_yi(window2);
-
-        % Extreme smoothing needed to find peaks
-        w1_rhoi = smooth(w1_rhoi, 30);
-        w2_rhoi = smooth(w2_rhoi, 30);
-
-        % Peakfinding on the two windows
-        sel1 = (max(w1_rhoi)-min(w1_rhoi))/32;
-        w1_peaklocs = peakfinder(w1_rhoi,sel1);
-        sel2 = (max(w2_rhoi)-min(w2_rhoi))/32;
-        w2_peaklocs = peakfinder(w2_rhoi,sel2);
-
-        % The amount of peaks in each window
-        w1peaks = length(w1_peaklocs);
-        w2peaks = length(w2_peaklocs);
-
-        if w1peaks >= w2peaks % notch on top
-            cut1 = window1(1);
-            cut2 = window1(end);
-            spin = -pi/2;
-        elseif w1peaks < w2peaks % notch on bottom
-            cut1 = window2(1);
-            cut2 = window2(end);
-            spin = pi/2;
-        end
-
-        % "Pie" vectors (the external cross sections with the notch cut out)
-        pier = [ext_rhoi(cut2+1:end)   ext_rhoi(1:cut1-1)];
-        piet = [ti_ext(cut2+1:end)     ti_ext(1:cut1-1)];
-        piex = [ext_xi(cut2+1:end)     ext_xi(1:cut1-1)];
-        piey = [ext_yi(cut2+1:end)     ext_yi(1:cut1-1)];
-
-        % Rotate the cross-section again to be horizontal / notch on the right
-        [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_xi, ext_yi, spin);
-        [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_xi, int_yi, spin, mean(ext_xi), mean(ext_yi));
-        [~, ~, ~, ~, ~, ~, piex,   piey,   ~, ~] = reorder_V2(piex,   piey,   spin);
-
-        % Fitting an ellipse to the cross-section with the notch removed to
-        % get a more accurate alpha
-        [new_alpha, ~, ~, ~, ~, ~, ~] = fit_ellipse_R2( piex, piey, alpha, gca );
-
-        % Rotating according to the new, more accurate alpha
-        [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_xi, ext_yi, new_alpha);
-        [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_xi, int_yi, new_alpha, mean(ext_xi), mean(ext_yi));
-
-        % Downsampling exterior/ Resampling interior
-        idx =  1:length(ext_xi);                            % Index
-        idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
-        ext_xi = interp1(idx, ext_xi, idxq, 'pchip');       % Downsampled Vector
-
-        idy = 1:length(ext_yi);                             % Index
-        idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
-        ext_yi = interp1(idy, ext_yi, idyq, 'pchip');       % Downsampled Vector
-
-        idx =  1:length(int_xi);                            % Index
-        idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
-        int_xi = interp1(idx, int_xi, idxq, 'pchip');       % Downsampled Vector
-
-        idy = 1:length(int_yi);                             % Index
-        idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
-        int_yi = interp1(idy, int_yi, idyq, 'pchip');       % Downsampled Vector
-
-        % Get interior and exterior data in polar coordinates
-        [~, ~, ~, ~, ~, ~, ~, ~, ext_rhoDCR(:,:,g), ext_tDCR(:,:,g)] = reorder_V2(ext_xi, ext_yi, 0);
-        [~, ~, ~, ~, ~, ~, ~, ~, int_rhoDCR(:,:,g), int_tDCR(:,:,g)] = reorder_V2_interior(int_xi, int_yi, 0, mean(ext_xi), mean(ext_yi));
-
-        % Interpolate in polar to get first point exactly on the x-axis
-        % when converted back to Cartesian
-        theta = linspace(0,2*pi,npoints+1); % npoints points from 0 to 2*pi inclusive (puts the theta values right on degrees if npoints = 359)
-        theta = transpose(theta(1:end-1)); % Remove the last point so there are npoints points in the end
-        ext_rho_interp(:,:,g) = interp1(ext_tDCR(:,:,g),ext_rhoDCR(:,:,g),theta,'pchip','extrap');
-        int_rho_interp(:,:,g) = interp1(int_tDCR(:,:,g),int_rhoDCR(:,:,g),theta,'pchip','extrap');  
-        ext_tDCR(:,:,g) = theta;
-        int_tDCR(:,:,g) = theta;
-        ext_rhoDCR(:,:,g) = ext_rho_interp(:,:,g);
-        int_rhoDCR(:,:,g) = int_rho_interp(:,:,g);
-
-        % Convert the resampled polar points back to Cartesian before
-        % output
-        ext_xDCR(:,:,g) = ext_rhoDCR(:,:,g).*cos(ext_tDCR(:,:,g));
-        ext_yDCR(:,:,g) = ext_rhoDCR(:,:,g).*sin(ext_tDCR(:,:,g));
-        int_xDCR(:,:,g) = int_rhoDCR(:,:,g).*cos(int_tDCR(:,:,g));
-        int_yDCR(:,:,g) = int_rhoDCR(:,:,g).*sin(int_tDCR(:,:,g));
-
-    catch % HAVE THIS PRINT ANY ERROR MESSAGES FOR DEBUGGING PURPOSES
-        error_indices = [error_indices, g];
     end
+else
+    startslice = 1;
+end
+
+for i = 1:size(DataTable,1)-1
+    if DataTable.StkNum(i) == stalknums(2) && DataTable.StkNum(i+1) ~= DataTable.StkNum(i)
+        endslice = i;
+    end
+end
+
+nslices = endslice - startslice + 1;
+
+
+error_indices = []; % Global indices where errors occur
+theta_rot = zeros(nslices,1);
+A = zeros(nslices,1);
+B = zeros(nslices,1);
+
+nstalks = stalknums(2) - stalknums(1) + 1;
+nodeindices = zeros(nstalks,1); % Holding vector for global indices of nodes
+
+Stalk_TablePCA = DataTable(stalknums(1):stalknums(2),:);
+
+%% Start loop
+% Loop through stalk numbers
+for n = stalknums(1):stalknums(2)
+    n
+    % Get the starting and ending indices of the table for the current stalk
+    % number
+    indices = (DataTable.StkNum == n); % This outputs a logical where the condition is true, not a table
+            
+    % Get index of first row that is part of the current stalk
+    for i = 1:length(indices)
+        if indices(1) == 1
+            idx_first = 1;
+            break
+        elseif indices(i) == 1 && indices(i-1) == 0
+            idx_first = i;
+        end
+    end
+
+    % Get index of last row that is part of the current stalk
+    for i = 2:length(indices)
+        if indices(i) == 0 && indices(i-1) == 1
+            idx_last = i-1;
+            break
+        end
+    end
+    
+    tempTable = DataTable((idx_first:idx_last),:);
+
+    % Locate node cross-section in the complete original DataTable, not the
+    % indices selection
+    diffs = NaN(size(DataTable.StkNum));            
+    for i = idx_first:idx_last
+        diffs(i) = 0 - DataTable.SlP(i);
+    end
+    
+    % Get index of node on full table level
+    [~,globalNodeIndex] = min(abs(diffs));
+    nodeindices(n) = globalNodeIndex; % Save the global node indices
+    
+    % Locate node cross-section in the sub-table for just this stalk
+    diffs = NaN(size(tempTable.StkNum));            
+    for i = 1:size(tempTable,1)
+        diffs(i) = 0 - tempTable.SlP(i);
+    end
+    
+    % Get index of node on current stalk table level
+    [~,localNodeIndex] = min(abs(diffs));
+    nodeindices(n) = localNodeIndex; % Save the global node indices
+    
+    
+    % Define geometric center of the node cross-section
+    xcnode = DataTable.xbar(globalNodeIndex);
+    ycnode = DataTable.ybar(globalNodeIndex);
+    
+    % Shift all cross-sections in the current stalk by the node
+    % cross-section shift
+    xshift = xcnode;
+    yshift = ycnode;
+    for i = 1:size(tempTable,1)
+        % Convert cells to arrays for easier access
+        ext_X = cell2mat(tempTable.Ext_X(i));
+        ext_Y = cell2mat(tempTable.Ext_Y(i));
+        int_X = cell2mat(tempTable.Int_X(i));
+        int_Y = cell2mat(tempTable.Int_Y(i));
         
+        % Shift current cross-section by xshift and yshift
+        for j = 1:length(ext_X)
+            ext_X(j) = ext_X(j) - xshift;
+        end
+        for j = 1:length(ext_Y)
+            ext_Y(j) = ext_Y(j) - yshift;
+        end
+        for j = 1:length(int_X)
+            int_X(j) = int_X(j) - xshift;
+        end
+        for j = 1:length(int_Y)
+            int_Y(j) = int_Y(j) - yshift;
+        end
+        
+        tempTable.Ext_X(i) = {ext_X};
+        tempTable.Ext_Y(i) = {ext_Y};
+        tempTable.Int_X(i) = {int_X};
+        tempTable.Int_Y(i) = {int_Y};
+        
+        tempTable.xbar(i) = mean(ext_X);
+        tempTable.ybar(i) = mean(ext_Y);
+        
+    end
+    
+    %% At this point, a smaller table exists for the current stalk only, with all cross-sections shifted together so that the node cross-section is centered at the origin
+    % All operations should be done on this, then inserted into the
+    % original table at the appropriate rows.
+    
+    %% Rotate all cross-sections about the center of the node cross-section  (which should be at 0,0)
+    
+    % Determine the angle of the node cross-section
+    prev_alpha = 0;
+    ext_X = cell2mat(tempTable.Ext_X(localNodeIndex));
+    ext_Y = cell2mat(tempTable.Ext_Y(localNodeIndex));
+    
+    [node_alpha,~,~] = getrotation(ext_X, ext_Y, prev_alpha);
+    
+    % Check the notch angle of the first 10 cross-sections. Determine the
+    % correct hemisphere to rotate the node into by taking the rough angle
+    % of the majority of these and determining what quadrant will put the
+    % notch at the left for these cross-sections. Then use this as a
+    % correction if the notch is difficult to locate for the node. This
+    % should avoid whole stalks being turned the wrong way.
+    nbottom = 5;
+    bottom_angles = zeros(nbottom,1);
+    notch_indicator = zeros(nbottom,1);
+    for i = 1:nbottom
+        prev_alpha = 0;
+        ext_X = cell2mat(tempTable.Ext_X(i));
+        ext_Y = cell2mat(tempTable.Ext_Y(i));
+        [bottom_angles(i),~,~] = getrotation(ext_X, ext_Y, prev_alpha);
+        [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_X, ext_Y, bottom_angles(i));
+
+        plot(ext_xi,ext_yi);
+        axis equal
+        
+        s = input('Enter 1 if notch is NOT on the left: ');
+        if isempty(s) || s ~= 1
+            s = 0;
+        end
+        notch_indicator(i) = s;
+    end
+    
+    
+    % Add rotation to node_alpha if the notch at the bottom of the stalk is
+    % not on the left
+    
+    count_flip = sum(notch_indicator(:) == 1);
+    
+    if count_flip > 2
+        if node_alpha > 0
+            node_alpha = node_alpha + pi;
+        else
+            node_alpha = node_alpha - pi;
+        end
+    end
+    
+    % Rotate all exteriors and interiors by node_alpha, about 0,0
+    for i = 1:size(tempTable,1)
+        try
+        
+            ext_X = cell2mat(tempTable.Ext_X(i));
+            ext_Y = cell2mat(tempTable.Ext_Y(i));
+            int_X = cell2mat(tempTable.Int_X(i));
+            int_Y = cell2mat(tempTable.Int_Y(i));
+            [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2_interior(ext_X, ext_Y, node_alpha, 0, 0);
+            [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_X, int_Y, node_alpha, 0, 0);
+
+            % Save rotation angles of each cross-section relative to the x-axis.
+            prev_alpha = 0;
+    %         ext_X = cell2mat(tempTable.Ext_X(i));
+    %         ext_Y = cell2mat(tempTable.Ext_Y(i));        
+            [theta_rot(i),A(i),B(i)] = getrotation(ext_xi, ext_yi, prev_alpha);
+
+            % Downsample cross-sections
+            idx =  1:length(ext_xi);                            % Index
+            idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
+            ext_xi = interp1(idx, ext_xi, idxq, 'pchip');       % Downsampled Vector
+
+            idy = 1:length(ext_yi);                             % Index
+            idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
+            ext_yi = interp1(idy, ext_yi, idyq, 'pchip');       % Downsampled Vector
+
+            idx =  1:length(int_xi);                            % Index
+            idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
+            int_xi = interp1(idx, int_xi, idxq, 'pchip');       % Downsampled Vector
+
+            idy = 1:length(int_yi);                             % Index
+            idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
+            int_yi = interp1(idy, int_yi, idyq, 'pchip');       % Downsampled Vector
+
+            % Temporarily shift boundary data to be centered at the
+            % centroid of the exterior data so conversion to polar and
+            % interpolation goes better.
+            xshift = tempTable.xbar(i);
+            yshift = tempTable.ybar(i);
+            ext_xi = ext_xi - xshift;
+            ext_yi = ext_yi - yshift;
+            int_xi = int_xi - xshift;
+            int_yi = int_yi - yshift;
+
+            % Get interior and exterior data in polar coordinates
+            [~, ~, ~, ~, ~, ~, ~, ~, ext_rho, ext_t] = reorder_V2_interior(ext_xi, ext_yi, 0, 0, 0);
+            [~, ~, ~, ~, ~, ~, ~, ~, int_rho, int_t] = reorder_V2_interior(int_xi, int_yi, 0, 0, 0);
+
+            % Interpolate in polar to get first point exactly on the x-axis
+            % when converted back to Cartesian
+            theta = linspace(0,2*pi,npoints+1); % npoints points from 0 to 2*pi inclusive (puts the theta values right on degrees if npoints = 359)
+            theta = transpose(theta(1:end-1)); % Remove the last point so there are npoints points in the end
+
+            [ext_t, index] = unique(ext_t); 
+            ext_rho_interp = interp1(ext_t,ext_rho(index),theta,'pchip','extrap');
+            [int_t, index] = unique(int_t);
+            int_rho_interp = interp1(int_t,int_rho(index),theta,'pchip','extrap');  
+            ext_t = theta;
+            int_t = theta;
+            ext_rho = ext_rho_interp;
+            int_rho = int_rho_interp;
+
+            % Convert the resampled polar points back to Cartesian before
+            % output
+            ext_xi = ext_rho.*cos(ext_t);
+            ext_yi = ext_rho.*sin(ext_t);
+            int_xi = int_rho.*cos(int_t);
+            int_yi = int_rho.*sin(int_t);
+
+            % Shift the boundaries back by their shift values
+            ext_xi = ext_xi + xshift;
+            ext_yi = ext_yi + yshift;
+            int_xi = int_xi + xshift;
+            int_yi = int_yi + yshift;
+
+            % Insert rotated and downsampled data back into tempTable
+            tempTable.Ext_X(i) = {ext_xi};
+            tempTable.Ext_Y(i) = {ext_yi};
+            tempTable.Int_X(i) = {int_xi};
+            tempTable.Int_Y(i) = {int_yi};
+        
+        % Catch error cases from try block
+        catch
+            global_index = idx_first + i - 1;
+            error_indices = [error_indices, global_index];
+        end
+        
+    end
+    
+    % Insert tempTable into copy of DataTable
+    Stalk_TablePCA(idx_first:idx_last,:) = tempTable;
+
 end
 
-% Force saves some working variables into the workspace
-assignin('base','error_indices',error_indices);
+assignin('base','nodeindices',nodeindices);
+assignin('base','A',A);
+assignin('base','B',B);
+assignin('base','theta_rot',theta_rot);
+Stalk_TablePCA = addvars(Stalk_TablePCA,A);
+Stalk_TablePCA = addvars(Stalk_TablePCA,B);
+Stalk_TablePCA = addvars(Stalk_TablePCA,theta_rot);
 
-% Squeeze all variables so they are two-dimensional and the same size
-ext_xDCR = squeeze(ext_xDCR);
-ext_yDCR = squeeze(ext_yDCR);
-int_xDCR = squeeze(int_xDCR);
-int_yDCR = squeeze(int_yDCR);
-ext_rhoDCR = squeeze(ext_rhoDCR);
-ext_tDCR = squeeze(ext_tDCR);
-int_rhoDCR = squeeze(int_rhoDCR);
-int_tDCR = squeeze(int_tDCR);
 
-% Check with polar and Cartesian plots if plotting is enabled
-if plotting == 1
-    % Plot in Cartesian coordinates to check results
-    plot(ext_xDCR(:,1),ext_yDCR(:,1),'.','LineWidth',2);
-    hold on
-    plot(int_xDCR(:,1),int_yDCR(:,1),'.','LineWidth',2);
-    pause();
-    close;
 
-    % Plot in polar coordinates to check results
-    polarplot(ext_tDCR(:,1),ext_rhoDCR(:,1));
-    hold on
-    polarplot(int_tDCR(:,1),int_rhoDCR(:,1));
-    pause();
-    close;
-    close(gcf)
+%% Remove error cases from the table
+% Sort error_indices in descending order
+error_indices = sort(error_indices,'descend');
+for i = 1:length(error_indices)
+    Stalk_TablePCA(error_indices(i),:) = [];
 end
 
-% Create new table using CreateDCRTable function
-Stalk_TableDCR = CreateDCRTable(Table,[1 nslices],ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR);
+
 
 % Output all variables into mat file
 FolderName = pwd;
 SaveFile = fullfile(FolderName, SaveName);
-save(SaveFile,'Stalk_TableDCR','error_indices','npoints');
+save(SaveFile,'Stalk_TablePCA','error_indices','npoints');
+
+
+end
 
 
 
 
-
-%% Localizing all of the functions used
 function [alpha, major, minor, xbar_e, ybar_e, X_ellipse, Y_ellipse] = fit_ellipse_R2( x, y, prev_alpha, axis_handle )
 %
 % fit_ellipse - finds the best fit to an ellipse for the given set of points.
@@ -602,6 +675,98 @@ Y_ellipse = rotated_ellipse(2,:);
 
 end
 
+
+function [tot_alpha,major,minor] = getrotation(ext_X, ext_Y, prev_alpha)
+% Get the accurate angle of rotation for the current cross-section. Used on
+% the node and the first 10 cross-sections below the node to verify the
+% notch orientation of the stalk
+
+npoints_slice_ext = length(ext_X);
+
+% Uses a fit ellipse function to identify the angle of rotation along the long axis of the cross-section
+% (only takes into account the exterior boundaries)
+[alpha, ~, ~, ~, ~, ~, ~] = fit_ellipse_R2( ext_X, ext_Y, prev_alpha, gca );
+
+% Reorders and rotates the stalk's exterior and interior
+% Rotates an extra 90 degrees so the long axis is vertical
+[~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_X, ext_Y, alpha-pi/2);
+% [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_X, int_Y, alpha-pi/2, mean(ext_X), mean(ext_Y));
+
+%         close(gcf)
+ext_xi = ext_xi';
+ext_yi = ext_yi';
+% int_xi = int_xi';
+% int_yi = int_yi';
+
+% NEW POLAR COORDINATES
+ti_ext = 0:2*pi/npoints_slice_ext:2*pi;                             % Creates a theta vector according to the inputted resolution
+ti_ext = ti_ext(1:end-1);                                           % The last point is not necessary
+
+for j = 1:length(ti_ext)                                        
+    ext_rhoi(:,j) = sqrt(ext_xi(:,j)^2 + ext_yi(:,j)^2);  % Creates an exterior rho vector using the Pythagorean theorem 
+end
+
+% LOCATES THE NOTCH -----------------------------------
+
+% Creates the two cut-outs to look for the notch in
+window1 = find(ti_ext >   pi/4 & ti_ext < 3*pi/4);
+window2 = find(ti_ext > 5*pi/4 & ti_ext < 7*pi/4);
+
+% The 2 windows on all the coordinates
+w1_ti = ti_ext(window1);
+w2_ti = ti_ext(window2);
+w1_rhoi = ext_rhoi(window1);
+w2_rhoi = ext_rhoi(window2);
+w1_ext_xi = ext_xi(window1);
+w2_ext_xi = ext_xi(window2);
+w1_ext_yi = ext_yi(window1);
+w2_ext_yi = ext_yi(window2);
+
+% Extreme smoothing needed to find peaks
+w1_rhoi = smooth(w1_rhoi, 30);
+w2_rhoi = smooth(w2_rhoi, 30);
+
+% Peakfinding on the two windows
+sel1 = (max(w1_rhoi)-min(w1_rhoi))/32;
+w1_peaklocs = peakfinder(w1_rhoi,sel1);
+sel2 = (max(w2_rhoi)-min(w2_rhoi))/32;
+w2_peaklocs = peakfinder(w2_rhoi,sel2);
+
+% The amount of peaks in each window
+w1peaks = length(w1_peaklocs);
+w2peaks = length(w2_peaklocs);
+
+if w1peaks >= w2peaks % notch on top
+    cut1 = window1(1);
+    cut2 = window1(end);
+    spin = -pi/2;
+elseif w1peaks < w2peaks % notch on bottom
+    cut1 = window2(1);
+    cut2 = window2(end);
+    spin = pi/2;
+end
+
+% "Pie" vectors (the external cross sections with the notch cut out)
+pier = [ext_rhoi(cut2+1:end)   ext_rhoi(1:cut1-1)];
+piet = [ti_ext(cut2+1:end)     ti_ext(1:cut1-1)];
+piex = [ext_xi(cut2+1:end)     ext_xi(1:cut1-1)];
+piey = [ext_yi(cut2+1:end)     ext_yi(1:cut1-1)];
+
+% Rotate the cross-section again to be horizontal / notch on the right
+[~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_xi, ext_yi, spin);
+% [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_xi, int_yi, spin, mean(ext_xi), mean(ext_yi));
+[~, ~, ~, ~, ~, ~, piex,   piey,   ~, ~] = reorder_V2(piex,   piey,   spin);
+
+% Fitting an ellipse to the cross-section with the notch removed to
+% get a more accurate alpha
+[new_alpha, major, minor, ~, ~, ~, ~] = fit_ellipse_R2( piex, piey, alpha, gca );
+tot_alpha = alpha + new_alpha;
+
+end
+
+
+
+
 function [X, Y, x, y, r, t, xp, yp, rp, tp] = reorder_V2(x, y, alpha)
 % function centers and reorders the parametric curves described
 % by x and y.
@@ -700,6 +865,9 @@ tp = t-alpha;
 
 
 end
+
+
+
 
 function varargout = peakfinder(x0, sel, thresh, extrema)
 %PEAKFINDER Noise tolerant fast peak finding algorithm
@@ -936,116 +1104,5 @@ if nargout == 0
 else
     varargout = {peakInds,peakMags};
 end
-
-end
-
-function [Stalk_TableDCR] = CreateDCRTable(Table,range,ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR)
-% FILENAME: CreateDCRTable.m
-% AUTHOR: Ryan Larson
-% DATE: 6/17/2019
-%
-% PURPOSE: Take the variables created from PrepSections_V2.m and
-% make a new data table, copied from SMALL_CURVES_V2_3_1500.mat with some
-% deletions and additions
-% 
-% INPUTS: 
-%       Table: This should be the data table Stalk_Table from
-%       SMALL_CURVES_V2_3_1500.mat
-%
-%       range: A 1x2 vector that contains the indices that will be included
-%       in the new table. [1 nslices]
-% 
-%       ext_xDCR: Downsampled, centered, and rotated exterior x coordinates
-% 
-%       ext_yDCR: Downsampled, centered, and rotated exterior y coordinates
-% 
-%       ext_tDCR: Downsampled, centered, and rotated exterior theta
-%       coordinates
-% 
-%       ext_rhoDCR: Downsampled, centered, and rotated exterior R
-%       coordinates
-% 
-%       int_xDCR: Downsampled, centered, and rotated interior x coordinates
-% 
-%       int_yDCR: Downsampled, centered, and rotated interior y coordinates
-% 
-%       int_tDCR: Downsampled, centered, and rotated interior theta
-%       coordinates
-% 
-%       int_rhoDCR: Downsampled, centered, and rotated interior R
-%       coordinates
-%
-%
-% OUTPUTS:
-%       StalkTableDCR: A new version of Table that contains the
-%       downsampled, centered, and rotated versions of the original
-%       boundaries.
-%
-%
-% NOTES: 
-% 
-% 
-% VERSION HISTORY:
-% V1 - 
-% V2 - 
-% V3 - 
-%
-% -------------------------------------------------------------------------
-
-% Copy the original data table, through specified rows (Jared's data has
-% some misfit cases that don't have usable data at the end, so we only go
-% up to that point)
-Stalk_TableDCR = Table(range(1):range(2),:);
-
-% Remove variables that were sampled at the original sample rate
-Stalk_TableDCR = removevars(Stalk_TableDCR,{'Ext_X','Ext_Y','Int_X','Int_Y','xbar','ybar'});
-
-N = size(Stalk_TableDCR,1);
-
-% Preparing variables to be put in cell arrays
-ext_xDCR = single(ext_xDCR);
-ext_yDCR = single(ext_yDCR);
-ext_tDCR = single(ext_tDCR);
-ext_rhoDCR = single(ext_rhoDCR);
-int_xDCR = single(int_xDCR);
-int_yDCR = single(int_yDCR);
-int_tDCR = single(int_tDCR);
-int_rhoDCR = single(int_rhoDCR);
-
-% Create empty cells to house the data
-Ext_X = cell(N,1);
-Ext_Y = cell(N,1);
-Ext_T = cell(N,1);
-Ext_Rho = cell(N,1);
-Int_X = cell(N,1);
-Int_Y = cell(N,1);
-Int_T = cell(N,1);
-Int_Rho = cell(N,1);
-
-% Recreate the original variable names, but with DCR data
-for i = 1:N
-    Ext_X{i} = ext_xDCR(:,i);
-    Ext_Y{i} = ext_yDCR(:,i);
-    Ext_T{i} = ext_tDCR(:,i);
-    Ext_Rho{i} = ext_rhoDCR(:,i);
-    Int_X{i} = int_xDCR(:,i);
-    Int_Y{i} = int_yDCR(:,i);
-    Int_T{i} = int_tDCR(:,i);
-    Int_Rho{i} = int_rhoDCR(:,i);   
-end
-
-
-% Save new boundary profiles into Stalk_TableDCR
-Stalk_TableDCR = addvars(Stalk_TableDCR,Ext_X,'Before','rind_t');
-Stalk_TableDCR = addvars(Stalk_TableDCR,Ext_Y,'After','Ext_X');
-Stalk_TableDCR = addvars(Stalk_TableDCR,Int_X,'After','Ext_Y');
-Stalk_TableDCR = addvars(Stalk_TableDCR,Int_Y,'After','Int_X');
-Stalk_TableDCR = addvars(Stalk_TableDCR,Ext_T,'After','Int_Y');
-Stalk_TableDCR = addvars(Stalk_TableDCR,Ext_Rho,'After','Ext_T');
-Stalk_TableDCR = addvars(Stalk_TableDCR,Int_T,'After','Ext_Rho');
-Stalk_TableDCR = addvars(Stalk_TableDCR,Int_Rho,'After','Int_T');
-
-end
-
 
 end

@@ -1,7 +1,7 @@
-function PrepSections_V2(indices, npoints, Table, SaveName)
-% FILENAME: PrepSections_V2.m
+function PrepSections_Longitudinal(indices, npoints, Table, SaveName)
+% FILENAME: PrepSections_Longitudinal.m
 % AUTHOR: Ryan Larson
-% DATE: 6/11/19
+% DATE: 1/8/2020
 %
 % PURPOSE: This function is specifically a prep function for PCA analysis.
 % Its goal is to output an array of x and y coordinates, representing a
@@ -16,12 +16,6 @@ function PrepSections_V2(indices, npoints, Table, SaveName)
 % vector of indices that determines which slices are examined. Since the
 % data table has a row for each slice, but the stalks are all put together,
 % another script must be used to create the set.
-
-
-% VERIFY THAT THE CROSS-SECTION IS SHIFTED TO THE CENTER OF THE ELLIPSE (in
-% reorder?)
-
-
 % 
 % INPUTS: 
 %       indices - A vector of consecutive indices that represents the rows
@@ -48,9 +42,8 @@ function PrepSections_V2(indices, npoints, Table, SaveName)
 %       input, except that Ext_X, Ext_Y, Int_X, and Int_Y are replaced with
 %       their downsampled, centered, and rotated versions. Added are Ext_T,
 %       Ext_Rho, Int_T, and Int_Rho, the polar coordinate versions of the 
-%       downsampled data. xbar and ybar from the original table are removed
-%       because they are no longer meaningful.
-%
+%       downsampled data.
+% 
 %       error_indices - A list of integers corresponding to rows in
 %       Stalk_Table that experienced errors during conversion, and should
 %       not be used for further analysis until the problems are fixed.
@@ -59,17 +52,12 @@ function PrepSections_V2(indices, npoints, Table, SaveName)
 %       saved to ensure that all downstream functions assume the same
 %       number of downsampled cross-section points.
 %
-% SUBROUTINES:
-%       fit_ellipse_R2.m:
-% 
-% 
-%       
 %
 % NOTES: - Originally adapted from boundary_info_V4.m for PCA purposes
 % 
 % 
 % VERSION HISTORY:
-% V1 - Works directly with images, but a subset of the full data.
+% V1 - 
 % V2 - Converted to work with Jared's data table rather than Joe and
 % Aaron's subset of data that they selected
 % V3 - 
@@ -84,6 +72,9 @@ prev_alpha = 0;
 nslices = length(indices);
 
 error_indices = [];
+theta_rot = zeros(nslices,1);
+A = zeros(nslices,1);
+B = zeros(nslices,1);
 
 for g = 1:nslices
     pct_loop1 = (g/nslices)*100     % This function runs for a long time, so this line outputs the approximate percentage completed
@@ -118,24 +109,46 @@ for g = 1:nslices
         npoints_slice_ext = length(ext_X);
         npoints_slice_int = length(int_X);
 
-        
-        %%
+    %         %% Trying shifting early
+    %         % Shift the points so they are centered at the geometric mean of
+    %         % the cross-section
+    %         ext_xi = ext_xi - mean(ext_xi);
+    %         ext_yi = ext_yi - mean(ext_yi);
+    %         int_xi = int_xi - mean(ext_xi);
+    %         int_yi = int_yi - mean(ext_yi);
+    %         
+    %         %% Trying downsampling early
+    %         % Downsampling exterior/ Resampling interior
+    %         idx =  1:length(ext_xi);                            % Index
+    %         idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
+    %         ext_xi = interp1(idx, ext_xi, idxq, 'pchip');       % Downsampled Vector
+    % 
+    %         idy = 1:length(ext_yi);                             % Index
+    %         idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
+    %         ext_yi = interp1(idy, ext_yi, idyq, 'pchip');       % Downsampled Vector
+    % 
+    %         idx =  1:length(int_xi);                            % Index
+    %         idxq = linspace(min(idx), max(idx), npoints);       % Interpolation Vector
+    %         int_xi = interp1(idx, int_xi, idxq, 'pchip');       % Downsampled Vector
+    % 
+    %         idy = 1:length(int_yi);                             % Index
+    %         idyq = linspace(min(idy), max(idy), npoints);       % Interpolation Vector
+    %         int_yi = interp1(idy, int_yi, idyq, 'pchip');       % Downsampled Vector
+
+
+    %%
         % Uses a fit ellipse function to identify the angle of rotation along the long axis of the cross-section
         % (only takes into account the exterior boundaries)
-        [alpha, ~, ~, ~, ~, ~, ~] = fit_ellipse_R2( ext_X, ext_Y, prev_alpha, gca );
+        [alpha, major, minor, ~, ~, ~, ~] = fit_ellipse_R2( ext_X, ext_Y, prev_alpha, gca );
+        A(g) = major;
+        B(g) = minor;
 
         % Reorders and rotates the stalk's exterior and interior
         % Rotates an extra 90 degrees so the long axis is vertical
         [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_X, ext_Y, alpha-pi/2);
-        
-        % reorder_V2_interior is almost identical to reorder_V2, except
-        % that it allows the data to be rotated about a point other than
-        % the current data's centroid. This is important, because the real
-        % data will have different centroids for the interior and exterior.
-        % This prevents odd shifts from happening due to this rotation.
         [~, ~, ~, ~, ~, ~, int_xi, int_yi, ~, ~] = reorder_V2_interior(int_X, int_Y, alpha-pi/2, mean(ext_X), mean(ext_Y));
 
-        close(gcf)
+    %         close(gcf)
         ext_xi = ext_xi';
         ext_yi = ext_yi';
         int_xi = int_xi';
@@ -203,6 +216,7 @@ for g = 1:nslices
         % Fitting an ellipse to the cross-section with the notch removed to
         % get a more accurate alpha
         [new_alpha, ~, ~, ~, ~, ~, ~] = fit_ellipse_R2( piex, piey, alpha, gca );
+        theta_rot(g) = new_alpha;
 
         % Rotating according to the new, more accurate alpha
         [~, ~, ~, ~, ~, ~, ext_xi, ext_yi, ~, ~] = reorder_V2(ext_xi, ext_yi, new_alpha);
@@ -233,6 +247,7 @@ for g = 1:nslices
         % when converted back to Cartesian
         theta = linspace(0,2*pi,npoints+1); % npoints points from 0 to 2*pi inclusive (puts the theta values right on degrees if npoints = 359)
         theta = transpose(theta(1:end-1)); % Remove the last point so there are npoints points in the end
+
         ext_rho_interp(:,:,g) = interp1(ext_tDCR(:,:,g),ext_rhoDCR(:,:,g),theta,'pchip','extrap');
         int_rho_interp(:,:,g) = interp1(int_tDCR(:,:,g),int_rhoDCR(:,:,g),theta,'pchip','extrap');  
         ext_tDCR(:,:,g) = theta;
@@ -247,14 +262,16 @@ for g = 1:nslices
         int_xDCR(:,:,g) = int_rhoDCR(:,:,g).*cos(int_tDCR(:,:,g));
         int_yDCR(:,:,g) = int_rhoDCR(:,:,g).*sin(int_tDCR(:,:,g));
 
-    catch % HAVE THIS PRINT ANY ERROR MESSAGES FOR DEBUGGING PURPOSES
+    catch
         error_indices = [error_indices, g];
     end
         
 end
 
-% Force saves some working variables into the workspace
 assignin('base','error_indices',error_indices);
+assignin('base','theta_rot',theta_rot);
+assignin('base','A',A);
+assignin('base','B',B);
 
 % Squeeze all variables so they are two-dimensional and the same size
 ext_xDCR = squeeze(ext_xDCR);
@@ -284,13 +301,13 @@ if plotting == 1
     close(gcf)
 end
 
-% Create new table using CreateDCRTable function
-Stalk_TableDCR = CreateDCRTable(Table,[1 nslices],ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR);
+% Create new table using CreatePCATable function
+Stalk_TablePCA = CreateDCRTable(Table,[1 nslices],ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR);
 
 % Output all variables into mat file
 FolderName = pwd;
 SaveFile = fullfile(FolderName, SaveName);
-save(SaveFile,'Stalk_TableDCR','error_indices','npoints');
+save(SaveFile,'Stalk_TablePCA','error_indices','npoints');
 
 
 
@@ -940,69 +957,19 @@ end
 end
 
 function [Stalk_TableDCR] = CreateDCRTable(Table,range,ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR)
-% FILENAME: CreateDCRTable.m
-% AUTHOR: Ryan Larson
-% DATE: 6/17/2019
-%
-% PURPOSE: Take the variables created from PrepSections_V2.m and
+% CreateDCRTable.m: Take the variables created from PrepSections_V2.m and
 % make a new data table, copied from SMALL_CURVES_V2_3_1500.mat with some
 % deletions and additions
-% 
-% INPUTS: 
-%       Table: This should be the data table Stalk_Table from
-%       SMALL_CURVES_V2_3_1500.mat
 %
-%       range: A 1x2 vector that contains the indices that will be included
-%       in the new table. [1 nslices]
-% 
-%       ext_xDCR: Downsampled, centered, and rotated exterior x coordinates
-% 
-%       ext_yDCR: Downsampled, centered, and rotated exterior y coordinates
-% 
-%       ext_tDCR: Downsampled, centered, and rotated exterior theta
-%       coordinates
-% 
-%       ext_rhoDCR: Downsampled, centered, and rotated exterior R
-%       coordinates
-% 
-%       int_xDCR: Downsampled, centered, and rotated interior x coordinates
-% 
-%       int_yDCR: Downsampled, centered, and rotated interior y coordinates
-% 
-%       int_tDCR: Downsampled, centered, and rotated interior theta
-%       coordinates
-% 
-%       int_rhoDCR: Downsampled, centered, and rotated interior R
-%       coordinates
-%
-%
-% OUTPUTS:
-%       StalkTableDCR: A new version of Table that contains the
-%       downsampled, centered, and rotated versions of the original
-%       boundaries.
-%
-%
-% NOTES: 
-% 
-% 
-% VERSION HISTORY:
-% V1 - 
-% V2 - 
-% V3 - 
-%
-% -------------------------------------------------------------------------
+% Author: Ryan Larson
+% Date: 6/17/2019
 
-% Copy the original data table, through specified rows (Jared's data has
-% some misfit cases that don't have usable data at the end, so we only go
-% up to that point)
 Stalk_TableDCR = Table(range(1):range(2),:);
 
-% Remove variables that were sampled at the original sample rate
 Stalk_TableDCR = removevars(Stalk_TableDCR,{'Ext_X','Ext_Y','Int_X','Int_Y','xbar','ybar'});
 
 N = size(Stalk_TableDCR,1);
 
-% Preparing variables to be put in cell arrays
 ext_xDCR = single(ext_xDCR);
 ext_yDCR = single(ext_yDCR);
 ext_tDCR = single(ext_tDCR);
@@ -1012,7 +979,6 @@ int_yDCR = single(int_yDCR);
 int_tDCR = single(int_tDCR);
 int_rhoDCR = single(int_rhoDCR);
 
-% Create empty cells to house the data
 Ext_X = cell(N,1);
 Ext_Y = cell(N,1);
 Ext_T = cell(N,1);
@@ -1022,7 +988,6 @@ Int_Y = cell(N,1);
 Int_T = cell(N,1);
 Int_Rho = cell(N,1);
 
-% Recreate the original variable names, but with DCR data
 for i = 1:N
     Ext_X{i} = ext_xDCR(:,i);
     Ext_Y{i} = ext_yDCR(:,i);
@@ -1048,4 +1013,59 @@ Stalk_TableDCR = addvars(Stalk_TableDCR,Int_Rho,'After','Int_T');
 end
 
 
+function [Stalk_TablePCA] = CreatePCATable(Table,range,ext_xDCR,ext_yDCR,ext_tDCR,ext_rhoDCR,int_xDCR,int_yDCR,int_tDCR,int_rhoDCR)
+% CreatePCATable.m: Take the variables created from PrepSections_Longitudinal.m and
+% make a new data table, copied from SMALL_CURVES_V2_3_1500.mat with some
+% deletions and additions
+%
+% Author: Ryan Larson
+% Date: 1/9/2020
+
+Stalk_TablePCA = Table(range(1):range(2),:);
+
+Stalk_TablePCA = removevars(Stalk_TablePCA,{'Ext_X','Ext_Y','Int_X','Int_Y'});
+
+N = size(Stalk_TablePCA,1);
+
+ext_xDCR = single(ext_xDCR);
+ext_yDCR = single(ext_yDCR);
+ext_tDCR = single(ext_tDCR);
+ext_rhoDCR = single(ext_rhoDCR);
+int_xDCR = single(int_xDCR);
+int_yDCR = single(int_yDCR);
+int_tDCR = single(int_tDCR);
+int_rhoDCR = single(int_rhoDCR);
+
+Ext_X = cell(N,1);
+Ext_Y = cell(N,1);
+Ext_T = cell(N,1);
+Ext_Rho = cell(N,1);
+Int_X = cell(N,1);
+Int_Y = cell(N,1);
+Int_T = cell(N,1);
+Int_Rho = cell(N,1);
+
+for i = 1:N
+    Ext_X{i} = ext_xDCR(:,i);
+    Ext_Y{i} = ext_yDCR(:,i);
+    Ext_T{i} = ext_tDCR(:,i);
+    Ext_Rho{i} = ext_rhoDCR(:,i);
+    Int_X{i} = int_xDCR(:,i);
+    Int_Y{i} = int_yDCR(:,i);
+    Int_T{i} = int_tDCR(:,i);
+    Int_Rho{i} = int_rhoDCR(:,i);   
+end
+
+
+% Save new boundary profiles into Stalk_TableDCR
+Stalk_TablePCA = addvars(Stalk_TablePCA,Ext_X,'Before','rind_t');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Ext_Y,'After','Ext_X');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Int_X,'After','Ext_Y');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Int_Y,'After','Int_X');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Ext_T,'After','Int_Y');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Ext_Rho,'After','Ext_T');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Int_T,'After','Ext_Rho');
+Stalk_TablePCA = addvars(Stalk_TablePCA,Int_Rho,'After','Int_T');
+
+end
 end
