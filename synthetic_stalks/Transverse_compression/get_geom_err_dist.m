@@ -1,7 +1,56 @@
 function [geom_err_dist] = get_geom_err_dist(ChosenEllipseData,PCAData,NewGoodStalks,nNEPCs)
-% Correct issues in geometric_error.m so a set of stalks can be examined
-% for geometric accuracy in a distribution format, and the results combined
-% across longitudinal sampling location.
+% FILENAME: get_geom_err_dist.m
+% AUTHOR: Ryan Larson
+% DATE: 2019
+%
+% PURPOSE: Gather geometric error data for each cross-section under
+% examination. The inputs are somewhat limiting in that they only allow
+% examination of a single slice location at a time (i.e. 5mm above the node
+% only).
+% 
+% 
+% INPUTS:
+%       ChosenEllipseData: .mat file with the ellipse fit data for the
+%       chosen slices.
+% 
+%       PCAData: Principal component .mat file for the chosen slices.
+% 
+%       NewGoodStalks: .mat file containing the the stalk numbers that were
+%       used for the data set (? This header was written long after I had 
+%       moved on to another version of the code).
+% 
+%       nNEPCs: The number of principal components to include in the
+%       output.
+%       
+% OUTPUTS:
+%       geom_err_dist: An array where rows correspond to unique
+%       cross-section slices, and the columns correspond to different
+%       levels of geometric approximation. First column is the ellipse
+%       case, and the subsequent columns are the principal components in
+%       numerical order. The content of the array is the radial error for
+%       each theta coordinate, for each unique cross-section in the data.
+% 
+% NOTES: 
+%       Follow up with plot_intervals_geom_err.m to visualize the
+%       progression of geometric error as more principal components are
+%       included in the model
+% 
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%   
+% 
+% PSEUDO-CODE:
+%   
+%       
+% -------------------------------------------------------------------------
+% 
+% VERSION HISTORY:
+% V1 - Correcting issues from geometric_error.m so a set of stalks can be
+% examined for geometric accuracy in a distribution format, and the results
+% manually combined across longitudinal sampling locations.
+% V2 - 
+% V3 - 
+% -------------------------------------------------------------------------
 
 hold off
 close all;

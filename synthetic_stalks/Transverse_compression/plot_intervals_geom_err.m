@@ -1,6 +1,41 @@
 function [intervals] = plot_intervals_geom_err(geom_err_dist)
 % Plot the mean and two standard deviation lines for the geom_err_dist data
 
+% FILENAME: get_geom_err_distV2.m
+% AUTHOR: Ryan Larson
+% DATE: 2019
+%
+% PURPOSE: Gather geometric error data for each cross-section under
+% examination. The inputs have been changed since version 1 to simplify and
+% make the outputs more comprehensive, instead of limiting them to a single
+% slice location at a time.
+% 
+% 
+% INPUTS:
+%       geom_err_dist: An array of geometric errors,  output from 
+%       get_geom_err_distV2.m or get_geom_err_dist.m.
+%       
+% OUTPUTS:
+%       intervals: 
+% 
+% NOTES: 
+%       
+% 
+% -------------------------------------------------------------------------
+% SUBROUTINES:
+%   
+% 
+% PSEUDO-CODE:
+%   
+%       
+% -------------------------------------------------------------------------
+% 
+% VERSION HISTORY:
+% V1 - 
+% V2 - 
+% V3 - 
+% -------------------------------------------------------------------------
+
 hold off
 close all;
 set(0,'DefaultFigureWindowStyle','docked');
@@ -26,16 +61,6 @@ for i = 1:size(geom_err_dist,2)
     
 end
 
-% % Basic plot
-% figure(1);
-% hold on
-% plot(numNEPCs,intervals(1,:));
-% plot(numNEPCs,intervals(2,:));
-% plot(numNEPCs,intervals(3,:));
-% plot(numNEPCs,intervals(4,:));
-% plot(numNEPCs,intervals(5,:));
-% hold off
-
 
 %% Patch plot for paper
 % Get x values (same for all patches)
@@ -58,7 +83,7 @@ two_stdevs = [intervals(1,2:end) flipped_two_stdevs];
 flipped_one_stdev = fliplr(intervals(4,2:end));
 one_stdev = [intervals(2,2:end) flipped_one_stdev];
 
-figure(2);
+figure(1);
 hold on
 patch(patchNEPCs,two_stdevs,[0.75 0.75 0.75],'EdgeColor','none');
 patch(patchNEPCs,one_stdev,[0.5 0.5 0.5],'EdgeColor','none');
