@@ -61,7 +61,7 @@ By comparing each individual approximation to its real counterpart, we can exami
 ## Code flow chart
 The specific functions to use for transverse parameterization are shown in the flow chart below.
 
-[process_flowchart]: https://github.com/byu-crop-biomechanics-lab/synthetic_stalk_modeling/blob/master/High_level_code_process.png "Code process flow chart"
+[process_flowchart]: https://github.com/byu-crop-biomechanics-lab/synthetic_stalk_modeling/blob/master/Code_flowchart.png "Code process flow chart"
 
 ![alt text][process_flowchart]
 
