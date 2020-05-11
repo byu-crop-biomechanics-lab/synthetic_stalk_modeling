@@ -64,7 +64,7 @@ function [AR_prctile,S_err_prctile] = Longitudinal_Stiffness(slices,stalknums,nu
 
 
 % Load data from AllTransversePCA.mat
-load('AllSlicesPCA')
+load('AllSlicesPCA.mat')
 
 % Intitialize the problem stalk indices
 problem_slice_stalk = [];
@@ -115,7 +115,7 @@ for slice = slices
         Ap(CSnum,2,slicenum) = polyarea(int_x, int_y);
         Ar(CSnum,2,slicenum) = polyarea(ext_x, ext_y) - Ap(CSnum,2,slicenum);
         
-         % Calculate pith and rind areas for true cross section
+         % Calculate pith and rind areas for ellipse cross section
         [int_x,int_y] = pol2cart(ALL_ELLIPSE_T(adj_ind,:),ALL_ELLIPSE_R_int(adj_ind,:));
         [ext_x,ext_y] = pol2cart(ALL_ELLIPSE_T(adj_ind,:),ALL_ELLIPSE_R_ext(adj_ind,:));
         Ap(CSnum,3,slicenum) = polyarea(int_x, int_y);
@@ -162,6 +162,7 @@ for i = 1:length(slices)
     
     % Create subplots for each slice distance. Each have 100 bins to show
     % ditribution
+    figure(1)
     subplot(3,5,i)
     histogram(AR(:,2,i),100)
     title(char(titles(i)))
