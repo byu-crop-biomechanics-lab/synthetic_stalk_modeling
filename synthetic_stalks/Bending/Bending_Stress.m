@@ -55,9 +55,10 @@ problem_slice_stalk = [];
 % an iteration number)
 slicenum = 0;
 CSnum = 0;
+n =0;
 
 for slice = slices
-    slicenum = slicenum + 1;
+    slicenum = slicenum + 1
     
     % Determine the indices in the data where the slice location lives
     sliceidx = find(slice_dists == slice);
@@ -89,22 +90,45 @@ for slice = slices
         % Track the indice number in the first column
         Ip(CSnum,1,slicenum) = adj_ind;
         Ir(CSnum,1,slicenum) = adj_ind;
+        Y(CSnum,1,slicenum) = adj_ind;
+        
         
         % Calculate pith and rind inertias for true cross section
         [int_x,int_y] = pol2cart(ALL_ELLIPSE_T(adj_ind,:),ALL_R_int(adj_ind,:));
         [ext_x,ext_y] = pol2cart(ALL_ELLIPSE_T(adj_ind,:),ALL_R_ext(adj_ind,:));
         [~,I_int,~] = polygeom(int_x,int_y);
         [~,I_ext,~] = polygeom(ext_x,ext_y);
-        Ip(CSnum,2,slicenum) = I_int(1);
-        Ir(CSnum,2,slicenum) = I_ext(1)-I_int(1);
+        Ip(CSnum,2,slicenum) = I_int(4);
+        Ir(CSnum,2,slicenum) = I_ext(4)-I_int(4);
+        % Calculate neutral axis for cross section
+        [y,~] = Center_Inertia(int_x,int_y,ext_x,ext_y,1e-4);
+        y1 = max(ext_y) - y;
+        y2 = min(ext_y) - y;
+        if abs(y1) > abs(y2)
+            Y(CSnum,2,slicenum) = abs(y1);
+        elseif abs(y2) > abs(y1)
+            Y(CSnum,2,slicenum) = abs(y2);
+        end
+        % Calculate max bending stress
         
-         % Calculate pith and rind areas for ellipse cross section
+        
+        
+        % Calculate pith and rind inertias for ellipse cross section
         [int_x,int_y] = pol2cart(ALL_ELLIPSE_T(adj_ind,:),ALL_ELLIPSE_R_int(adj_ind,:));
         [ext_x,ext_y] = pol2cart(ALL_ELLIPSE_T(adj_ind,:),ALL_ELLIPSE_R_ext(adj_ind,:));
         [~,I_int,~] = polygeom(int_x,int_y);
         [~,I_ext,~] = polygeom(ext_x,ext_y);
-        Ip(CSnum,3,slicenum) = I_int(1);
-        Ir(CSnum,3,slicenum) = I_ext(1)-I_int(1);
+        Ip(CSnum,3,slicenum) = I_int(4);
+        Ir(CSnum,3,slicenum) = I_ext(4)-I_int(4);
+        % Calculate neutral axis for cross section
+        [y,~] = Center_Inertia(int_x,int_y,ext_x,ext_y,1e-4);
+        y1 = max(ext_y) - y;
+        y2 = min(ext_y) - y;
+        if abs(y1) > abs(y2)
+            Y(CSnum,3,slicenum) = abs(y1);
+        elseif abs(y2) > abs(y1)
+            Y(CSnum,3,slicenum) = abs(y2);
+        end
 
         % Combined PC cases
         for j = 1:numNEPCs
@@ -130,15 +154,27 @@ for slice = slices
             [ext_x,ext_y] = pol2cart(ALL_ELLIPSE_T(adj_ind,:),Rnew_ext);
             [~,I_int,~] = polygeom(int_x,int_y);
             [~,I_ext,~] = polygeom(ext_x,ext_y);
-            Ip(CSnum,j+3,slicenum) = I_int(1);
-            Ir(CSnum,j+3,slicenum) = I_ext(1)-I_int(1);
+            Ip(CSnum,j+3,slicenum) = I_int(4);
+            Ir(CSnum,j+3,slicenum) = I_ext(4)-I_int(4);
+            % Calculate neutral axis for cross section
+            [y,~] = Center_Inertia(int_x,int_y,ext_x,ext_y,1e-4);
+            y1 = max(ext_y) - y;
+            y2 = min(ext_y) - y;
+            if abs(y1) > abs(y2)
+                Y(CSnum,j+3,slicenum) = abs(y1);
+            elseif abs(y2) > abs(y1)
+                Y(CSnum,j+3,slicenum) = abs(y2);
+            end
 
             
         end
+        n = n + 1
     end
 end
 
-% Apply Modulus ratio to moment aria of inertia
+sigma = Y./Ir;
+
+% Apply Modulus ratio to moment area of inertia
 ref = E_ratio*Ir(:,2,:) + 1*Ip(:,2,:);
 VE = E_ratio*Ir(:,3:numNEPCs+3,:) + 1*Ip(:,3:numNEPCs+3,:);
 
@@ -194,6 +230,11 @@ yline(0);
 hold off
 
 
+
+
+
+% ================ Area Inertia Rind Only ====================
+
 % Varried ellipse data for RIND ONLY
 VE = Ir(:,3:numNEPCs+3,:);
 
@@ -203,7 +244,7 @@ for i = 1:numNEPCs+1
     S_err_rind(:,i,:) =  (VE(:,i,:) - Ir(:,2,:))./Ir(:,2,:)*100;
     S_err_rind_prctile_i(i,:,:) = prctile(S_err_rind(:,i,:),[5,25,50,75,95]);
     for j = 1:5
-       S_err_rind_prctile(i,j) = mean(S_err_rind_prctile_i(i,j,:)); 
+       S_err_rind_prctile(i,j) = mean(S_err_rind_prctile_i(i,:,j)); 
     end
 end
 
@@ -246,6 +287,75 @@ figure(2)
 boxplot(S_err_rind_plot,all_labels_rind,'notch','on','symbol','')
 ylim([lolim_rind,uplim_rind]);
 set(gca,'YTick',lolim_rind:0.5:uplim_rind,'XTickLabelRotation',-30);
+ytickformat('percentage');
+ylabel('Error');
+hold on
+yline(0);
+hold off
+
+
+
+
+
+
+
+
+% ============== Max Stress (ms) Percent Error ==============
+
+
+% Varried ellipse data for MAX STRESS
+VE_ms = sigma(:,3:numNEPCs+3,:);
+
+% Get percent error for MAX STRESS for each varried ellipse 
+% compared to real shape 
+for i = 1:numNEPCs+1
+    S_err_ms(:,i,:) =  (VE_ms(:,i,:) - sigma(:,2,:))./sigma(:,2,:)*100;
+    S_err_ms_prctile_i(i,:,:) = prctile(S_err_ms(:,i,:),[5,25,50,75,95]);
+    for j = 1:5
+       S_err_ms_prctile(i,j) = mean(S_err_ms_prctile_i(i,:,j)); 
+    end
+end
+
+
+
+% Create labels according to the number of principal components used in
+% the study (cumulative cases followed by remaining individual cases) MAX
+% STRESS
+all_labels_ms = strings(1,(1+numNEPCs));
+all_labels_ms(1,1:2) = ["Ellipse","Ellipse + PC 1"];
+for i = 2:numNEPCs
+    addlabel_ms = "Ellipse + PCs 1-" + num2str(i);
+    all_labels_ms(1,i+1) = addlabel_ms;
+end
+
+% Combine all percent error data into one matrix for box plotting MAX
+% STRESS
+S_err_ms_plot = S_err_ms(:,:,1);
+for i = 1:length(slices)-1
+S_err_ms_plot = [S_err_ms_plot;S_err_ms(:,:,i+1)];
+end
+
+% Grab upper and lower limits by using 5th and 95th percentile data MAX
+% STRESS
+uplimrow_ms = S_err_ms_prctile(:,5)';
+lolimrow_ms = S_err_ms_prctile(:,1)';
+
+% Add a buffer between the calculated outer reach of the whiskers and the
+% edge of the plot. Round to the nearest integer for a nice y label. MAX
+% STRESS
+buffer_ms = 3;
+uplim_ms = max(uplimrow_ms) + buffer_ms;
+lolim_ms = min(lolimrow_ms) - buffer_ms;
+uplim_ms = round(uplim_ms);
+lolim_ms = round(lolim_ms);
+
+% Create box plot for MAX STRESS
+% Include significance notches on boxes
+% supress outliers
+figure(3)
+boxplot(S_err_ms_plot,all_labels_ms,'notch','on','symbol','')
+ylim([lolim_ms,uplim_ms]);
+set(gca,'YTick',lolim_ms:0.5:uplim_ms,'XTickLabelRotation',-30);
 ytickformat('percentage');
 ylabel('Error');
 hold on
