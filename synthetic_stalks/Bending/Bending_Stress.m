@@ -34,7 +34,20 @@ function [] = Bending_Stress(slices,stalknums,numNEPCs,E_ratio)
 %       - 
 % 
 % PSEUDO-CODE:
-%   
+%   Load AllSicesPCA data.
+%   Initialize variables and arrays.
+%   Begin large loop.
+%       Get cross section data.
+%       Find inertia data for ellipse and ellipse plus principal
+%       components.
+%       Also calculate inertial center in y-direction (for max stress).
+%       Determine max distance from center to edge.
+%   Calculate stress for all cross sections.
+%   Apply modulus ratio and find percent error for data.
+%   Create box plot to represent percent error in moment area of inertia of
+%   PC cross sections compared to original.
+%   Create box plot to represent percent error in max stress of PC cross
+%   sections compared to the original.
 % 
 % VERSION HISTORY:
 % V1 - 
@@ -55,7 +68,6 @@ problem_slice_stalk = [];
 % an iteration number)
 slicenum = 0;
 CSnum = 0;
-n =0;
 
 for slice = slices
     slicenum = slicenum + 1
@@ -168,7 +180,6 @@ for slice = slices
 
             
         end
-        n = n + 1
     end
 end
 
@@ -343,7 +354,7 @@ lolimrow_ms = S_err_ms_prctile(:,1)';
 % Add a buffer between the calculated outer reach of the whiskers and the
 % edge of the plot. Round to the nearest integer for a nice y label. MAX
 % STRESS
-buffer_ms = 3;
+buffer_ms = 7;
 uplim_ms = max(uplimrow_ms) + buffer_ms;
 lolim_ms = min(lolimrow_ms) - buffer_ms;
 uplim_ms = round(uplim_ms);
@@ -358,6 +369,7 @@ ylim([lolim_ms,uplim_ms]);
 set(gca,'YTick',lolim_ms:0.5:uplim_ms,'XTickLabelRotation',-30);
 ytickformat('percentage');
 ylabel('Error');
+title('Maximum Bending Stress')
 hold on
 yline(0);
 hold off
